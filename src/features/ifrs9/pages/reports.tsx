@@ -174,9 +174,6 @@ export function IFRS9Reports() {
               <span className="flex h-9 w-9 items-center justify-center rounded-lg bg-pale-red text-primary">
                 {r.icon}
               </span>
-              <Badge variant="brand" size="sm">
-                Live
-              </Badge>
             </div>
             <div>
               <p className="text-sm font-semibold text-dark-gray">{r.title}</p>
@@ -197,3 +194,4 @@ export function IFRS9Reports() {
     </div>
   );
 }
+

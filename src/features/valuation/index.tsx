@@ -4,12 +4,11 @@ import {
   LayoutDashboard,
   Briefcase,
   SlidersHorizontal,
-  Calculator,
-  BarChart3,
+  TrendingUp,
   FileText,
-  Activity,
   Database,
-  FileSpreadsheet,
+  PieChart,
+  Calendar,
 } from "lucide-react";
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
@@ -19,28 +18,22 @@ import { ValuationDataManager } from "./pages/data-manager";
 import { ValuationOverview } from "./pages/overview";
 import { ValuationInventory } from "./pages/inventory";
 import { ValuationAssumptions } from "./pages/assumptions";
-import { ValuationDCFWorkbench } from "./pages/dcf-workbench";
-import { ValuationComparables } from "./pages/comparables";
 import { ValuationResults } from "./pages/results";
-import { ValuationSensitivity } from "./pages/sensitivity";
+import { ValuationMaturity } from "./pages/maturity";
+import { ValuationIncome } from "./pages/income";
 import { ValuationReports } from "./pages/reports";
+import { ValuationAssetDetail } from "./pages/asset-detail";
 
 export type ValuationPage =
   | "data-manager"
   | "overview"
   | "inventory"
-  | "assumptions"
-  | "dcf"
-  | "comparables"
   | "results"
-  | "sensitivity"
-  | "reports";
-
-interface Props {
-  persona: { name: string; role: string; avatar: string };
-  onBack: () => void;
-  onLogout: () => void;
-}
+  | "maturity"
+  | "income"
+  | "assumptions"
+  | "reports"
+  | "asset-detail";
 
 const NAV: {
   id: ValuationPage;
@@ -58,57 +51,51 @@ const NAV: {
     id: "overview",
     label: "Overview",
     icon: <LayoutDashboard className="h-4 w-4" />,
-    group: "main",
+    group: "portfolio",
   },
   {
     id: "inventory",
     label: "Asset Inventory",
     icon: <Briefcase className="h-4 w-4" />,
-    group: "main",
+    group: "portfolio",
+  },
+  {
+    id: "results",
+    label: "Breakdown",
+    icon: <PieChart className="h-4 w-4" />,
+    group: "analytics",
+  },
+  {
+    id: "maturity",
+    label: "Maturity Profile",
+    icon: <Calendar className="h-4 w-4" />,
+    group: "analytics",
+  },
+  {
+    id: "income",
+    label: "Income & P&L",
+    icon: <TrendingUp className="h-4 w-4" />,
+    group: "analytics",
   },
   {
     id: "assumptions",
     label: "Assumptions",
     icon: <SlidersHorizontal className="h-4 w-4" />,
-    group: "main",
-  },
-  {
-    id: "dcf",
-    label: "DCF Workbench",
-    icon: <Calculator className="h-4 w-4" />,
-    group: "analytics",
-  },
-  {
-    id: "comparables",
-    label: "Comparables",
-    icon: <BarChart3 className="h-4 w-4" />,
-    group: "analytics",
-  },
-  {
-    id: "results",
-    label: "Results",
-    icon: <FileSpreadsheet className="h-4 w-4" />,
-    group: "analytics",
-  },
-  {
-    id: "sensitivity",
-    label: "Sensitivity",
-    icon: <Activity className="h-4 w-4" />,
-    group: "analytics",
+    group: "settings",
   },
   {
     id: "reports",
     label: "Reports",
     icon: <FileText className="h-4 w-4" />,
-    group: "operations",
+    group: "settings",
   },
 ];
 
 const GROUPS: Record<string, string> = {
   data: "Data",
-  main: "Overview",
+  portfolio: "Portfolio",
   analytics: "Analytics",
-  operations: "Operations",
+  settings: "Operations",
 };
 
 function PageBody({ page }: { page: ValuationPage }) {
@@ -119,26 +106,29 @@ function PageBody({ page }: { page: ValuationPage }) {
       return <ValuationOverview />;
     case "inventory":
       return <ValuationInventory />;
-    case "assumptions":
-      return <ValuationAssumptions />;
-    case "dcf":
-      return <ValuationDCFWorkbench />;
-    case "comparables":
-      return <ValuationComparables />;
     case "results":
       return <ValuationResults />;
-    case "sensitivity":
-      return <ValuationSensitivity />;
+    case "maturity":
+      return <ValuationMaturity />;
+    case "income":
+      return <ValuationIncome />;
+    case "assumptions":
+      return <ValuationAssumptions />;
     case "reports":
       return <ValuationReports />;
+    case "asset-detail":
+      return <ValuationAssetDetail />;
   }
 }
 
 export function ValuationModule() {
   const { persona, setPersona } = usePersona();
   const navigate = useNavigate();
-  const { page: pageParam } = useParams<{ page?: string }>();
-  const page = (pageParam ?? "overview") as ValuationPage;
+  const { page: pageParam, id } = useParams<{ page?: string; id?: string }>();
+
+  const page: ValuationPage = id
+    ? "asset-detail"
+    : ((pageParam ?? "overview") as ValuationPage);
 
   const grouped = Object.entries(GROUPS).map(([key, label]) => ({
     groupLabel: label,
@@ -148,7 +138,6 @@ export function ValuationModule() {
   return (
     <ValuationProvider>
       <div className="flex h-screen flex-col bg-surface-muted font-sans text-dark-gray overflow-hidden">
-        {/* top header */}
         <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-5 z-10">
           <div className="flex items-center gap-3">
             <Logo collapsed />
@@ -156,8 +145,10 @@ export function ValuationModule() {
             <span className="text-xs font-semibold text-dark-gray">
               Valuation Engine
             </span>
+            <span className="ml-2 hidden rounded-full bg-pale-red px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wider text-primary sm:inline">
+              Fixed Income
+            </span>
           </div>
-
           <div className="flex items-center gap-3">
             <UserMenu
               persona={persona}
@@ -170,7 +161,6 @@ export function ValuationModule() {
           </div>
         </header>
 
-        {/* body */}
         <div className="flex flex-1 overflow-hidden">
           <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-surface overflow-y-auto">
             <nav className="flex-1 py-4">

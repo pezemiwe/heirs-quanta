@@ -43,7 +43,7 @@ const MODULES = [
   },
   {
     id: "deal-capture",
-    live: false,
+    live: true,
     icon: ArrowLeftRight,
     title: "Deal Capture & Trade Management",
     subtitle: "End-to-end trade lifecycle & settlement workflow",
@@ -58,11 +58,11 @@ const MODULES = [
     ],
     accent: "#B30000",
     lightBg: "#FDF0F0",
-    tag: "Coming Soon",
+    tag: "Beta",
   },
   {
     id: "market-data",
-    live: false,
+    live: true,
     icon: Activity,
     title: "Market Data & Trend Analytics",
     subtitle: "Live prices, yields, indices & macro signals",
@@ -77,7 +77,7 @@ const MODULES = [
     ],
     accent: "#1A6B8A",
     lightBg: "#EFF7FA",
-    tag: "Coming Soon",
+    tag: "Live",
   },
   {
     id: "valuation",
@@ -119,7 +119,7 @@ const MODULES = [
   },
   {
     id: "performance",
-    live: false,
+    live: true,
     icon: TrendingUp,
     title: "Return & Performance Analytics",
     subtitle: "Attribution, benchmarking & return decomposition",
@@ -134,11 +134,11 @@ const MODULES = [
     ],
     accent: "#1A7A4A",
     lightBg: "#EFF8F3",
-    tag: "Coming Soon",
+    tag: "Beta",
   },
   {
     id: "duration-risk",
-    live: false,
+    live: true,
     icon: ShieldCheck,
     title: "Duration & Risk Analytics",
     subtitle: "Interest rate sensitivity, VaR & stress testing",
@@ -157,7 +157,7 @@ const MODULES = [
   },
   {
     id: "accounting",
-    live: false,
+    live: true,
     icon: FileText,
     title: "Accounting & GL Integration",
     subtitle: "Automated journal entries & general ledger sync",
@@ -172,11 +172,11 @@ const MODULES = [
     ],
     accent: "#7A5A1A",
     lightBg: "#FAF5EF",
-    tag: "Coming Soon",
+    tag: "Beta",
   },
   {
     id: "reporting",
-    live: false,
+    live: true,
     icon: PieChart,
     title: "Reporting & Dashboard",
     subtitle: "Board, ALCO & regulatory reporting suite",
@@ -191,7 +191,7 @@ const MODULES = [
     ],
     accent: "#4A4A8A",
     lightBg: "#F0F0F8",
-    tag: "Coming Soon",
+    tag: "Beta",
   },
 ];
 

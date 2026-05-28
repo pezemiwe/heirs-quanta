@@ -1,6 +1,7 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import clsx, { type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
+import { ChevronLeft, ChevronRight } from "lucide-react";
 import { EmptyState } from "./empty-state";
 
 const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
@@ -16,29 +17,68 @@ export type DataTableColumn<T> = {
 type DataTableProps<T> = {
   columns: DataTableColumn<T>[];
   data: T[];
-  keyExtractor: (row: T, i: number) => string | number;
+  keyExtractor?: (row: T, i: number) => string | number;
   emptyMessage?: string;
   emptyDescription?: string;
   loading?: boolean;
   striped?: boolean;
   className?: string;
+  pageSize?: number;
 };
 
 export const DataTable = <T extends Record<string, unknown>>({
   columns,
   data,
-  keyExtractor,
+  keyExtractor = (_row: T, i: number) => i,
   emptyMessage = "No data",
   emptyDescription,
   loading = false,
   striped = true,
   className,
+  pageSize,
 }: DataTableProps<T>) => {
+  const [page, setPage] = useState(1);
+
+  // Reset to page 1 when data changes
+  useEffect(() => {
+    setPage(1);
+  }, [data.length]);
+
+  const totalPages = pageSize
+    ? Math.max(1, Math.ceil(data.length / pageSize))
+    : 1;
+  const pagedData = pageSize
+    ? data.slice((page - 1) * pageSize, page * pageSize)
+    : data;
+
   const alignCls = {
     left: "text-left",
     center: "text-center",
     right: "text-right",
   };
+
+  const from = pageSize ? (page - 1) * pageSize + 1 : 1;
+  const to = pageSize ? Math.min(page * pageSize, data.length) : data.length;
+
+  // Build visible page numbers (always show first, last, current ±1)
+  function pageNumbers() {
+    if (totalPages <= 7)
+      return Array.from({ length: totalPages }, (_, i) => i + 1);
+    const pages: (number | "…")[] = [];
+    const near = new Set(
+      [1, totalPages, page - 1, page, page + 1].filter(
+        (p) => p >= 1 && p <= totalPages,
+      ),
+    );
+    let prev = 0;
+    for (const p of Array.from(near).sort((a, b) => a - b)) {
+      if (p - prev > 1) pages.push("…");
+      pages.push(p);
+      prev = p;
+    }
+    return pages;
+  }
+
   return (
     <div
       className={cn(
@@ -84,9 +124,9 @@ export const DataTable = <T extends Record<string, unknown>>({
               </td>
             </tr>
           ) : (
-            data.map((row, i) => (
+            pagedData.map((row, i) => (
               <tr
-                key={keyExtractor(row, i)}
+                key={keyExtractor(row, (page - 1) * (pageSize ?? 0) + i)}
                 className={cn(
                   "border-b border-border last:border-0 transition-colors hover:bg-pale-red/40",
                   striped && i % 2 !== 0 && "bg-[#F8F8F8]",
@@ -101,7 +141,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                     )}
                   >
                     {col.render
-                      ? col.render(row, i)
+                      ? col.render(row, (page - 1) * (pageSize ?? 0) + i)
                       : (row[col.key as keyof T] as ReactNode)}
                   </td>
                 ))}
@@ -110,6 +150,60 @@ export const DataTable = <T extends Record<string, unknown>>({
           )}
         </tbody>
       </table>
+
+      {/* Pagination footer */}
+      {pageSize && data.length > 0 && (
+        <div className="flex items-center justify-between border-t border-border bg-[#FAFAFA] px-4 py-2.5">
+          <span className="text-xs text-dark-gray/50">
+            Showing{" "}
+            <span className="font-medium text-dark-gray/70">
+              {from}–{to}
+            </span>{" "}
+            of{" "}
+            <span className="font-medium text-dark-gray/70">{data.length}</span>{" "}
+            records
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={() => setPage((p) => Math.max(1, p - 1))}
+              disabled={page === 1}
+              className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-white text-dark-gray/60 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              <ChevronLeft className="h-3.5 w-3.5" />
+            </button>
+            {pageNumbers().map((p, i) =>
+              p === "…" ? (
+                <span
+                  key={`ellipsis-${i}`}
+                  className="px-1 text-xs text-dark-gray/40"
+                >
+                  …
+                </span>
+              ) : (
+                <button
+                  key={p}
+                  onClick={() => setPage(p as number)}
+                  className={cn(
+                    "flex h-7 min-w-[28px] items-center justify-center rounded-md border px-1.5 text-xs font-medium transition-colors",
+                    page === p
+                      ? "border-primary bg-primary text-white"
+                      : "border-border bg-white text-dark-gray/70 hover:border-primary hover:text-primary",
+                  )}
+                >
+                  {p}
+                </button>
+              ),
+            )}
+            <button
+              onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+              disabled={page === totalPages}
+              className="flex h-7 w-7 items-center justify-center rounded-md border border-border bg-white text-dark-gray/60 hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-30"
+            >
+              <ChevronRight className="h-3.5 w-3.5" />
+            </button>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

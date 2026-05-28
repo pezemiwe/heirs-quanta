@@ -436,8 +436,8 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
               </strong>
               , Deal Capture, Performance Analytics, Duration & Risk, Market
               Data, Accounting integration, and Reporting — into a single,
-              audit-ready platform — engineered for CBN compliance and
-              real-time decision making.
+              audit-ready platform — engineered for CBN compliance and real-time
+              decision making.
             </p>
 
             {/* CTAs */}

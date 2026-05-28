@@ -1,95 +1,168 @@
-import { TrendingUp, TrendingDown } from "lucide-react";
+﻿import { TrendingUp, TrendingDown } from "lucide-react";
+import { useState } from "react";
+import {
+  BarChart,
+  Bar,
+  XAxis,
+  YAxis,
+  CartesianGrid,
+  Tooltip,
+  ResponsiveContainer,
+  Legend,
+} from "recharts";
+import {
+  BOOK_COMPUTED,
+  fmtCompact,
+  fmtPct,
+  fmtN,
+} from "../../../features/portfolio/engine/book-compute";
 
-const PERIODS = ["1M", "3M", "6M", "YTD", "1Y", "3Y", "Inception"];
+const vals = BOOK_COMPUTED.valuations;
+const totals = BOOK_COMPUTED.totals;
+
+// Weighted avg EIR
+const wEIR = (() => {
+  let ws = 0,
+    wt = 0;
+  for (const v of vals) {
+    if (v.eir > 0) {
+      ws += v.eir * v.balanceSheetValueNGN;
+      wt += v.balanceSheetValueNGN;
+    }
+  }
+  return wt > 0 ? ws / wt : 0;
+})();
+// Weighted avg market yield
+const wYield = (() => {
+  let ws = 0,
+    wt = 0;
+  for (const v of vals) {
+    if (v.marketYieldUsed > 0) {
+      ws += v.marketYieldUsed * v.balanceSheetValueNGN;
+      wt += v.balanceSheetValueNGN;
+    }
+  }
+  return wt > 0 ? ws / wt : 0;
+})();
+// Portfolio duration (weighted)
+const wDur = (() => {
+  let ws = 0,
+    wt = 0;
+  for (const v of vals) {
+    if (v.risk.modifiedDuration > 0) {
+      ws += v.risk.modifiedDuration * v.balanceSheetValueNGN;
+      wt += v.balanceSheetValueNGN;
+    }
+  }
+  return wt > 0 ? ws / wt : 0;
+})();
+const totalDV01 = vals.reduce((s, v) => s + v.risk.dv01, 0);
+const totalAnnualIncome = vals.reduce((s, v) => s + v.annualEIRIncome, 0);
+const totalOCI = totals.totalOCIReserveNGN;
+const totalFVTPL = totals.totalFVTPLUnrealisedGLNGN;
+
+// Income by classification
+const incomeByClass = [
+  { name: "AC", income: BOOK_COMPUTED.income.ac.totalAccruedInterestNGN },
+  {
+    name: "FVOCI",
+    income: BOOK_COMPUTED.income.fvoci.totalACCarryingValueNGN * wEIR,
+  },
+  { name: "FVTPL", income: Math.abs(totalFVTPL) },
+];
+
+// Sector income chart
+const sectorIncome = BOOK_COMPUTED.bySector
+  .slice(0, 8)
+  .map((s) => {
+    const sVals = vals.filter((v) => v.instrument.sector === s.sector);
+    return {
+      sector: s.sector.length > 12 ? s.sector.slice(0, 12) + "â€¦" : s.sector,
+      income: sVals.reduce((a, v) => a + v.annualEIRIncome, 0),
+    };
+  })
+  .sort((a, b) => b.income - a.income);
 
 const METRICS = [
   {
-    label: "Total Return (YTD)",
-    value: "11.8%",
-    benchmark: "9.4%",
-    alpha: "+2.4%",
-    pos: true,
+    label: "Weighted Avg EIR",
+    value: fmtPct(wEIR),
+    note: "Effective Interest Rate across book",
+    positive: true,
   },
   {
-    label: "Annualised Return (3Y)",
-    value: "14.2%",
-    benchmark: "11.7%",
-    alpha: "+2.5%",
-    pos: true,
+    label: "Weighted Avg Market Yield",
+    value: fmtPct(wYield),
+    note: "Current market yield",
+    positive: true,
   },
   {
-    label: "Sharpe Ratio",
-    value: "1.42",
-    benchmark: "1.18",
-    alpha: "+0.24",
-    pos: true,
+    label: "EIRâ€“Yield Spread",
+    value: `${((wEIR - wYield) * 100).toFixed(0)} bps`,
+    note: "Carry vs current market",
+    positive: wEIR > wYield,
   },
   {
-    label: "Sortino Ratio",
-    value: "1.87",
-    benchmark: "1.56",
-    alpha: "+0.31",
-    pos: true,
+    label: "Portfolio Duration (Mod.)",
+    value: `${wDur.toFixed(2)} yrs`,
+    note: "Weighted modified duration",
+    positive: true,
   },
   {
-    label: "Max Drawdown",
-    value: "-4.1%",
-    benchmark: "-6.8%",
-    alpha: "+2.7%",
-    pos: true,
+    label: "DV01 (Interest Rate Sens.)",
+    value: fmtCompact(Math.abs(totalDV01)),
+    note: "+1bp â†’ P&L change",
+    positive: false,
   },
   {
-    label: "Tracking Error",
-    value: "2.3%",
-    benchmark: "—",
-    alpha: "—",
-    pos: true,
+    label: "Annual Income (EIR)",
+    value: fmtCompact(totalAnnualIncome),
+    note: "Projected income run rate",
+    positive: true,
   },
   {
-    label: "Information Ratio",
-    value: "1.04",
-    benchmark: "—",
-    alpha: "—",
-    pos: true,
+    label: "OCI Reserve (FVOCI)",
+    value: fmtCompact(totalOCI),
+    note: "Unrealised in equity",
+    positive: totalOCI >= 0,
   },
   {
-    label: "Beta",
-    value: "0.82",
-    benchmark: "1.00",
-    alpha: "-0.18",
-    pos: true,
+    label: "FVTPL Unrealised P&L",
+    value: fmtCompact(totalFVTPL),
+    note: "Through P&L",
+    positive: totalFVTPL >= 0,
   },
 ];
 
-const MONTHLY = [
-  { month: "Jan", port: 2.1, bench: 1.8 },
-  { month: "Feb", port: 1.4, bench: 1.2 },
-  { month: "Mar", port: -0.3, bench: -0.8 },
-  { month: "Apr", port: 2.8, bench: 2.1 },
-  { month: "May", port: 1.9, bench: 1.6 },
-];
+const PERIODS = ["1M", "3M", "6M", "YTD", "1Y", "3Y", "Inception"];
 
 export function PerformanceAnalytics() {
+  const [period, setPeriod] = useState("YTD");
+
   return (
     <div className="p-6 xl:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">
           Performance Analytics
         </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Returns, risk-adjusted metrics and benchmark attribution
+        <p className="mt-1 text-sm text-dark-gray/50">
+          Yield, EIR, duration, income, and P&L analytics across{" "}
+          <span className="font-medium text-dark-gray">
+            {totals.instruments} instruments
+          </span>
         </p>
       </div>
 
       {/* period selector */}
       <div className="flex items-center gap-1 flex-wrap">
-        {PERIODS.map((p, i) => (
+        {PERIODS.map((p) => (
           <button
             key={p}
+            onClick={() => setPeriod(p)}
             className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-              i === 3
+              period === p
                 ? "bg-primary text-white"
-                : "bg-gray-100 text-gray-500 hover:bg-pale-red hover:text-primary"
+                : "bg-gray-100 text-dark-gray/50 hover:bg-pale-red hover:text-primary"
             }`}
           >
             {p}
@@ -97,67 +170,79 @@ export function PerformanceAnalytics() {
         ))}
       </div>
 
-      {/* monthly returns mini-chart */}
+      {/* summary tiles */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-4">
+        {[
+          {
+            label: "Annual Income",
+            value: fmtCompact(totalAnnualIncome),
+            sub: "EIR income run rate",
+          },
+          { label: "Wt. Avg EIR", value: fmtPct(wEIR), sub: "Effective yield" },
+          {
+            label: "Portfolio Duration",
+            value: `${wDur.toFixed(2)}y`,
+            sub: "Modified duration",
+          },
+          {
+            label: "DV01",
+            value: fmtCompact(Math.abs(totalDV01)),
+            sub: "Per 1bp rate move",
+          },
+        ].map((t) => (
+          <div
+            key={t.label}
+            className="rounded-xl border border-border bg-surface p-4 shadow-sm"
+          >
+            <p className="text-xs text-dark-gray/50 font-medium">{t.label}</p>
+            <p className="mt-1 text-xl font-bold text-dark-gray">{t.value}</p>
+            <p className="mt-0.5 text-xs text-dark-gray/40">{t.sub}</p>
+          </div>
+        ))}
+      </div>
+
+      {/* income by sector chart */}
       <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold text-dark-gray">
-          Monthly Returns vs Benchmark (YTD)
+          Annual EIR Income by Sector (Top 8)
         </h2>
-        <div className="flex items-end gap-4 h-28">
-          {MONTHLY.map((m) => (
-            <div
-              key={m.month}
-              className="flex-1 flex flex-col items-center gap-1"
-            >
-              <div className="flex items-end gap-1 h-20">
-                <div
-                  title={`Portfolio: ${m.port}%`}
-                  className="w-5 rounded-t"
-                  style={{
-                    height: `${Math.abs(m.port) * 15}px`,
-                    background: m.port >= 0 ? "#CC0000" : "#b91c1c",
-                  }}
-                />
-                <div
-                  title={`Benchmark: ${m.bench}%`}
-                  className="w-5 rounded-t"
-                  style={{
-                    height: `${Math.abs(m.bench) * 15}px`,
-                    background: "#E2E2E2",
-                  }}
-                />
-              </div>
-              <span className="text-xs text-gray-400">{m.month}</span>
-            </div>
-          ))}
-        </div>
-        <div className="mt-3 flex items-center gap-4 text-xs text-gray-400">
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-4 rounded bg-primary inline-block" />{" "}
-            Portfolio
-          </span>
-          <span className="flex items-center gap-1">
-            <span className="h-2 w-4 rounded bg-gray-200 inline-block" />{" "}
-            Benchmark (NGSE ASI)
-          </span>
-        </div>
+        <ResponsiveContainer width="100%" height={200}>
+          <BarChart data={sectorIncome} margin={{ left: 0, right: 4 }}>
+            <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
+            <XAxis dataKey="sector" tick={{ fontSize: 10 }} />
+            <YAxis
+              tick={{ fontSize: 10 }}
+              tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(0)}B`}
+            />
+            <Tooltip
+              formatter={
+                ((v: number) => [fmtCompact(v), "Annual Income"]) as any
+              }
+              contentStyle={{ fontSize: 12 }}
+            />
+            <Bar dataKey="income" fill="#C8102E" radius={[4, 4, 0, 0]} />
+          </BarChart>
+        </ResponsiveContainer>
       </div>
 
       {/* metrics table */}
       <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
+        <div className="px-5 py-3.5 border-b border-border">
+          <h2 className="text-sm font-semibold text-dark-gray">
+            Portfolio Performance Metrics
+          </h2>
+        </div>
         <table className="w-full text-sm">
           <thead className="border-b border-border bg-gray-50">
             <tr>
-              <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400">
+              <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-dark-gray/40">
                 Metric
               </th>
-              <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">
-                Portfolio
+              <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-dark-gray/40">
+                Value
               </th>
-              <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">
-                Benchmark
-              </th>
-              <th className="px-5 py-3 text-right text-xs font-semibold uppercase tracking-wider text-gray-400">
-                Alpha / Diff
+              <th className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-dark-gray/40 hidden sm:table-cell">
+                Note
               </th>
             </tr>
           </thead>
@@ -165,32 +250,95 @@ export function PerformanceAnalytics() {
             {METRICS.map((m) => (
               <tr
                 key={m.label}
-                className="border-b border-border/50 last:border-0 hover:bg-pale-red/30"
+                className="border-b border-border/50 last:border-0 hover:bg-pale-red/20"
               >
-                <td className="px-5 py-3.5 font-medium text-dark-gray">
+                <td className="px-5 py-3.5 font-medium text-dark-gray text-sm">
                   {m.label}
                 </td>
-                <td className="px-5 py-3.5 text-right font-semibold text-primary">
-                  {m.value}
+                <td className="px-5 py-3.5 text-right">
+                  <span
+                    className={`text-sm font-bold ${m.positive ? "text-primary" : "text-emerald-600"}`}
+                  >
+                    {m.value}
+                  </span>
                 </td>
-                <td className="px-5 py-3.5 text-right text-gray-500">
-                  {m.benchmark}
-                </td>
-                <td
-                  className={`px-5 py-3.5 text-right font-semibold text-xs flex items-center justify-end gap-1 ${m.alpha === "—" ? "text-gray-300" : m.pos ? "text-success" : "text-danger"}`}
-                >
-                  {m.alpha !== "—" &&
-                    (m.pos ? (
-                      <TrendingUp className="h-3 w-3" />
-                    ) : (
-                      <TrendingDown className="h-3 w-3" />
-                    ))}
-                  {m.alpha}
+                <td className="px-5 py-3.5 text-xs text-dark-gray/50 hidden sm:table-cell">
+                  {m.note}
                 </td>
               </tr>
             ))}
           </tbody>
         </table>
+      </div>
+
+      {/* OCI / FVTPL breakdown */}
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-dark-gray">
+            FVOCI â€” OCI Reserve
+          </h2>
+          <p className="text-2xl font-bold text-dark-gray">
+            {fmtCompact(totalOCI)}
+          </p>
+          <p className="mt-1 text-xs text-dark-gray/50">
+            Unrealised fair value movement recognised in Other Comprehensive
+            Income. Recycled to P&L on disposal.
+          </p>
+          <div className="mt-3 text-xs flex gap-4">
+            <span className="text-dark-gray/50">
+              Instruments:{" "}
+              <span className="font-medium text-dark-gray">
+                {BOOK_COMPUTED.byClassification.find(
+                  (c) => c.classification === "FVOCI",
+                )?.count ?? 0}
+              </span>
+            </span>
+            <span className="text-dark-gray/50">
+              Book Value:{" "}
+              <span className="font-medium text-dark-gray">
+                {fmtCompact(
+                  BOOK_COMPUTED.byClassification.find(
+                    (c) => c.classification === "FVOCI",
+                  )?.bsValueNGN ?? 0,
+                )}
+              </span>
+            </span>
+          </div>
+        </div>
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-3 text-sm font-semibold text-dark-gray">
+            FVTPL â€” Unrealised P&L
+          </h2>
+          <p
+            className={`text-2xl font-bold ${totalFVTPL >= 0 ? "text-emerald-600" : "text-primary"}`}
+          >
+            {fmtCompact(totalFVTPL)}
+          </p>
+          <p className="mt-1 text-xs text-dark-gray/50">
+            Unrealised fair value movement recognised through P&amp;L. Realised
+            on disposal.
+          </p>
+          <div className="mt-3 text-xs flex gap-4">
+            <span className="text-dark-gray/50">
+              Instruments:{" "}
+              <span className="font-medium text-dark-gray">
+                {BOOK_COMPUTED.byClassification.find(
+                  (c) => c.classification === "FVTPL",
+                )?.count ?? 0}
+              </span>
+            </span>
+            <span className="text-dark-gray/50">
+              Book Value:{" "}
+              <span className="font-medium text-dark-gray">
+                {fmtCompact(
+                  BOOK_COMPUTED.byClassification.find(
+                    (c) => c.classification === "FVTPL",
+                  )?.bsValueNGN ?? 0,
+                )}
+              </span>
+            </span>
+          </div>
+        </div>
       </div>
     </div>
   );

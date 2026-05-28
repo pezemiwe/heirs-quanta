@@ -1,417 +1,801 @@
+/* ───────────────────────────────────────────────────────────
+   Valuation Engine — Calculations
+   Fixed income amortisation, EIR, cash-flow PV, OCI, risk.
+   ─────────────────────────────────────────────────────────── */
+
 import type {
-  Asset,
-  AssetValuation,
+  AmortRow,
   Assumptions,
-  ComparableResult,
-  DCFProjection,
-  EngineResult,
-  IFRS13Level,
-  ValuationMethod,
+  CashFlowRow,
+  Classification,
+  CouponFrequency,
+  Currency,
+  Instrument,
+  InstrumentType,
+  InstrumentValuation,
+  IncomeSummary,
+  MaturityBucket,
+  OCIRow,
+  PortfolioByClassification,
+  PortfolioBySector,
+  PortfolioByType,
+  PortfolioResult,
+  RiskMetrics,
+  TopExposure,
+  YieldCurvePoint,
 } from "./types";
 
-/* ───────────────────────────────────────────────────────────
-   WACC build-up — uses Modigliani re-leveraged cost of equity
-   ─────────────────────────────────────────────────────────── */
-export function computeWACC(a: Assumptions, beta = 1): number {
-  const costOfEquity =
-    a.riskFreeRate +
-    beta * a.equityRiskPremium +
-    a.countryRiskPremium +
-    a.sizePremium;
-  const afterTaxCostOfDebt = a.costOfDebt * (1 - a.taxRate);
-  const we = 1 - a.targetDebtRatio;
-  const wd = a.targetDebtRatio;
-  return we * costOfEquity + wd * afterTaxCostOfDebt;
+/* ─── date helpers ──────────────────────────────────────── */
+const MS_DAY = 86_400_000;
+
+export function parseDate(s: string): Date {
+  return new Date(s + "T00:00:00Z");
 }
 
-/* ───────────────────────────────────────────────────────────
-   DCF — explicit projection + Gordon Growth terminal value
-   Returns enterprise value and attributable equity value
-   ─────────────────────────────────────────────────────────── */
-export function runDCF(asset: Asset, a: Assumptions): DCFProjection | null {
-  if (asset.freeCashFlowYear1 == null) return null;
+export function toISO(d: Date): string {
+  return d.toISOString().slice(0, 10);
+}
 
-  const wacc = computeWACC(a, asset.beta ?? 1);
-  const years = asset.projectionYears ?? 5;
-  const g = asset.growthRate ?? 0.08;
-  const tg = asset.terminalGrowth ?? 0.03;
+export function daysBetween(a: Date, b: Date): number {
+  return Math.round((b.getTime() - a.getTime()) / MS_DAY);
+}
 
-  const yearArr: number[] = [];
-  const fcfs: number[] = [];
-  const discountFactors: number[] = [];
-  const presentValues: number[] = [];
+export function yearsBetween(a: Date, b: Date): number {
+  return daysBetween(a, b) / 365.25;
+}
 
-  let fcf = asset.freeCashFlowYear1;
-  for (let t = 1; t <= years; t++) {
-    if (t > 1) fcf = fcf * (1 + g);
-    const df = 1 / Math.pow(1 + wacc, t);
-    yearArr.push(t);
-    fcfs.push(fcf);
-    discountFactors.push(df);
-    presentValues.push(fcf * df);
+export function addMonths(d: Date, months: number): Date {
+  const r = new Date(d.getTime());
+  const day = r.getUTCDate();
+  r.setUTCMonth(r.getUTCMonth() + months);
+  // handle month overflow
+  if (r.getUTCDate() < day) r.setUTCDate(0);
+  return r;
+}
+
+/* ─── coupon frequency ──────────────────────────────────── */
+export function periodsPerYear(freq: CouponFrequency): number {
+  switch (freq) {
+    case "Annual":
+      return 1;
+    case "Semi":
+      return 2;
+    case "Quarterly":
+      return 4;
+    case "Monthly":
+      return 12;
+    default:
+      return 0;
+  }
+}
+
+export function monthsPerPeriod(freq: CouponFrequency): number {
+  switch (freq) {
+    case "Annual":
+      return 12;
+    case "Semi":
+      return 6;
+    case "Quarterly":
+      return 3;
+    case "Monthly":
+      return 1;
+    default:
+      return 0;
+  }
+}
+
+/* ─── build coupon dates from purchase → maturity ───────── */
+export function couponDates(inst: Instrument): Date[] {
+  const purchase = parseDate(inst.purchaseDate);
+  const maturity = parseDate(inst.maturityDate);
+  const months = monthsPerPeriod(inst.couponFrequency);
+  if (months === 0) return [maturity]; // zero coupon / equity / N/A
+  const dates: Date[] = [];
+  // generate forward from purchase
+  let d = addMonths(purchase, months);
+  while (d.getTime() < maturity.getTime()) {
+    dates.push(d);
+    d = addMonths(d, months);
+  }
+  dates.push(maturity);
+  return dates;
+}
+
+/* ─── EIR solver (Newton on price-from-cf) ───────────────── */
+export function priceAtYield(
+  cashFlows: { t: number; cf: number }[],
+  y: number,
+  periodsYear: number,
+): number {
+  if (periodsYear === 0) {
+    // zero coupon — t is in years
+    return cashFlows.reduce((s, c) => s + c.cf / Math.pow(1 + y, c.t), 0);
+  }
+  const r = y / periodsYear;
+  return cashFlows.reduce((s, c) => s + c.cf / Math.pow(1 + r, c.t), 0);
+}
+
+export function solveEIR(
+  cashFlows: { t: number; cf: number }[],
+  price: number,
+  periodsYear: number,
+  guess = 0.1,
+): number {
+  let y = guess;
+  for (let iter = 0; iter < 100; iter++) {
+    const f = priceAtYield(cashFlows, y, periodsYear) - price;
+    // numeric derivative
+    const h = 1e-6;
+    const fp =
+      (priceAtYield(cashFlows, y + h, periodsYear) -
+        priceAtYield(cashFlows, y - h, periodsYear)) /
+      (2 * h);
+    if (Math.abs(fp) < 1e-12) break;
+    const step = f / fp;
+    y -= step;
+    if (Math.abs(step) < 1e-10) return y;
+    if (y < -0.5) y = -0.5;
+    if (y > 5) y = 5;
+  }
+  return y;
+}
+
+/* ─── amortisation schedule (AC / FVOCI) ─────────────────── */
+export function buildAmortSchedule(
+  inst: Instrument,
+  valuationDate: Date,
+): { schedule: AmortRow[]; eir: number } {
+  const dates = couponDates(inst);
+  const ppy = periodsPerYear(inst.couponFrequency);
+  const couponCF = ppy > 0 ? (inst.faceValue * inst.couponRate) / ppy : 0;
+
+  // Build cash flow array for EIR
+  const cfArr = dates.map((_, i) => {
+    const isFinal = i === dates.length - 1;
+    return {
+      t: i + 1,
+      cf: couponCF + (isFinal ? inst.faceValue : 0),
+    };
+  });
+
+  let eir: number;
+  if (ppy === 0) {
+    // zero coupon — annualised
+    const years = yearsBetween(parseDate(inst.purchaseDate), dates[0]);
+    eir =
+      years > 0
+        ? Math.pow(inst.faceValue / inst.purchasePrice, 1 / years) - 1
+        : 0;
+  } else {
+    eir = solveEIR(cfArr, inst.purchasePrice, ppy, inst.couponRate || 0.1);
   }
 
-  /* terminal value via Gordon Growth */
-  const terminalFCF = fcfs[fcfs.length - 1] * (1 + tg);
-  const terminalValue = wacc > tg ? terminalFCF / (wacc - tg) : 0;
-  const terminalPV = terminalValue / Math.pow(1 + wacc, years);
+  const periodRate = ppy > 0 ? eir / ppy : 0;
+  const schedule: AmortRow[] = [];
+  let opening = inst.purchasePrice;
 
-  const explicitPV = presentValues.reduce((s, v) => s + v, 0);
-  const enterpriseValue = explicitPV + terminalPV;
-  const equityValueAttributable = enterpriseValue * (asset.holdingPct / 100);
+  // Determine "Current" period — the one containing valuationDate
+  for (let i = 0; i < dates.length; i++) {
+    const eirIncome = ppy > 0 ? opening * periodRate : 0;
+    const amort = eirIncome - couponCF;
+    const closing = opening + amort;
+    const cfDate = dates[i];
 
-  return {
-    assetId: asset.id,
-    wacc,
-    years: yearArr,
-    fcfs,
-    discountFactors,
-    presentValues,
-    terminalValue,
-    terminalPV,
-    explicitPV,
-    enterpriseValue,
-    equityValueAttributable,
-  };
+    let status: AmortRow["status"];
+    const prev = i === 0 ? parseDate(inst.purchaseDate) : dates[i - 1];
+    if (cfDate.getTime() < valuationDate.getTime()) status = "Past";
+    else if (
+      prev.getTime() <= valuationDate.getTime() &&
+      cfDate.getTime() >= valuationDate.getTime()
+    )
+      status = "Current";
+    else status = "Future";
+
+    schedule.push({
+      period: i + 1,
+      date: toISO(cfDate),
+      openingBalance: opening,
+      eirIncome,
+      couponCF,
+      amortisation: amort,
+      closingBalance: closing,
+      status,
+    });
+
+    // force last closing to face value to remove rounding drift
+    if (i === dates.length - 1) {
+      schedule[i].closingBalance = inst.faceValue;
+      schedule[i].amortisation = inst.faceValue - opening;
+      schedule[i].eirIncome = schedule[i].amortisation + couponCF;
+    }
+    opening = schedule[i].closingBalance;
+  }
+
+  return { schedule, eir };
 }
 
-/* ───────────────────────────────────────────────────────────
-   Comparable multiples — applies P/E, EV/EBITDA, P/B, P/S
-   Returns attributable equity value (already × holdingPct)
-   ─────────────────────────────────────────────────────────── */
-export function runComparables(asset: Asset, a: Assumptions): ComparableResult {
-  const pct = asset.holdingPct / 100;
-  const fromPE =
-    asset.netIncome != null ? asset.netIncome * a.peMultiple * pct : null;
-  const fromEvEbitda =
-    asset.ebitda != null ? asset.ebitda * a.evEbitdaMultiple * pct : null;
-  const fromPB =
-    asset.bookValue != null ? asset.bookValue * a.pbMultiple * pct : null;
-  const fromPS =
-    asset.revenue != null ? asset.revenue * a.psMultiple * pct : null;
+/* ─── AC carrying value at valuation date (linear interp) ─ */
+export function interpolatedCarryingValue(
+  schedule: AmortRow[],
+  purchaseDate: Date,
+  valuationDate: Date,
+): number {
+  if (schedule.length === 0) return 0;
+  // find bracketing period
+  let prevDate = purchaseDate;
+  let prevBal = schedule[0].openingBalance;
+  for (const row of schedule) {
+    const rowDate = parseDate(row.date);
+    if (rowDate.getTime() >= valuationDate.getTime()) {
+      const total = daysBetween(prevDate, rowDate);
+      const elapsed = daysBetween(prevDate, valuationDate);
+      const frac = total > 0 ? elapsed / total : 0;
+      return prevBal + (row.closingBalance - prevBal) * frac;
+    }
+    prevDate = rowDate;
+    prevBal = row.closingBalance;
+  }
+  return prevBal;
+}
 
-  const vals = [fromPE, fromEvEbitda, fromPB, fromPS].filter(
-    (v): v is number => v != null,
-  );
-  const average = vals.length
-    ? vals.reduce((s, v) => s + v, 0) / vals.length
+/* ─── accrued interest at valuation date ────────────────── */
+export function accruedInterest(
+  inst: Instrument,
+  schedule: AmortRow[],
+  valuationDate: Date,
+): number {
+  const ppy = periodsPerYear(inst.couponFrequency);
+  if (ppy === 0) return 0;
+  const couponCF = (inst.faceValue * inst.couponRate) / ppy;
+
+  // find current period bounds
+  let periodStart = parseDate(inst.purchaseDate);
+  for (const row of schedule) {
+    const rowDate = parseDate(row.date);
+    if (rowDate.getTime() >= valuationDate.getTime()) {
+      const total = daysBetween(periodStart, rowDate);
+      const elapsed = daysBetween(periodStart, valuationDate);
+      const frac = total > 0 ? Math.max(0, elapsed / total) : 0;
+      return couponCF * frac;
+    }
+    periodStart = rowDate;
+  }
+  return 0;
+}
+
+/* ─── yield curve interpolation ─────────────────────────── */
+export function interpolateYield(
+  curve: YieldCurvePoint[],
+  tenorYears: number,
+): number {
+  if (curve.length === 0) return 0;
+  if (tenorYears <= curve[0].tenorYears) return curve[0].yield;
+  if (tenorYears >= curve[curve.length - 1].tenorYears)
+    return curve[curve.length - 1].yield;
+  for (let i = 0; i < curve.length - 1; i++) {
+    const a = curve[i];
+    const b = curve[i + 1];
+    if (tenorYears >= a.tenorYears && tenorYears <= b.tenorYears) {
+      const frac = (tenorYears - a.tenorYears) / (b.tenorYears - a.tenorYears);
+      return a.yield + (b.yield - a.yield) * frac;
+    }
+  }
+  return curve[curve.length - 1].yield;
+}
+
+/* ─── cash flow schedule with PV at market yield ────────── */
+export function buildCashFlowSchedule(
+  inst: Instrument,
+  valuationDate: Date,
+  marketYield: number,
+): { rows: CashFlowRow[]; totalFuturePV: number } {
+  const dates = couponDates(inst);
+  const ppy = periodsPerYear(inst.couponFrequency);
+  const couponCF = ppy > 0 ? (inst.faceValue * inst.couponRate) / ppy : 0;
+
+  let totalFuturePV = 0;
+  const rows: CashFlowRow[] = dates.map((d, i) => {
+    const isFinal = i === dates.length - 1;
+    const amount =
+      ppy === 0 ? inst.faceValue : couponCF + (isFinal ? inst.faceValue : 0);
+    const daysToCF = daysBetween(valuationDate, d);
+    const t = daysToCF / 365.25;
+    const isFuture = d.getTime() >= valuationDate.getTime();
+    const isCurrent = Math.abs(d.getTime() - valuationDate.getTime()) < MS_DAY;
+    let pv: number | null = null;
+    if (isFuture) {
+      const disc = 1 / Math.pow(1 + marketYield, t);
+      pv = amount * disc;
+      totalFuturePV += pv;
+    }
+    let type: CashFlowRow["type"];
+    if (ppy === 0) type = "Principal";
+    else if (isFinal) type = "Coupon + Principal";
+    else type = "Coupon";
+    return {
+      period: i + 1,
+      date: toISO(d),
+      type,
+      amount,
+      daysToCF,
+      pvOfCF: pv,
+      status: isCurrent
+        ? "Future"
+        : d.getTime() < valuationDate.getTime()
+          ? "Past"
+          : "Future",
+    };
+  });
+
+  return { rows, totalFuturePV };
+}
+
+/* ─── OCI movement (FVOCI only) ─────────────────────────── */
+export function buildOCIMovement(
+  inst: Instrument,
+  schedule: AmortRow[],
+  marketYield: number,
+): OCIRow[] {
+  // For each period, FV is calculated as PV of remaining cash flows at marketYield
+  const ppy = periodsPerYear(inst.couponFrequency);
+  const couponCF = ppy > 0 ? (inst.faceValue * inst.couponRate) / ppy : 0;
+  const dates = couponDates(inst);
+  const N = dates.length;
+
+  const rows: OCIRow[] = schedule.map((row, idx) => {
+    // remaining periods from this date onward
+    let fv = 0;
+    for (let j = idx + 1; j < N; j++) {
+      const isFinal = j === N - 1;
+      const amt = couponCF + (isFinal ? inst.faceValue : 0);
+      const periods = j - idx;
+      const r = ppy > 0 ? marketYield / ppy : marketYield;
+      fv += amt / Math.pow(1 + r, periods);
+    }
+    // if this is the final period, FV = faceValue (already received)
+    if (idx === N - 1) fv = inst.faceValue;
+    return {
+      period: row.period,
+      date: row.date,
+      acCarryingValue: row.closingBalance,
+      fairValueEst: fv,
+      ociReserve: fv - row.closingBalance,
+    };
+  });
+  return rows;
+}
+
+/* ─── risk metrics (Macaulay/Modified duration, DV01, convexity) ─── */
+export function riskMetrics(
+  inst: Instrument,
+  rows: CashFlowRow[],
+  marketYield: number,
+  valuationDate: Date,
+  fairValue: number,
+): RiskMetrics {
+  const future = rows.filter((r) => r.status === "Future" && r.pvOfCF != null);
+  let mac = 0;
+  let convex = 0;
+  for (const r of future) {
+    const t = r.daysToCF / 365.25;
+    mac += t * (r.pvOfCF || 0);
+    convex += t * (t + 1) * (r.pvOfCF || 0);
+  }
+  const macaulay = fairValue > 0 ? mac / fairValue : 0;
+  const modified = macaulay / (1 + marketYield);
+  const convexity =
+    fairValue > 0 ? convex / (fairValue * Math.pow(1 + marketYield, 2)) : 0;
+  const dv01 = modified * fairValue * 0.0001;
+
+  const maturity = parseDate(inst.maturityDate);
+  const remaining = yearsBetween(valuationDate, maturity);
+
+  // next coupon
+  const nextCF = future.find((r) => r.type !== "Principal");
+  const nextCouponDate = nextCF ? nextCF.date : null;
+  const nextCouponAmount = nextCF
+    ? nextCF.type === "Coupon + Principal"
+      ? nextCF.amount - inst.faceValue
+      : nextCF.amount
     : 0;
+  const daysToNext = nextCF ? nextCF.daysToCF : null;
 
   return {
-    assetId: asset.id,
-    fromPE,
-    fromEvEbitda,
-    fromPB,
-    fromPS,
-    average,
+    remainingTenorYears: remaining,
+    macaulayDuration: macaulay,
+    modifiedDuration: modified,
+    dv01,
+    convexity,
+    nextCouponDate,
+    nextCouponAmount,
+    daysToNextCoupon: daysToNext,
   };
 }
 
-/* ───────────────────────────────────────────────────────────
-   Bond pricing — PV of coupons + face value
-   ─────────────────────────────────────────────────────────── */
-export function priceBond(asset: Asset): number {
+/* ─── yield curve / spread selection ────────────────────── */
+function pickYieldCurve(
+  inst: Instrument,
+  assumptions: Assumptions,
+  valuationDate: Date,
+): { curve: YieldCurvePoint[]; spread: number; label: string } {
+  const valDate = toISO(valuationDate);
+  if (inst.currency !== "NGN") {
+    return {
+      curve: assumptions.usdYieldCurve,
+      spread:
+        inst.instrumentType === "Corporate Bond" ||
+        inst.instrumentType === "Eurobond"
+          ? assumptions.corporateSpread
+          : 0,
+      label: `USD Benchmark — ${valDate}`,
+    };
+  }
+  let spread = 0;
   if (
-    asset.faceValue == null ||
-    asset.couponRate == null ||
-    asset.yearsToMaturity == null ||
-    asset.ytm == null
-  ) {
-    return asset.carryingValue;
-  }
-  const n = (asset.paymentsPerYear ?? 2) * asset.yearsToMaturity;
-  const r = asset.ytm / (asset.paymentsPerYear ?? 2);
-  const coupon =
-    (asset.faceValue * asset.couponRate) / (asset.paymentsPerYear ?? 2);
-  let pv = 0;
-  for (let t = 1; t <= n; t++) pv += coupon / Math.pow(1 + r, t);
-  pv += asset.faceValue / Math.pow(1 + r, n);
-  return pv;
-}
-
-/* ───────────────────────────────────────────────────────────
-   Real estate — income capitalization
-   ─────────────────────────────────────────────────────────── */
-export function valueRealEstate(asset: Asset, a: Assumptions): number {
-  if (asset.noi == null) return asset.carryingValue;
-  const cap = asset.capRate ?? a.defaultCapRate;
-  if (cap <= 0) return asset.carryingValue;
-  return asset.noi / cap;
-}
-
-/* ───────────────────────────────────────────────────────────
-   Listed equity — market price × shares
-   ─────────────────────────────────────────────────────────── */
-export function valueMarket(asset: Asset, a: Assumptions): number {
-  if (asset.sharesHeld == null || asset.lastPrice == null)
-    return asset.carryingValue;
-  const native = asset.sharesHeld * asset.lastPrice;
-  const fx =
-    asset.currency === "USD"
-      ? a.fxUSD
-      : asset.currency === "GBP"
-        ? a.fxGBP
-        : asset.currency === "EUR"
-          ? a.fxEUR
-          : 1;
-  // Convert kobo amount to millions (sharesHeld × price assumed kobo-clean already in NGN)
-  return (native * fx) / 1_000_000;
-}
-
-/* ───────────────────────────────────────────────────────────
-   Per-asset orchestration — choose primary method + range
-   ─────────────────────────────────────────────────────────── */
-function classifyLevel(method: ValuationMethod): IFRS13Level {
-  if (method === "Market Price") return "Level 1";
-  if (method === "Discounted Cash Flow (Bond)" || method === "Par Value")
-    return "Level 2";
-  return "Level 3";
-}
-
-export function valueAsset(asset: Asset, a: Assumptions): AssetValuation {
-  let method: ValuationMethod = "DCF";
-  let fairValue = 0;
-  let fairValueLow = 0;
-  let fairValueHigh = 0;
-  let dcf: DCFProjection | undefined;
-  let comparable: ComparableResult | undefined;
-  let notes = "";
-
-  switch (asset.type) {
-    case "subsidiary":
-    case "equity_unlisted":
-    case "joint_venture": {
-      dcf = runDCF(asset, a) ?? undefined;
-      comparable = runComparables(asset, a);
-      method = "DCF";
-      const dcfVal = dcf?.equityValueAttributable ?? asset.carryingValue;
-      const cmpVal = comparable.average || dcfVal;
-      // 70/30 weighting DCF vs comparables
-      fairValue = dcfVal * 0.7 + cmpVal * 0.3;
-      fairValueLow = Math.min(dcfVal, cmpVal) * 0.92;
-      fairValueHigh = Math.max(dcfVal, cmpVal) * 1.08;
-      notes = `Primary DCF @ WACC ${((dcf?.wacc ?? 0) * 100).toFixed(1)}%, cross-check via comparables.`;
-      break;
-    }
-    case "equity_listed": {
-      method = "Market Price";
-      const mkt = valueMarket(asset, a);
-      comparable = runComparables(asset, a);
-      fairValue = mkt;
-      fairValueLow = mkt * 0.95;
-      fairValueHigh = mkt * 1.05;
-      notes = `Marked at NSE close on ${asset.marketSnapshotDate ?? "snapshot date"}.`;
-      break;
-    }
-    case "real_estate": {
-      method = "Income Capitalization";
-      const rev = valueRealEstate(asset, a);
-      fairValue = rev;
-      fairValueLow = rev * 0.92;
-      fairValueHigh = rev * 1.1;
-      notes = `NOI / cap rate (${((asset.capRate ?? a.defaultCapRate) * 100).toFixed(2)}%).`;
-      break;
-    }
-    case "bond": {
-      method = "Discounted Cash Flow (Bond)";
-      const bp = priceBond(asset);
-      fairValue = bp;
-      fairValueLow = bp * 0.985;
-      fairValueHigh = bp * 1.015;
-      notes = `PV of coupons + face @ YTM ${((asset.ytm ?? 0) * 100).toFixed(2)}%.`;
-      break;
-    }
-    case "tbill": {
-      method = "Par Value";
-      fairValue = asset.carryingValue;
-      fairValueLow = asset.carryingValue * 0.999;
-      fairValueHigh = asset.carryingValue * 1.001;
-      notes = "Short-dated, held at amortised cost / par.";
-      break;
-    }
-    case "pe_fund": {
-      method = "Net Asset Value";
-      const nav = asset.reportedNav ?? asset.carryingValue;
-      fairValue = nav;
-      fairValueLow = nav * 0.85;
-      fairValueHigh = nav * 1.15;
-      notes = "Latest reported NAV from GP capital account statement.";
-      break;
-    }
-  }
-
-  const uplift = fairValue - asset.carryingValue;
-  const upliftPct = asset.carryingValue > 0 ? uplift / asset.carryingValue : 0;
-  const ifrs13Level = classifyLevel(method);
-
+    inst.instrumentType === "Corporate Bond" ||
+    inst.instrumentType === "Commercial Paper" ||
+    inst.instrumentType === "Promissory Note"
+  )
+    spread = assumptions.corporateSpread;
+  else if (inst.instrumentType === "State Bond")
+    spread = assumptions.stateSpread;
   return {
-    assetId: asset.id,
-    method,
-    fairValue,
-    fairValueLow,
-    fairValueHigh,
-    ifrs13Level,
-    uplift,
-    upliftPct,
-    dcf,
-    comparable,
-    notes,
+    curve: assumptions.fgnYieldCurve,
+    spread,
+    label: `FGN Sovereign — ${valDate}`,
   };
 }
 
-/* ───────────────────────────────────────────────────────────
-   Portfolio engine
-   ─────────────────────────────────────────────────────────── */
-export function runEngine(assets: Asset[], a: Assumptions): EngineResult {
-  const valuations = assets.map((asset) => valueAsset(asset, a));
+/* ─── FX rate ───────────────────────────────────────────── */
+export function fxRate(currency: Currency, a: Assumptions): number {
+  switch (currency) {
+    case "NGN":
+      return 1;
+    case "USD":
+      return a.fxUSD;
+    case "GBP":
+      return a.fxGBP;
+    case "EUR":
+      return a.fxEUR;
+  }
+}
 
-  const totalCarryingValue = assets.reduce((s, x) => s + x.carryingValue, 0);
-  const totalFairValue = valuations.reduce((s, v) => s + v.fairValue, 0);
-  const totalFairValueLow = valuations.reduce((s, v) => s + v.fairValueLow, 0);
-  const totalFairValueHigh = valuations.reduce(
-    (s, v) => s + v.fairValueHigh,
+/* ─── main per-instrument valuation ─────────────────────── */
+export function valueInstrument(
+  inst: Instrument,
+  assumptions: Assumptions,
+): InstrumentValuation {
+  const valDate = parseDate(assumptions.valuationDate);
+  const purchaseDate = parseDate(inst.purchaseDate);
+  const maturity = parseDate(inst.maturityDate);
+
+  // ─ Equity special case ─
+  if (inst.instrumentType === "Equity") {
+    const fv = inst.marketPrice ?? inst.purchasePrice;
+    const fx = fxRate(inst.currency, assumptions);
+    return {
+      instrument: inst,
+      eir: 0,
+      discountAtPurchase: 0,
+      amortSchedule: [],
+      acCarryingValue: fv,
+      accruedInterest: 0,
+      totalBookValueDirty: fv,
+      cleanFairValue: fv,
+      dirtyFairValue: fv,
+      cashFlowSchedule: [],
+      totalFuturePV: fv,
+      ociReserve: fv - inst.purchasePrice,
+      ociMovement: [],
+      unrealisedGL: fv - inst.purchasePrice,
+      marketYieldUsed: 0,
+      yieldCurveLabel: "Market Price (Equity)",
+      annualEIRIncome: 0,
+      risk: {
+        remainingTenorYears: 0,
+        macaulayDuration: 0,
+        modifiedDuration: 0,
+        dv01: 0,
+        convexity: 0,
+        nextCouponDate: null,
+        nextCouponAmount: 0,
+        daysToNextCoupon: null,
+      },
+      balanceSheetValueNGN: fv * fx,
+    };
+  }
+
+  const { schedule, eir } = buildAmortSchedule(inst, valDate);
+  const ac = interpolatedCarryingValue(schedule, purchaseDate, valDate);
+  const accrued = accruedInterest(inst, schedule, valDate);
+
+  // pick market yield
+  const { curve, spread, label } = pickYieldCurve(inst, assumptions, valDate);
+  const remainingYrs = Math.max(0, yearsBetween(valDate, maturity));
+  const interpolated =
+    inst.marketYield ?? interpolateYield(curve, remainingYrs) + spread;
+
+  const { rows, totalFuturePV } = buildCashFlowSchedule(
+    inst,
+    valDate,
+    interpolated,
+  );
+
+  const cleanFV = inst.marketPrice ?? totalFuturePV - accrued; // dirty PV → clean
+  const dirtyFV = cleanFV + accrued;
+
+  const oci =
+    inst.classification === "FVOCI"
+      ? buildOCIMovement(inst, schedule, interpolated)
+      : [];
+
+  const risk = riskMetrics(inst, rows, interpolated, valDate, totalFuturePV);
+
+  const fx = fxRate(inst.currency, assumptions);
+
+  // Balance sheet value depends on classification
+  let bsLocal: number;
+  if (inst.classification === "AC") bsLocal = ac;
+  else bsLocal = cleanFV;
+
+  return {
+    instrument: inst,
+    eir,
+    discountAtPurchase: inst.faceValue - inst.purchasePrice,
+    amortSchedule: schedule,
+    acCarryingValue: ac,
+    accruedInterest: accrued,
+    totalBookValueDirty: ac + accrued,
+    cleanFairValue: cleanFV,
+    dirtyFairValue: dirtyFV,
+    cashFlowSchedule: rows,
+    totalFuturePV,
+    ociReserve: cleanFV - ac,
+    ociMovement: oci,
+    unrealisedGL: cleanFV - inst.purchasePrice,
+    marketYieldUsed: interpolated,
+    yieldCurveLabel: label,
+    annualEIRIncome: ac * eir,
+    risk,
+    balanceSheetValueNGN: bsLocal * fx,
+  };
+}
+
+/* ─── portfolio rollup ──────────────────────────────────── */
+const MATURITY_BUCKETS: {
+  bucket: string;
+  minDays: number;
+  maxDays: number;
+}[] = [
+  { bucket: "Matured", minDays: -100000, maxDays: 0 },
+  { bucket: "0-3 Months", minDays: 0, maxDays: 90 },
+  { bucket: "3-6 Months", minDays: 90, maxDays: 180 },
+  { bucket: "6-12 Months", minDays: 180, maxDays: 365 },
+  { bucket: "1-2 Years", minDays: 365, maxDays: 730 },
+  { bucket: "2-5 Years", minDays: 730, maxDays: 1826 },
+  { bucket: "5-10 Years", minDays: 1826, maxDays: 3652 },
+  { bucket: "10+ Years", minDays: 3652, maxDays: 100000 },
+];
+
+export function runPortfolioEngine(
+  instruments: Instrument[],
+  assumptions: Assumptions,
+): PortfolioResult {
+  const valuations = instruments.map((i) => valueInstrument(i, assumptions));
+
+  const totalFaceValueNGN = valuations.reduce(
+    (s, v) =>
+      s + v.instrument.faceValue * fxRate(v.instrument.currency, assumptions),
     0,
   );
-  const totalUplift = totalFairValue - totalCarryingValue;
-  const totalUpliftPct =
-    totalCarryingValue > 0 ? totalUplift / totalCarryingValue : 0;
+  const totalBSValueNGN = valuations.reduce(
+    (s, v) => s + v.balanceSheetValueNGN,
+    0,
+  );
+  const totalECLNGN = valuations.reduce(
+    (s, v) =>
+      s +
+      (v.instrument.eclProvision ?? 0) *
+        fxRate(v.instrument.currency, assumptions),
+    0,
+  );
+  const totalOCIReserveNGN = valuations
+    .filter((v) => v.instrument.classification === "FVOCI")
+    .reduce(
+      (s, v) => s + v.ociReserve * fxRate(v.instrument.currency, assumptions),
+      0,
+    );
+  const totalFVTPLGLNGN = valuations
+    .filter((v) => v.instrument.classification === "FVTPL")
+    .reduce(
+      (s, v) => s + v.unrealisedGL * fxRate(v.instrument.currency, assumptions),
+      0,
+    );
 
-  const level1Total = valuations
-    .filter((v) => v.ifrs13Level === "Level 1")
-    .reduce((s, v) => s + v.fairValue, 0);
-  const level2Total = valuations
-    .filter((v) => v.ifrs13Level === "Level 2")
-    .reduce((s, v) => s + v.fairValue, 0);
-  const level3Total = valuations
-    .filter((v) => v.ifrs13Level === "Level 3")
-    .reduce((s, v) => s + v.fairValue, 0);
-
-  /* aggregate by type */
-  const typeMap = new Map<
-    string,
-    { carrying: number; fair: number; count: number }
-  >();
-  assets.forEach((asset, i) => {
-    const v = valuations[i];
-    const cur = typeMap.get(asset.type) ?? { carrying: 0, fair: 0, count: 0 };
-    cur.carrying += asset.carryingValue;
-    cur.fair += v.fairValue;
-    cur.count += 1;
-    typeMap.set(asset.type, cur);
-  });
-  const byType = Array.from(typeMap.entries()).map(([type, v]) => ({
-    type: type as Asset["type"],
-    ...v,
-  }));
-
-  /* aggregate by sector */
-  const sectorMap = new Map<
-    string,
-    { carrying: number; fair: number; count: number }
-  >();
-  assets.forEach((asset, i) => {
-    const v = valuations[i];
-    const cur = sectorMap.get(asset.sector) ?? {
-      carrying: 0,
-      fair: 0,
-      count: 0,
+  /* by classification */
+  const classes: Classification[] = ["AC", "FVOCI", "FVTPL"];
+  const byClassification: PortfolioByClassification[] = classes.map((c) => {
+    const subset = valuations.filter((v) => v.instrument.classification === c);
+    return {
+      classification: c,
+      count: subset.length,
+      faceValueNGN: subset.reduce(
+        (s, v) =>
+          s +
+          v.instrument.faceValue * fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+      bsValueNGN: subset.reduce((s, v) => s + v.balanceSheetValueNGN, 0),
+      eclNGN: subset.reduce(
+        (s, v) =>
+          s +
+          (v.instrument.eclProvision ?? 0) *
+            fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
     };
-    cur.carrying += asset.carryingValue;
-    cur.fair += v.fairValue;
-    cur.count += 1;
-    sectorMap.set(asset.sector, cur);
   });
-  const bySector = Array.from(sectorMap.entries()).map(([sector, v]) => ({
-    sector,
-    ...v,
+
+  /* by type */
+  const typeMap = new Map<InstrumentType, PortfolioByType>();
+  for (const v of valuations) {
+    const t = v.instrument.instrumentType;
+    const cur = typeMap.get(t) ?? {
+      type: t,
+      count: 0,
+      faceValueNGN: 0,
+      bsValueNGN: 0,
+    };
+    cur.count++;
+    cur.faceValueNGN +=
+      v.instrument.faceValue * fxRate(v.instrument.currency, assumptions);
+    cur.bsValueNGN += v.balanceSheetValueNGN;
+    typeMap.set(t, cur);
+  }
+  const byType = [...typeMap.values()].sort(
+    (a, b) => b.bsValueNGN - a.bsValueNGN,
+  );
+
+  /* by sector */
+  const sectorMap = new Map<string, PortfolioBySector>();
+  for (const v of valuations) {
+    const s = v.instrument.sector;
+    const cur = sectorMap.get(s) ?? {
+      sector: s,
+      count: 0,
+      faceValueNGN: 0,
+      bsValueNGN: 0,
+      pctOfPortfolio: 0,
+    };
+    cur.count++;
+    cur.faceValueNGN +=
+      v.instrument.faceValue * fxRate(v.instrument.currency, assumptions);
+    cur.bsValueNGN += v.balanceSheetValueNGN;
+    sectorMap.set(s, cur);
+  }
+  const bySector = [...sectorMap.values()].sort(
+    (a, b) => b.faceValueNGN - a.faceValueNGN,
+  );
+  for (const r of bySector) {
+    r.pctOfPortfolio =
+      totalFaceValueNGN > 0 ? r.faceValueNGN / totalFaceValueNGN : 0;
+  }
+
+  /* maturity profile */
+  const valDate = parseDate(assumptions.valuationDate);
+  const maturityProfile: MaturityBucket[] = MATURITY_BUCKETS.map((b) => ({
+    ...b,
+    count: 0,
+    faceValueNGN: 0,
   }));
+  for (const v of valuations) {
+    const days = daysBetween(valDate, parseDate(v.instrument.maturityDate));
+    const bucket = maturityProfile.find(
+      (b) => days > b.minDays && days <= b.maxDays,
+    );
+    if (bucket) {
+      bucket.count++;
+      bucket.faceValueNGN +=
+        v.instrument.faceValue * fxRate(v.instrument.currency, assumptions);
+    }
+  }
+
+  /* top exposures */
+  const topExposures: TopExposure[] = [...valuations]
+    .sort((a, b) => b.balanceSheetValueNGN - a.balanceSheetValueNGN)
+    .slice(0, 10)
+    .map((v, i) => ({
+      rank: i + 1,
+      id: v.instrument.id,
+      name: v.instrument.name,
+      type: v.instrument.instrumentType,
+      classification: v.instrument.classification,
+      bsValueNGN: v.balanceSheetValueNGN,
+    }));
+
+  /* income summary */
+  const acSet = valuations.filter((v) => v.instrument.classification === "AC");
+  const fvociSet = valuations.filter(
+    (v) => v.instrument.classification === "FVOCI",
+  );
+  const fvtplSet = valuations.filter(
+    (v) => v.instrument.classification === "FVTPL",
+  );
+  const income: IncomeSummary = {
+    ac: {
+      instruments: acSet.length,
+      totalCarryingValueNGN: acSet.reduce(
+        (s, v) =>
+          s + v.acCarryingValue * fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+      totalAccruedInterestNGN: acSet.reduce(
+        (s, v) =>
+          s + v.accruedInterest * fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+      totalECLNGN: acSet.reduce(
+        (s, v) =>
+          s +
+          (v.instrument.eclProvision ?? 0) *
+            fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+    },
+    fvoci: {
+      instruments: fvociSet.length,
+      totalACCarryingValueNGN: fvociSet.reduce(
+        (s, v) =>
+          s + v.acCarryingValue * fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+      totalFairValueNGN: fvociSet.reduce(
+        (s, v) =>
+          s + v.cleanFairValue * fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+      totalOCIReserveNGN: fvociSet.reduce(
+        (s, v) => s + v.ociReserve * fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+      totalECLNGN: fvociSet.reduce(
+        (s, v) =>
+          s +
+          (v.instrument.eclProvision ?? 0) *
+            fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+    },
+    fvtpl: {
+      instruments: fvtplSet.length,
+      totalFairValueNGN: fvtplSet.reduce(
+        (s, v) =>
+          s + v.cleanFairValue * fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+      totalUnrealisedGLNGN: fvtplSet.reduce(
+        (s, v) =>
+          s + v.unrealisedGL * fxRate(v.instrument.currency, assumptions),
+        0,
+      ),
+    },
+  };
 
   return {
     valuations,
-    totalCarryingValue,
-    totalFairValue,
-    totalFairValueLow,
-    totalFairValueHigh,
-    totalUplift,
-    totalUpliftPct,
-    level1Total,
-    level2Total,
-    level3Total,
+    totals: {
+      instruments: instruments.length,
+      totalFaceValueNGN,
+      totalBSValueNGN,
+      totalECLNGN,
+      totalOCIReserveNGN,
+      totalFVTPLUnrealisedGLNGN: totalFVTPLGLNGN,
+    },
+    byClassification,
     byType,
     bySector,
+    maturityProfile,
+    topExposures,
+    income,
   };
-}
-
-/* ───────────────────────────────────────────────────────────
-   Sensitivity — vary one assumption at a time, return % impact
-   ─────────────────────────────────────────────────────────── */
-export interface SensitivityRow {
-  driver: string;
-  low: number;
-  base: number;
-  high: number;
-  swing: number;
-}
-
-export function runSensitivity(
-  assets: Asset[],
-  base: Assumptions,
-): SensitivityRow[] {
-  const baseResult = runEngine(assets, base).totalFairValue;
-
-  function flex(field: keyof Assumptions, delta: number) {
-    const v = base[field];
-    if (typeof v !== "number") return { low: baseResult, high: baseResult };
-    return {
-      low: runEngine(assets, { ...base, [field]: v - delta }).totalFairValue,
-      high: runEngine(assets, { ...base, [field]: v + delta }).totalFairValue,
-    };
-  }
-
-  const rows: SensitivityRow[] = [
-    {
-      driver: "Risk-Free Rate (±1.5%)",
-      ...flex("riskFreeRate", 0.015),
-      base: baseResult,
-      swing: 0,
-    },
-    {
-      driver: "Equity Risk Premium (±1%)",
-      ...flex("equityRiskPremium", 0.01),
-      base: baseResult,
-      swing: 0,
-    },
-    {
-      driver: "Country Risk Premium (±1%)",
-      ...flex("countryRiskPremium", 0.01),
-      base: baseResult,
-      swing: 0,
-    },
-    {
-      driver: "EV/EBITDA Multiple (±1.0x)",
-      ...flex("evEbitdaMultiple", 1.0),
-      base: baseResult,
-      swing: 0,
-    },
-    {
-      driver: "P/E Multiple (±1.0x)",
-      ...flex("peMultiple", 1.0),
-      base: baseResult,
-      swing: 0,
-    },
-    {
-      driver: "Default Cap Rate (±0.5%)",
-      ...flex("defaultCapRate", 0.005),
-      base: baseResult,
-      swing: 0,
-    },
-    {
-      driver: "Cost of Debt (±1%)",
-      ...flex("costOfDebt", 0.01),
-      base: baseResult,
-      swing: 0,
-    },
-  ];
-  rows.forEach((r) => (r.swing = Math.abs(r.high - r.low)));
-  return rows.sort((a, b) => b.swing - a.swing);
 }

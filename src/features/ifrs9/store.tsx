@@ -8,10 +8,8 @@ import {
 import type { Assumptions, EngineResult, Security } from "./engine/types";
 import { runEngine } from "./engine";
 import { parseSecuritiesCSV } from "./engine/parsing";
-import {
-  DEFAULT_ASSUMPTIONS,
-  SAMPLE_SECURITIES,
-} from "./engine/reference-data";
+import { DEFAULT_ASSUMPTIONS } from "./engine/reference-data";
+import { BOOK_SECURITIES } from "../portfolio/engine/instrument-book";
 
 interface IFRS9ContextValue {
   securities: Security[];
@@ -38,10 +36,12 @@ interface IFRS9ContextValue {
 const IFRS9Context = createContext<IFRS9ContextValue | null>(null);
 
 export function IFRS9Provider({ children }: { children: ReactNode }) {
-  const [securities, setSecurities] = useState<Security[]>([]);
+  const [securities, setSecurities] = useState<Security[]>(BOOK_SECURITIES);
   const [assumptions, setAssumptions] =
     useState<Assumptions>(DEFAULT_ASSUMPTIONS);
-  const [lastUploadedFile, setLastUploadedFile] = useState<string | null>(null);
+  const [lastUploadedFile, setLastUploadedFile] = useState<string | null>(
+    `Portfolio Book (${BOOK_SECURITIES.length} instruments)`,
+  );
   const [parseErrors, setParseErrors] = useState<
     { row: number; message: string }[]
   >([]);
@@ -66,8 +66,10 @@ export function IFRS9Provider({ children }: { children: ReactNode }) {
     },
     setAssumptions,
     loadSample: () => {
-      setSecurities(SAMPLE_SECURITIES);
-      setLastUploadedFile("Sample Portfolio (24 instruments)");
+      setSecurities(BOOK_SECURITIES);
+      setLastUploadedFile(
+        `Portfolio Book (${BOOK_SECURITIES.length} instruments)`,
+      );
       setParseErrors([]);
     },
     loadFromCSV: (text, fileName) => {

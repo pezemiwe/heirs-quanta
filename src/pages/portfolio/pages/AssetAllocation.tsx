@@ -1,78 +1,75 @@
-const ALLOCATION = [
-  {
-    label: "Fixed Income",
-    pct: 38,
-    value: "₦321.8B",
-    color: "#CC0000",
-    change: "+1.2pp",
-  },
-  {
-    label: "Equities",
-    pct: 27,
-    value: "₦228.8B",
-    color: "#800000",
-    change: "-0.5pp",
-  },
-  {
-    label: "Real Estate",
-    pct: 14,
-    value: "₦118.6B",
-    color: "#5C0000",
-    change: "+0.3pp",
-  },
-  {
-    label: "Cash & Equivalents",
-    pct: 11,
-    value: "₦93.2B",
-    color: "#B30000",
-    change: "-0.2pp",
-  },
-  {
-    label: "Private Equity",
-    pct: 7,
-    value: "₦59.3B",
-    color: "#E05050",
-    change: "+0.8pp",
-  },
-  {
-    label: "Alternatives",
-    pct: 3,
-    value: "₦25.4B",
-    color: "#F4B8B8",
-    change: "-0.0pp",
-  },
-];
+﻿import {
+  BOOK_COMPUTED,
+  BOOK_INSTRUMENTS,
+  fmtCompact,
+  fmtPct,
+} from "../../../features/portfolio/engine/book-compute";
+import { AlertTriangle } from "lucide-react";
 
-const GEO = [
-  { label: "Nigeria", pct: 72, color: "#CC0000" },
-  { label: "Pan-Africa", pct: 18, color: "#800000" },
-  { label: "International", pct: 10, color: "#5C0000" },
-];
+const { totals, byType, byClassification, bySector } = BOOK_COMPUTED;
 
-const CURRENCY = [
-  { label: "NGN", pct: 74, color: "#CC0000" },
-  { label: "USD", pct: 17, color: "#800000" },
-  { label: "GBP", pct: 6, color: "#5C0000" },
-  { label: "EUR", pct: 3, color: "#E05050" },
+// Currency breakdown from instruments
+const ccy: Record<string, number> = {};
+for (const inst of BOOK_INSTRUMENTS) {
+  ccy[inst.currency] = (ccy[inst.currency] ?? 0) + inst.faceValue;
+}
+const totalFV = BOOK_INSTRUMENTS.reduce((s, i) => s + i.faceValue, 0);
+const CURRENCY = Object.entries(ccy)
+  .sort((a, b) => b[1] - a[1])
+  .slice(0, 6)
+  .map(([label, fv], idx) => ({
+    label,
+    pct: fv / totalFV,
+    color: ["#C8102E", "#1E3A5F", "#5C0000", "#E8563A", "#92400E", "#6B7280"][
+      idx
+    ],
+  }));
+
+// Find largest type for drift alert
+const largestType =
+  byType.length > 0
+    ? byType.reduce((a, b) => (a.bsValueNGN > b.bsValueNGN ? a : b))
+    : null;
+const largestTypePct = largestType
+  ? largestType.bsValueNGN / totals.totalBSValueNGN
+  : 0;
+
+const TYPE_COLORS = [
+  "#C8102E",
+  "#1E3A5F",
+  "#5C0000",
+  "#E8563A",
+  "#92400E",
+  "#6B7280",
+  "#10B981",
+  "#F59E0B",
+  "#8B5CF6",
 ];
 
 function BarChart({
   data,
 }: {
-  data: { label: string; pct: number; color: string }[];
+  data: { label: string; pct: number; color: string; value?: number }[];
 }) {
   return (
     <div className="space-y-3">
       {data.map((d) => (
         <div key={d.label}>
-          <div className="flex justify-between text-xs text-gray-500 mb-1">
+          <div className="flex justify-between text-xs text-dark-gray/60 mb-1">
             <span>{d.label}</span>
-            <span className="font-semibold text-dark-gray">{d.pct}%</span>
+            <div className="flex items-center gap-2">
+              {d.value !== undefined && (
+                <span className="text-dark-gray/40">{fmtCompact(d.value)}</span>
+              )}
+              <span className="font-semibold text-dark-gray">
+                {fmtPct(d.pct)}
+              </span>
+            </div>
           </div>
           <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
             <div
-              className="h-full rounded-full"
-              style={{ width: `${d.pct}%`, background: d.color }}
+              className="h-full rounded-full transition-all"
+              style={{ width: `${d.pct * 100}%`, background: d.color }}
             />
           </div>
         </div>
@@ -82,80 +79,132 @@ function BarChart({
 }
 
 export function AssetAllocation() {
+  const typeData = byType
+    .sort((a, b) => b.bsValueNGN - a.bsValueNGN)
+    .map((t, i) => ({
+      label: t.type,
+      pct: t.bsValueNGN / totals.totalBSValueNGN,
+      value: t.bsValueNGN,
+      color: TYPE_COLORS[i % TYPE_COLORS.length],
+    }));
+
+  const classData = byClassification.map((c, i) => ({
+    label: c.classification,
+    pct: c.bsValueNGN / totals.totalBSValueNGN,
+    value: c.bsValueNGN,
+    color: ["#C8102E", "#1E3A5F", "#E8563A"][i] ?? "#6B7280",
+  }));
+
+  const sectorTop8 = bySector
+    .sort((a, b) => b.bsValueNGN - a.bsValueNGN)
+    .slice(0, 8)
+    .map((s, i) => ({
+      label: s.sector,
+      pct: s.pctOfPortfolio,
+      value: s.bsValueNGN,
+      color: TYPE_COLORS[i % TYPE_COLORS.length],
+    }));
+
   return (
     <div className="p-6 xl:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">Asset Allocation</h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Strategic and tactical allocation breakdown across all dimensions
+        <p className="mt-1 text-sm text-dark-gray/50">
+          Strategic and tactical allocation breakdown across all dimensions Â·{" "}
+          <span className="font-medium text-dark-gray">
+            {totals.instruments} instruments
+          </span>{" "}
+          Â· Total book value{" "}
+          <span className="font-medium text-dark-gray">
+            {fmtCompact(totals.totalBSValueNGN)}
+          </span>
         </p>
       </div>
 
-      {/* asset class breakdown */}
+      {/* summary strip */}
+      <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+        {byClassification.map((c, i) => (
+          <div
+            key={c.classification}
+            className="rounded-xl border border-border bg-surface p-4 shadow-sm"
+          >
+            <p className="text-xs text-dark-gray/50 font-medium">
+              {c.classification} â€” {c.count} instruments
+            </p>
+            <p className="mt-1 text-xl font-bold text-dark-gray">
+              {fmtCompact(c.bsValueNGN)}
+            </p>
+            <p className="mt-0.5 text-xs text-dark-gray/40">
+              {fmtPct(c.bsValueNGN / totals.totalBSValueNGN)} of book
+            </p>
+          </div>
+        ))}
+        <div className="rounded-xl border border-border bg-surface p-4 shadow-sm">
+          <p className="text-xs text-dark-gray/50 font-medium">
+            Total ECL Provision
+          </p>
+          <p className="mt-1 text-xl font-bold text-dark-gray">
+            {fmtCompact(totals.totalECLNGN)}
+          </p>
+          <p className="mt-0.5 text-xs text-dark-gray/40">
+            {fmtPct(totals.totalECLNGN / totals.totalBSValueNGN)} coverage
+          </p>
+        </div>
+      </div>
+
+      {/* main allocation charts */}
       <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+        {/* by instrument type */}
         <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-dark-gray">
-            By Asset Class
+            By Instrument Type
           </h2>
-          <div className="space-y-3">
-            {ALLOCATION.map((a) => (
-              <div key={a.label} className="flex items-center gap-3">
-                <div className="flex-1">
-                  <div className="flex justify-between text-xs text-gray-500 mb-1">
-                    <span>{a.label}</span>
-                    <span className="font-semibold text-dark-gray">
-                      {a.pct}%
-                    </span>
-                  </div>
-                  <div className="h-2.5 w-full rounded-full bg-gray-100 overflow-hidden">
-                    <div
-                      className="h-full rounded-full"
-                      style={{ width: `${a.pct}%`, background: a.color }}
-                    />
-                  </div>
-                </div>
-                <div className="text-right min-w-fit">
-                  <p className="text-xs font-medium text-dark-gray">
-                    {a.value}
-                  </p>
-                  <p
-                    className={`text-xs ${a.change.startsWith("+") ? "text-success" : "text-gray-400"}`}
-                  >
-                    {a.change} QoQ
-                  </p>
-                </div>
-              </div>
-            ))}
-          </div>
+          <BarChart data={typeData} />
         </div>
 
-        {/* summary cards */}
+        {/* IFRS 9 classification + currency */}
         <div className="space-y-4">
           <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold text-dark-gray">
-              Geographic Exposure
+              By IFRS 9 Classification
             </h2>
-            <BarChart data={GEO} />
+            <BarChart data={classData} />
           </div>
           <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
             <h2 className="mb-3 text-sm font-semibold text-dark-gray">
-              Currency Exposure
+              By Currency
             </h2>
             <BarChart data={CURRENCY} />
           </div>
         </div>
       </div>
 
-      {/* drift alert */}
-      <div className="rounded-xl border border-yellow-200 bg-yellow-50 p-4">
-        <p className="text-sm font-semibold text-yellow-800">
-          Allocation Drift Alert
-        </p>
-        <p className="mt-1 text-xs text-yellow-700">
-          Private Equity is 0.8pp above its strategic target of 6.2%. Consider
-          rebalancing within the next 30 days.
-        </p>
+      {/* sector breakdown */}
+      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+        <h2 className="mb-4 text-sm font-semibold text-dark-gray">
+          Sector Concentration (Top 8)
+        </h2>
+        <BarChart data={sectorTop8} />
       </div>
+
+      {/* concentration alert */}
+      {largestType && largestTypePct > 0.3 && (
+        <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex items-start gap-3">
+          <AlertTriangle className="h-4 w-4 text-amber-600 mt-0.5 shrink-0" />
+          <div>
+            <p className="text-sm font-semibold text-amber-800">
+              Concentration Alert
+            </p>
+            <p className="mt-0.5 text-xs text-amber-700">
+              <span className="font-medium">{largestType.type}</span> is the
+              largest exposure at{" "}
+              <span className="font-bold">{fmtPct(largestTypePct)}</span> (
+              {fmtCompact(largestType.bsValueNGN)}) of total book value. Review
+              strategic target allocation and consider rebalancing.
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

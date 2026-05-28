@@ -46,12 +46,6 @@ const NAV: {
   group: string;
 }[] = [
   {
-    id: "data-manager",
-    label: "Data Manager",
-    icon: <Database className="h-4 w-4" />,
-    group: "data",
-  },
-  {
     id: "overview",
     label: "Overview",
     icon: <LayoutDashboard className="h-4 w-4" />,
@@ -88,6 +82,12 @@ const NAV: {
     group: "analytics",
   },
   {
+    id: "data-manager",
+    label: "Data Manager",
+    icon: <Database className="h-4 w-4" />,
+    group: "operations",
+  },
+  {
     id: "reports",
     label: "Reports",
     icon: <FileText className="h-4 w-4" />,
@@ -96,7 +96,6 @@ const NAV: {
 ];
 
 const GROUPS: Record<string, string> = {
-  data: "Data",
   main: "Overview",
   analytics: "Analytics",
   operations: "Operations",

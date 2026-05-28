@@ -1,94 +1,75 @@
 import { useState } from "react";
-import { Search, ChevronRight, Plus, Trash2 } from "lucide-react";
-import { Drawer } from "../../../components/shared/drawer";
+import { useNavigate } from "react-router-dom";
+import { Search, Plus, X, ChevronRight } from "lucide-react";
 import { useValuation } from "../store";
-import {
-  fmtNGN,
-  fmtPct,
-  ASSET_TYPE_LABEL,
-  ASSET_TYPE_COLOR,
-  IFRS13_BADGE,
-} from "../utils";
-import type { Asset, AssetType, Currency } from "../engine/types";
+import { SectionCard } from "../../../components/shared/section-card";
+import { EmptyPortfolio } from "../components/empty-portfolio";
+import { fmtNumber, CLASSIFICATION_BADGE, STAGE_BADGE } from "../utils";
+import type {
+  Classification,
+  CouponFrequency,
+  Currency,
+  IFRS13Level,
+  ImpairmentStage,
+  Instrument,
+  InstrumentType,
+} from "../engine/types";
 
-const TYPE_FILTERS: ("All" | AssetType)[] = [
+const ALL_TYPES: ("All" | InstrumentType)[] = [
   "All",
-  "subsidiary",
-  "equity_listed",
-  "equity_unlisted",
-  "real_estate",
-  "bond",
-  "tbill",
-  "pe_fund",
-  "joint_venture",
+  "FGN Bond",
+  "Corporate Bond",
+  "State Bond",
+  "Eurobond",
+  "T-Bill",
+  "Commercial Paper",
+  "Promissory Note",
+  "Bank Placement",
+  "Fixed Deposit",
+  "Mutual Fund",
+  "Equity",
 ];
+
+const ALL_CLASSES: ("All" | Classification)[] = ["All", "AC", "FVOCI", "FVTPL"];
 
 export function ValuationInventory() {
   const v = useValuation();
+  const navigate = useNavigate();
   const [search, setSearch] = useState("");
-  const [active, setActive] = useState<"All" | AssetType>("All");
+  const [typeFilter, setTypeFilter] = useState<"All" | InstrumentType>("All");
+  const [classFilter, setClassFilter] = useState<"All" | Classification>("All");
   const [adding, setAdding] = useState(false);
-  const blank: Asset = {
-    id: "",
-    name: "",
-    type: "equity_listed",
-    sector: "",
-    currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 0,
-  };
-  const [draft, setDraft] = useState<Asset>(blank);
 
-  if (!v.hasData) {
-    return (
-      <div className="p-6 xl:p-8">
-        <div className="rounded-xl border border-dashed border-border bg-surface p-10 text-center">
-          <p className="text-sm font-medium text-dark-gray">
-            No assets to display
-          </p>
-          <p className="mt-1 text-xs text-gray-400">
-            Load data on the Data Manager page first, or add an asset manually.
-          </p>
-          <button
-            onClick={() => {
-              setDraft(blank);
-              setAdding(true);
-            }}
-            className="mt-4 inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
-          >
-            <Plus className="h-4 w-4" /> Add Asset
-          </button>
-        </div>
-        {addAssetDrawer()}
-      </div>
-    );
-  }
+  if (!v.hasData) return <EmptyPortfolio />;
 
-  const filtered = v.assets.filter((a) => {
-    const matchType = active === "All" || a.type === active;
+  const filtered = v.instruments.filter((i) => {
+    const matchType = typeFilter === "All" || i.instrumentType === typeFilter;
+    const matchClass =
+      classFilter === "All" || i.classification === classFilter;
+    const q = search.trim().toLowerCase();
     const matchSearch =
-      a.name.toLowerCase().includes(search.toLowerCase()) ||
-      a.sector.toLowerCase().includes(search.toLowerCase());
-    return matchType && matchSearch;
+      !q ||
+      i.id.toLowerCase().includes(q) ||
+      i.name.toLowerCase().includes(q) ||
+      i.issuer.toLowerCase().includes(q) ||
+      i.sector.toLowerCase().includes(q);
+    return matchType && matchClass && matchSearch;
   });
 
   return (
     <div className="p-6 xl:p-8 space-y-6">
-      <div className="flex items-start justify-between">
+      <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-dark-gray">Asset Inventory</h1>
           <p className="mt-1 text-sm text-gray-500">
-            {filtered.length} of {v.assets.length} assets in scope
+            {filtered.length} of {v.instruments.length} instruments in scope
           </p>
         </div>
         <button
-          onClick={() => {
-            setDraft(blank);
-            setAdding(true);
-          }}
+          onClick={() => setAdding(true)}
           className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-mid-red"
         >
-          <Plus className="h-4 w-4" /> Add Asset
+          <Plus className="h-4 w-4" /> Add Instrument
         </button>
       </div>
 
@@ -99,340 +80,415 @@ export function ValuationInventory() {
           <input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
-            placeholder="Search asset or sector…"
-            className="rounded-lg border border-border bg-surface py-2 pl-9 pr-4 text-sm outline-none focus:border-primary"
+            placeholder="Search ID, name, issuer or sector…"
+            className="w-72 rounded-lg border border-border bg-surface py-2 pl-9 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
           />
         </div>
-        <div className="flex flex-wrap gap-1">
-          {TYPE_FILTERS.map((t) => (
-            <button
-              key={t}
-              onClick={() => setActive(t)}
-              className={`rounded-full px-3 py-1 text-xs font-medium transition-colors ${
-                active === t
-                  ? "bg-primary text-white"
-                  : "bg-gray-100 text-gray-500 hover:bg-pale-red hover:text-primary"
-              }`}
-            >
-              {t === "All" ? "All" : ASSET_TYPE_LABEL[t]}
-            </button>
+        <select
+          value={typeFilter}
+          onChange={(e) => setTypeFilter(e.target.value as typeof typeFilter)}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          {ALL_TYPES.map((t) => (
+            <option key={t} value={t}>
+              {t === "All" ? "All Types" : t}
+            </option>
           ))}
-        </div>
+        </select>
+        <select
+          value={classFilter}
+          onChange={(e) => setClassFilter(e.target.value as typeof classFilter)}
+          className="rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+        >
+          {ALL_CLASSES.map((c) => (
+            <option key={c} value={c}>
+              {c === "All" ? "All Classifications" : c}
+            </option>
+          ))}
+        </select>
       </div>
 
-      {/* table */}
-      <div className="rounded-xl border border-border bg-surface shadow-sm overflow-x-auto">
-        <table className="w-full text-sm">
-          <thead className="border-b border-border bg-gray-50">
-            <tr>
-              {[
-                "Asset",
-                "Type",
-                "Sector",
-                "% Held",
-                "Carrying",
-                "Fair Value",
-                "Uplift",
-                "Level",
-              ].map((h) => (
-                <th
-                  key={h}
-                  className="px-5 py-3 text-left text-xs font-semibold uppercase tracking-wider text-gray-400"
-                >
-                  {h}
-                </th>
-              ))}
-              <th className="px-3" />
-            </tr>
-          </thead>
-          <tbody>
-            {filtered.map((a) => {
-              const val = v.result.valuations.find((x) => x.assetId === a.id);
-              if (!val) return null;
-              const isPos = val.uplift >= 0;
-              return (
-                <tr
-                  key={a.id}
-                  className={`border-b border-border/50 last:border-0 hover:bg-pale-red/30 cursor-pointer ${
-                    v.selectedAssetId === a.id ? "bg-pale-red/40" : ""
-                  }`}
-                  onClick={() => v.setSelectedAssetId(a.id)}
-                >
-                  <td className="px-5 py-3.5">
-                    <p className="font-medium text-dark-gray">{a.name}</p>
-                    <p className="text-xs text-gray-400">
-                      {a.id} · {a.currency}
-                    </p>
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span
-                      className="inline-flex items-center gap-1.5 rounded-full px-2 py-0.5 text-xs font-medium"
-                      style={{
-                        background: `${ASSET_TYPE_COLOR[a.type]}15`,
-                        color: ASSET_TYPE_COLOR[a.type],
-                      }}
-                    >
-                      <span
-                        className="h-1.5 w-1.5 rounded-full"
-                        style={{ background: ASSET_TYPE_COLOR[a.type] }}
-                      />
-                      {ASSET_TYPE_LABEL[a.type]}
-                    </span>
-                  </td>
-                  <td className="px-5 py-3.5 text-xs text-gray-500">
-                    {a.sector}
-                  </td>
-                  <td className="px-5 py-3.5 text-xs font-medium">
-                    {a.holdingPct}%
-                  </td>
-                  <td className="px-5 py-3.5 text-xs">
-                    {fmtNGN(a.carryingValue)}
-                  </td>
-                  <td className="px-5 py-3.5 text-xs font-semibold text-primary">
-                    {fmtNGN(val.fairValue)}
-                  </td>
-                  <td
-                    className={`px-5 py-3.5 text-xs font-semibold ${isPos ? "text-success" : "text-danger"}`}
+      <SectionCard noPadding>
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm">
+            <thead className="border-b border-border bg-gray-50 text-xs uppercase text-gray-500">
+              <tr>
+                <th className="px-4 py-2.5 text-left">ID</th>
+                <th className="px-4 py-2.5 text-left">Name</th>
+                <th className="px-4 py-2.5 text-left">Type</th>
+                <th className="px-4 py-2.5 text-left">Class</th>
+                <th className="px-4 py-2.5 text-left">Stage</th>
+                <th className="px-4 py-2.5 text-right">BS Value (NGN)</th>
+                <th className="px-4 py-2.5" />
+              </tr>
+            </thead>
+            <tbody>
+              {filtered.map((i) => {
+                const valuation = v.result.valuations.find(
+                  (vv) => vv.instrument.id === i.id,
+                );
+                const bs = valuation?.balanceSheetValueNGN ?? 0;
+                return (
+                  <tr
+                    key={i.id}
+                    onClick={() => navigate(`/valuation/asset/${i.id}`)}
+                    className="cursor-pointer border-b border-border/60 hover:bg-pale-red/20 transition-colors"
                   >
-                    {isPos ? "+" : ""}
-                    {fmtPct(val.upliftPct)}
-                  </td>
-                  <td className="px-5 py-3.5">
-                    <span
-                      className={`rounded-full px-2 py-0.5 text-xs font-medium ${IFRS13_BADGE[val.ifrs13Level]}`}
-                    >
-                      {val.ifrs13Level}
-                    </span>
-                  </td>
-                  <td className="px-3 text-gray-300">
-                    <ChevronRight className="h-3.5 w-3.5" />
+                    <td className="px-4 py-3 font-mono text-xs text-dark-gray">
+                      {i.id}
+                    </td>
+                    <td className="px-4 py-3">
+                      <p className="font-medium text-dark-gray">{i.name}</p>
+                      <p className="text-xs text-gray-400">
+                        {i.issuer} · {i.sector}
+                      </p>
+                    </td>
+                    <td className="px-4 py-3 text-xs text-gray-500">
+                      {i.instrumentType}
+                    </td>
+                    <td className="px-4 py-3">
+                      <span
+                        className={`rounded-full px-2 py-0.5 text-[10px] font-semibold ${CLASSIFICATION_BADGE[i.classification]}`}
+                      >
+                        {i.classification}
+                      </span>
+                    </td>
+                    <td className="px-4 py-3">
+                      {i.impairmentStage && (
+                        <span
+                          className={`rounded-full px-2 py-0.5 text-[10px] font-medium ${STAGE_BADGE[i.impairmentStage]}`}
+                        >
+                          {i.impairmentStage}
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-4 py-3 text-right font-mono">
+                      {fmtNumber(bs, 0)}
+                    </td>
+                    <td className="px-4 py-3 text-right text-gray-300">
+                      <ChevronRight className="ml-auto h-4 w-4" />
+                    </td>
+                  </tr>
+                );
+              })}
+              {filtered.length === 0 && (
+                <tr>
+                  <td
+                    colSpan={7}
+                    className="px-4 py-10 text-center text-sm text-gray-400"
+                  >
+                    No instruments match the current filters.
                   </td>
                 </tr>
-              );
-            })}
-          </tbody>
-        </table>
-      </div>
+              )}
+            </tbody>
+          </table>
+        </div>
+      </SectionCard>
 
-      {/* selected asset detail */}
-      {v.selectedAssetId &&
-        (() => {
-          const a = v.assets.find((x) => x.id === v.selectedAssetId);
-          const val = v.result.valuations.find(
-            (x) => x.assetId === v.selectedAssetId,
-          );
-          if (!a || !val) return null;
-          return (
-            <div className="rounded-xl border border-primary/30 bg-pale-red/30 p-5 shadow-sm">
-              <div className="mb-3 flex items-start justify-between gap-4">
-                <div>
-                  <p className="text-xs uppercase tracking-wider text-primary">
-                    Selected Asset
-                  </p>
-                  <h3 className="text-lg font-bold text-dark-gray">{a.name}</h3>
-                  <p className="text-xs text-gray-500">
-                    {a.sector} · {ASSET_TYPE_LABEL[a.type]} · {a.holdingPct}%
-                    holding
-                  </p>
-                </div>
-                <div className="flex items-center gap-2">
-                  <button
-                    onClick={() => {
-                      if (confirm(`Remove ${a.name} from inventory?`)) {
-                        v.removeAsset(a.id);
-                      }
-                    }}
-                    className="flex items-center gap-1 rounded-lg border border-danger/30 bg-surface px-2.5 py-1.5 text-xs font-medium text-danger shadow-sm hover:bg-red-50"
-                  >
-                    <Trash2 className="h-3.5 w-3.5" /> Remove
-                  </button>
-                  <span
-                    className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${IFRS13_BADGE[val.ifrs13Level]}`}
-                  >
-                    {val.ifrs13Level}
-                  </span>
-                </div>
-              </div>
-              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4">
-                <div>
-                  <p className="text-xs text-gray-400">Method</p>
-                  <p className="text-sm font-semibold">{val.method}</p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">Fair Value</p>
-                  <p className="text-sm font-bold text-primary">
-                    {fmtNGN(val.fairValue)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">Range</p>
-                  <p className="text-xs">
-                    {fmtNGN(val.fairValueLow)} → {fmtNGN(val.fairValueHigh)}
-                  </p>
-                </div>
-                <div>
-                  <p className="text-xs text-gray-400">Uplift vs Carrying</p>
-                  <p
-                    className={`text-sm font-semibold ${val.uplift >= 0 ? "text-success" : "text-danger"}`}
-                  >
-                    {val.uplift >= 0 ? "+" : ""}
-                    {fmtNGN(val.uplift)} ({fmtPct(val.upliftPct)})
-                  </p>
-                </div>
-              </div>
-              <p className="mt-3 border-t border-primary/20 pt-3 text-xs text-gray-600">
-                {val.notes}
-              </p>
-            </div>
-          );
-        })()}
-      {addAssetDrawer()}
+      {adding && <AddInstrumentDrawer onClose={() => setAdding(false)} />}
     </div>
   );
+}
 
-  function addAssetDrawer() {
-    const TYPE_OPTS: AssetType[] = [
-      "subsidiary",
-      "equity_listed",
-      "equity_unlisted",
-      "real_estate",
-      "bond",
-      "tbill",
-      "pe_fund",
-      "joint_venture",
-    ];
-    const CCY_OPTS: Currency[] = ["NGN", "USD", "GBP", "EUR"];
-    const valid =
-      draft.name.trim().length > 0 &&
-      draft.sector.trim().length > 0 &&
-      draft.carryingValue >= 0;
-    return (
-      <Drawer
-        isOpen={adding}
-        onClose={() => setAdding(false)}
-        size="md"
-        title="Add Asset to Inventory"
-        description="Register a new investment asset for valuation. Method-specific inputs can be added afterwards from the workbench."
-        footer={
-          <>
-            <button
-              onClick={() => setAdding(false)}
-              className="rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-gray-600 hover:border-gray-300"
-            >
-              Cancel
-            </button>
-            <button
-              disabled={!valid}
-              onClick={() => {
-                const id = `A-${Date.now().toString(36).toUpperCase()}`;
-                v.addAsset({ ...draft, id });
-                v.setSelectedAssetId(id);
-                setAdding(false);
-              }}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red disabled:opacity-50"
-            >
-              Add Asset
-            </button>
-          </>
-        }
+/* ─── add instrument drawer ─────────────────────────────── */
+function AddInstrumentDrawer({ onClose }: { onClose: () => void }) {
+  const v = useValuation();
+  const [draft, setDraft] = useState<Instrument>({
+    id: `INV-${String(Math.floor(Math.random() * 900) + 100)}`,
+    name: "",
+    instrumentType: "Corporate Bond",
+    issuer: "",
+    sector: "",
+    classification: "AC",
+    ifrs13Level: "L2",
+    currency: "NGN",
+    faceValue: 100_000_000,
+    purchasePrice: 97_000_000,
+    purchaseDate: new Date().toISOString().slice(0, 10),
+    maturityDate: new Date(Date.now() + 5 * 365 * 86_400_000)
+      .toISOString()
+      .slice(0, 10),
+    couponRate: 0.15,
+    couponFrequency: "Semi",
+    status: "Active",
+    impairmentStage: "Stage 1",
+    eclProvision: 0,
+  });
+  const [err, setErr] = useState<string | null>(null);
+
+  const save = () => {
+    if (!draft.id || !draft.name) {
+      setErr("ID and Name are required.");
+      return;
+    }
+    if (v.instruments.some((i) => i.id === draft.id)) {
+      setErr("Instrument ID already exists.");
+      return;
+    }
+    v.addInstrument(draft);
+    onClose();
+  };
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-black/40"
+      onClick={onClose}
+    >
+      <div
+        className="h-full w-full max-w-lg overflow-y-auto bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
       >
-        <div className="space-y-4">
-          <Field label="Asset Name" required>
+        <div className="mb-5 flex items-start justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-dark-gray">
+              Add Instrument
+            </h3>
+            <p className="mt-0.5 text-xs text-gray-500">
+              Manually add a new fixed-income holding to the portfolio.
+            </p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-gray-400 hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {err && (
+          <div className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-primary">
+            {err}
+          </div>
+        )}
+
+        <div className="space-y-3">
+          <Field label="Instrument ID">
+            <input
+              value={draft.id}
+              onChange={(e) => setDraft({ ...draft, id: e.target.value })}
+              className={inputCls}
+            />
+          </Field>
+          <Field label="Name">
             <input
               value={draft.name}
               onChange={(e) => setDraft({ ...draft, name: e.target.value })}
-              className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-              placeholder="e.g. Heirs Energies Ltd"
+              className={inputCls}
             />
           </Field>
           <div className="grid grid-cols-2 gap-3">
-            <Field label="Asset Type" required>
+            <Field label="Instrument Type">
               <select
-                value={draft.type}
+                value={draft.instrumentType}
                 onChange={(e) =>
-                  setDraft({ ...draft, type: e.target.value as AssetType })
+                  setDraft({
+                    ...draft,
+                    instrumentType: e.target.value as InstrumentType,
+                  })
                 }
-                className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+                className={inputCls}
               >
-                {TYPE_OPTS.map((t) => (
-                  <option key={t} value={t}>
-                    {ASSET_TYPE_LABEL[t]}
-                  </option>
+                {ALL_TYPES.filter((t) => t !== "All").map((t) => (
+                  <option key={t}>{t}</option>
                 ))}
               </select>
             </Field>
-            <Field label="Currency" required>
+            <Field label="Classification">
+              <select
+                value={draft.classification}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    classification: e.target.value as Classification,
+                  })
+                }
+                className={inputCls}
+              >
+                <option>AC</option>
+                <option>FVOCI</option>
+                <option>FVTPL</option>
+              </select>
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Issuer">
+              <input
+                value={draft.issuer}
+                onChange={(e) => setDraft({ ...draft, issuer: e.target.value })}
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Sector">
+              <input
+                value={draft.sector}
+                onChange={(e) => setDraft({ ...draft, sector: e.target.value })}
+                className={inputCls}
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-3 gap-3">
+            <Field label="Currency">
               <select
                 value={draft.currency}
                 onChange={(e) =>
                   setDraft({ ...draft, currency: e.target.value as Currency })
                 }
-                className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+                className={inputCls}
               >
-                {CCY_OPTS.map((c) => (
-                  <option key={c}>{c}</option>
-                ))}
+                <option>NGN</option>
+                <option>USD</option>
+                <option>GBP</option>
+                <option>EUR</option>
               </select>
             </Field>
-            <Field label="Sector" required>
-              <input
-                value={draft.sector}
-                onChange={(e) => setDraft({ ...draft, sector: e.target.value })}
-                className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-                placeholder="e.g. Energy"
-              />
-            </Field>
-            <Field label="% Held" required>
-              <input
-                type="number"
-                step="0.1"
-                value={draft.holdingPct}
-                onChange={(e) =>
-                  setDraft({ ...draft, holdingPct: Number(e.target.value) })
-                }
-                className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
-              />
-            </Field>
-            <Field label="Carrying Value (NGN M)" required>
-              <input
-                type="number"
-                step="1"
-                value={draft.carryingValue}
+            <Field label="IFRS 13 Level">
+              <select
+                value={draft.ifrs13Level}
                 onChange={(e) =>
                   setDraft({
                     ...draft,
-                    carryingValue: Number(e.target.value),
+                    ifrs13Level: e.target.value as IFRS13Level,
                   })
                 }
-                className="w-full rounded-md border border-border px-3 py-2 text-sm outline-none focus:border-primary"
+                className={inputCls}
+              >
+                <option>L1</option>
+                <option>L2</option>
+                <option>L3</option>
+              </select>
+            </Field>
+            <Field label="Frequency">
+              <select
+                value={draft.couponFrequency}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    couponFrequency: e.target.value as CouponFrequency,
+                  })
+                }
+                className={inputCls}
+              >
+                <option>Annual</option>
+                <option>Semi</option>
+                <option>Quarterly</option>
+                <option>Monthly</option>
+                <option>Zero</option>
+                <option>N/A</option>
+              </select>
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Face Value">
+              <input
+                type="number"
+                value={draft.faceValue}
+                onChange={(e) =>
+                  setDraft({ ...draft, faceValue: Number(e.target.value) })
+                }
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Purchase Price">
+              <input
+                type="number"
+                value={draft.purchasePrice}
+                onChange={(e) =>
+                  setDraft({ ...draft, purchasePrice: Number(e.target.value) })
+                }
+                className={inputCls}
               />
             </Field>
           </div>
-          <p className="text-xs text-gray-400">
-            Tip: method-specific inputs (DCF cash flows, multiples, bond cash
-            flows, NOI) can be edited later from the inventory detail panel.
-          </p>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Purchase Date">
+              <input
+                type="date"
+                value={draft.purchaseDate}
+                onChange={(e) =>
+                  setDraft({ ...draft, purchaseDate: e.target.value })
+                }
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Maturity Date">
+              <input
+                type="date"
+                value={draft.maturityDate}
+                onChange={(e) =>
+                  setDraft({ ...draft, maturityDate: e.target.value })
+                }
+                className={inputCls}
+              />
+            </Field>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <Field label="Coupon Rate (decimal)">
+              <input
+                type="number"
+                step="0.0001"
+                value={draft.couponRate}
+                onChange={(e) =>
+                  setDraft({ ...draft, couponRate: Number(e.target.value) })
+                }
+                className={inputCls}
+              />
+            </Field>
+            <Field label="Impairment Stage">
+              <select
+                value={draft.impairmentStage}
+                onChange={(e) =>
+                  setDraft({
+                    ...draft,
+                    impairmentStage: e.target.value as ImpairmentStage,
+                  })
+                }
+                className={inputCls}
+              >
+                <option>Stage 1</option>
+                <option>Stage 2</option>
+                <option>Stage 3</option>
+                <option>N/A</option>
+              </select>
+            </Field>
+          </div>
         </div>
-      </Drawer>
-    );
-  }
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={save}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
+          >
+            Add Instrument
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
+
+const inputCls =
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
 
 function Field({
   label,
-  required,
   children,
 }: {
   label: string;
-  required?: boolean;
   children: React.ReactNode;
 }) {
   return (
-    <div>
-      <label className="text-xs font-medium text-gray-500">
-        {label} {required && <span className="text-danger">*</span>}
-      </label>
-      <div className="mt-1">{children}</div>
-    </div>
+    <label className="block">
+      <span className="mb-1 block text-xs font-medium text-gray-500">
+        {label}
+      </span>
+      {children}
+    </label>
   );
 }

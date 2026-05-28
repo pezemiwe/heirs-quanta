@@ -20,7 +20,8 @@ export type BadgeVariant =
   | "warning"
   | "danger"
   | "neutral"
-  | "brand";
+  | "brand"
+  | "info";
 
 export type BadgeSize = "sm" | "md" | "lg";
 
@@ -50,6 +51,7 @@ const variantClasses: Record<BadgeVariant, string> = {
   danger: "bg-red-50 text-red-800 border-red-200",
   neutral: "bg-slate-100 text-slate-600 border-slate-200",
   brand: "bg-pale-red text-deep-red border-primary/20",
+  info: "bg-sky-50 text-sky-800 border-sky-200",
 };
 
 const dotClasses: Record<BadgeVariant, string> = {
@@ -69,6 +71,7 @@ const dotClasses: Record<BadgeVariant, string> = {
   danger: "bg-red-600",
   neutral: "bg-slate-400",
   brand: "bg-primary",
+  info: "bg-sky-500",
 };
 
 const sizeClasses: Record<BadgeSize, string> = {

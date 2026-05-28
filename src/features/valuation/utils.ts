@@ -1,54 +1,96 @@
-import type { AssetType, IFRS13Level } from "./engine/types";
+import type {
+  Classification,
+  Currency,
+  InstrumentType,
+  ImpairmentStage,
+} from "./engine/types";
 
-/* ─── currency formatters ───────────────────────────────── */
-export function fmtNGN(millions: number, decimals = 1): string {
-  if (millions == null || isNaN(millions)) return "—";
-  const abs = Math.abs(millions);
-  const sign = millions < 0 ? "-" : "";
-  if (abs >= 1_000_000)
-    return `${sign}₦${(abs / 1_000_000).toFixed(decimals)}T`;
-  if (abs >= 1_000) return `${sign}₦${(abs / 1_000).toFixed(decimals)}B`;
-  return `${sign}₦${abs.toFixed(decimals)}M`;
+/* ─── currency formatting ───────────────────────────────── */
+const CCY_SYMBOL: Record<Currency, string> = {
+  NGN: "₦",
+  USD: "$",
+  GBP: "£",
+  EUR: "€",
+};
+
+export function fmtMoney(
+  amount: number,
+  currency: Currency = "NGN",
+  decimals = 2,
+): string {
+  if (amount == null || isNaN(amount)) return "—";
+  const sym = CCY_SYMBOL[currency];
+  const sign = amount < 0 ? "-" : "";
+  const abs = Math.abs(amount);
+  return `${sign}${sym}${abs.toLocaleString("en-US", {
+    minimumFractionDigits: decimals,
+    maximumFractionDigits: decimals,
+  })}`;
 }
 
-export function fmtPct(v: number, decimals = 1): string {
+export function fmtMoneyCompact(
+  amount: number,
+  currency: Currency = "NGN",
+): string {
+  if (amount == null || isNaN(amount)) return "—";
+  const sym = CCY_SYMBOL[currency];
+  const abs = Math.abs(amount);
+  const sign = amount < 0 ? "-" : "";
+  if (abs >= 1e12) return `${sign}${sym}${(abs / 1e12).toFixed(2)}T`;
+  if (abs >= 1e9) return `${sign}${sym}${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${sign}${sym}${(abs / 1e6).toFixed(2)}M`;
+  if (abs >= 1e3) return `${sign}${sym}${(abs / 1e3).toFixed(2)}K`;
+  return `${sign}${sym}${abs.toFixed(0)}`;
+}
+
+export function fmtPct(v: number, decimals = 4): string {
   if (v == null || isNaN(v)) return "—";
   return `${(v * 100).toFixed(decimals)}%`;
 }
 
 export function fmtNumber(v: number, decimals = 0): string {
   if (v == null || isNaN(v)) return "—";
-  return v.toLocaleString("en-NG", {
+  return v.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
   });
 }
 
-/* ─── enum label maps ───────────────────────────────────── */
-export const ASSET_TYPE_LABEL: Record<AssetType, string> = {
-  subsidiary: "Subsidiary",
-  equity_listed: "Listed Equity",
-  equity_unlisted: "Unlisted Equity",
-  real_estate: "Real Estate",
-  bond: "Bond",
-  tbill: "Treasury Bill",
-  pe_fund: "PE Fund",
-  joint_venture: "Joint Venture",
+export function fmtDate(iso: string): string {
+  if (!iso) return "—";
+  return iso;
+}
+
+/* ─── label maps ────────────────────────────────────────── */
+export const CLASSIFICATION_LABEL: Record<Classification, string> = {
+  AC: "Amortised Cost",
+  FVOCI: "Fair Value through OCI",
+  FVTPL: "Fair Value through P&L",
 };
 
-export const ASSET_TYPE_COLOR: Record<AssetType, string> = {
-  subsidiary: "#CC0000",
-  equity_listed: "#B30000",
-  equity_unlisted: "#800000",
-  real_estate: "#5C0000",
-  bond: "#0f766e",
-  tbill: "#1A1A1A",
-  pe_fund: "#7c2d12",
-  joint_venture: "#9333ea",
+export const CLASSIFICATION_BADGE: Record<Classification, string> = {
+  AC: "bg-teal-50 text-success",
+  FVOCI: "bg-blue-50 text-blue-700",
+  FVTPL: "bg-pale-red text-primary",
 };
 
-export const IFRS13_BADGE: Record<IFRS13Level, string> = {
-  "Level 1": "bg-teal-50 text-success",
-  "Level 2": "bg-blue-50 text-blue-700",
-  "Level 3": "bg-pale-red text-primary",
+export const STAGE_BADGE: Record<ImpairmentStage, string> = {
+  "Stage 1": "bg-teal-50 text-success",
+  "Stage 2": "bg-amber-50 text-amber-700",
+  "Stage 3": "bg-pale-red text-primary",
+  "N/A": "bg-gray-100 text-gray-500",
+};
+
+export const INSTRUMENT_TYPE_COLOR: Record<InstrumentType, string> = {
+  "FGN Bond": "#0f766e",
+  "Corporate Bond": "#B30000",
+  "State Bond": "#9333ea",
+  Eurobond: "#1d4ed8",
+  "T-Bill": "#1A1A1A",
+  "Commercial Paper": "#CC0000",
+  "Promissory Note": "#7c2d12",
+  "Bank Placement": "#0891b2",
+  "Fixed Deposit": "#65a30d",
+  "Mutual Fund": "#d97706",
+  Equity: "#dc2626",
 };
