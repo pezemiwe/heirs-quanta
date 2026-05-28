@@ -179,11 +179,11 @@ export function IFRS9DataManager() {
                 Step 3
               </p>
               <h3 className="mt-0.5 text-base font-semibold text-dark-gray">
-                Or run with sample data
+                Import from Portfolio Management
               </h3>
               <p className="mt-1 text-sm text-dark-gray/60">
-                Skip the upload and load the 24-instrument demo portfolio.
-                Engine re-computes ECL automatically once data is in.
+                Skip the upload and import the live 204-instrument book directly
+                from Portfolio Management. Engine re-computes ECL automatically.
               </p>
             </div>
             <Button
@@ -194,11 +194,11 @@ export function IFRS9DataManager() {
                 loadSample();
                 setToast({
                   tone: "success",
-                  msg: "Sample portfolio loaded — 24 instruments. Navigate to any page to see results.",
+                  msg: "Portfolio Management book imported — 204 instruments. Navigate to any page to see results.",
                 });
               }}
             >
-              Load sample portfolio
+              Import from Portfolio
             </Button>
           </div>
         </SectionCard>

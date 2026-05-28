@@ -1,326 +1,517 @@
-import type { Asset, Assumptions } from "./types";
+import type {
+  Assumptions,
+  Classification,
+  CouponFrequency,
+  Currency,
+  ImpairmentStage,
+  Instrument,
+  InstrumentType,
+  YieldCurvePoint,
+} from "./types";
 
-/* ───────────────────────────────────────────────────────────
-   Heirs Holdings — sample valuation portfolio
-   All monetary figures in NGN millions unless otherwise noted.
-   These are demonstration figures, not actual financials.
-   ─────────────────────────────────────────────────────────── */
+/* ─── default valuation date ────────────────────────────── */
+export const DEFAULT_VALUATION_DATE = "2026-05-28";
+
+/* ─── yield curves ──────────────────────────────────────── */
+export const DEFAULT_FGN_CURVE: YieldCurvePoint[] = [
+  { tenorYears: 0.25, yield: 0.198 },
+  { tenorYears: 0.5, yield: 0.2005 },
+  { tenorYears: 1, yield: 0.204 },
+  { tenorYears: 2, yield: 0.196 },
+  { tenorYears: 3, yield: 0.193 },
+  { tenorYears: 5, yield: 0.1885 },
+  { tenorYears: 7, yield: 0.185 },
+  { tenorYears: 10, yield: 0.182 },
+  { tenorYears: 15, yield: 0.179 },
+  { tenorYears: 20, yield: 0.176 },
+  { tenorYears: 30, yield: 0.174 },
+];
+
+export const DEFAULT_USD_CURVE: YieldCurvePoint[] = [
+  { tenorYears: 0.25, yield: 0.052 },
+  { tenorYears: 0.5, yield: 0.054 },
+  { tenorYears: 1, yield: 0.057 },
+  { tenorYears: 2, yield: 0.063 },
+  { tenorYears: 3, yield: 0.066 },
+  { tenorYears: 5, yield: 0.069 },
+  { tenorYears: 7, yield: 0.071 },
+  { tenorYears: 10, yield: 0.072 },
+];
 
 export const DEFAULT_ASSUMPTIONS: Assumptions = {
-  riskFreeRate: 0.142, // 14.2% — Nigerian 10Y FGN
-  equityRiskPremium: 0.075, // 7.5%
-  countryRiskPremium: 0.045, // 4.5% Nigeria CRP
-  sizePremium: 0.01,
-  costOfDebt: 0.165, // 16.5% pre-tax
-  taxRate: 0.3, // CIT
-  targetDebtRatio: 0.3,
-
-  peMultiple: 8.5,
-  evEbitdaMultiple: 6.2,
-  pbMultiple: 1.4,
-  psMultiple: 1.8,
-
-  defaultCapRate: 0.085, // 8.5%
-
-  fxUSD: 1650,
-  fxGBP: 2100,
-  fxEUR: 1780,
-
-  valuationDate: "2026-05-31",
-  reportingCurrency: "NGN",
+  valuationDate: DEFAULT_VALUATION_DATE,
+  fgnYieldCurve: DEFAULT_FGN_CURVE,
+  usdYieldCurve: DEFAULT_USD_CURVE,
+  corporateSpread: 0.025,
+  stateSpread: 0.015,
+  fxUSD: 1580,
+  fxGBP: 1980,
+  fxEUR: 1720,
+  taxRate: 0.3,
 };
 
-export const SAMPLE_ASSETS: Asset[] = [
-  /* ── subsidiaries ────────────────────────────────────── */
-  {
-    id: "VAL-001",
-    name: "Heirs Insurance Group",
-    type: "subsidiary",
-    sector: "Insurance",
-    currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 78400,
-    freeCashFlowYear1: 14200,
-    growthRate: 0.12,
-    terminalGrowth: 0.04,
-    projectionYears: 5,
-    beta: 0.95,
-    revenue: 86500,
-    ebitda: 21300,
-    netIncome: 13200,
-    bookValue: 64800,
-  },
-  {
-    id: "VAL-002",
-    name: "Heirs Life Assurance",
-    type: "subsidiary",
-    sector: "Life Insurance",
-    currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 52600,
-    freeCashFlowYear1: 9800,
-    growthRate: 0.14,
-    terminalGrowth: 0.04,
-    projectionYears: 5,
-    beta: 0.85,
-    revenue: 58200,
-    ebitda: 15400,
-    netIncome: 9100,
-    bookValue: 41800,
-  },
-  {
-    id: "VAL-003",
-    name: "Heirs Oil & Gas (Tenoil)",
-    type: "subsidiary",
-    sector: "Oil & Gas — Upstream",
-    currency: "NGN",
-    holdingPct: 51,
-    carryingValue: 124000,
-    freeCashFlowYear1: 32800,
-    growthRate: 0.08,
-    terminalGrowth: 0.025,
-    projectionYears: 5,
-    beta: 1.35,
-    revenue: 218000,
-    ebitda: 58200,
-    netIncome: 28400,
-    bookValue: 187000,
-  },
-  {
-    id: "VAL-004",
-    name: "Heirs Technologies",
-    type: "subsidiary",
-    sector: "Technology Services",
-    currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 14200,
-    freeCashFlowYear1: 2800,
-    growthRate: 0.22,
-    terminalGrowth: 0.05,
-    projectionYears: 5,
-    beta: 1.1,
-    revenue: 18400,
-    ebitda: 4800,
-    netIncome: 2900,
-    bookValue: 11200,
-  },
+/* ─── seeded pseudo-random for reproducibility ──────────── */
+function mulberry32(seed: number) {
+  let s = seed >>> 0;
+  return () => {
+    s |= 0;
+    s = (s + 0x6d2b79f5) | 0;
+    let t = Math.imul(s ^ (s >>> 15), 1 | s);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
-  /* ── listed equity holdings ──────────────────────────── */
-  {
-    id: "VAL-005",
-    name: "Transcorp Plc",
-    type: "equity_listed",
-    sector: "Conglomerate",
-    currency: "NGN",
-    holdingPct: 27.3,
-    carryingValue: 38200,
-    sharesHeld: 1820000000,
-    lastPrice: 24.5,
-    marketSnapshotDate: "2026-05-30",
-    revenue: 184000,
-    ebitda: 48200,
-    netIncome: 21400,
-    bookValue: 142000,
-    beta: 1.05,
-  },
-  {
-    id: "VAL-006",
-    name: "Transcorp Hotels Plc",
-    type: "equity_listed",
-    sector: "Hospitality",
-    currency: "NGN",
-    holdingPct: 14.8,
-    carryingValue: 28400,
-    sharesHeld: 480000000,
-    lastPrice: 96.0,
-    marketSnapshotDate: "2026-05-30",
-    revenue: 42600,
-    ebitda: 14800,
-    netIncome: 7400,
-    bookValue: 38200,
-    beta: 0.92,
-  },
-  {
-    id: "VAL-007",
-    name: "United Capital Plc",
-    type: "equity_listed",
-    sector: "Financial Services",
-    currency: "NGN",
-    holdingPct: 11.5,
-    carryingValue: 18600,
-    sharesHeld: 690000000,
-    lastPrice: 32.4,
-    marketSnapshotDate: "2026-05-30",
-    revenue: 28400,
-    ebitda: 14200,
-    netIncome: 8600,
-    bookValue: 24800,
-    beta: 0.78,
-  },
-  {
-    id: "VAL-008",
-    name: "Africa Prudential Plc",
-    type: "equity_listed",
-    sector: "Registrar Services",
-    currency: "NGN",
-    holdingPct: 8.4,
-    carryingValue: 4200,
-    sharesHeld: 168000000,
-    lastPrice: 28.6,
-    marketSnapshotDate: "2026-05-30",
-    revenue: 6400,
-    ebitda: 2800,
-    netIncome: 1700,
-    bookValue: 4800,
-    beta: 0.65,
-  },
+const rand = mulberry32(42);
+const pick = <T>(arr: T[]): T => arr[Math.floor(rand() * arr.length)];
+const between = (a: number, b: number) => a + rand() * (b - a);
 
-  /* ── unlisted / strategic ────────────────────────────── */
-  {
-    id: "VAL-009",
-    name: "Heritage Bank Holdings",
-    type: "equity_unlisted",
-    sector: "Banking",
-    currency: "NGN",
-    holdingPct: 18.2,
-    carryingValue: 24600,
-    freeCashFlowYear1: 5800,
-    growthRate: 0.1,
-    terminalGrowth: 0.035,
-    projectionYears: 5,
-    beta: 0.92,
-    revenue: 84000,
-    ebitda: 24200,
-    netIncome: 14600,
-    bookValue: 168000,
-    reportedNav: 28400,
-  },
-  {
-    id: "VAL-010",
-    name: "Strategic FinTech JV",
-    type: "joint_venture",
-    sector: "Financial Technology",
-    currency: "NGN",
-    holdingPct: 49,
-    carryingValue: 8400,
-    freeCashFlowYear1: 1800,
-    growthRate: 0.28,
-    terminalGrowth: 0.05,
-    projectionYears: 5,
-    beta: 1.25,
-    revenue: 9800,
-    ebitda: 2400,
-    netIncome: 1200,
-    bookValue: 6800,
-  },
+/* ─── helpers ───────────────────────────────────────────── */
+function isoDate(year: number, month: number, day: number): string {
+  const m = String(month).padStart(2, "0");
+  const d = String(day).padStart(2, "0");
+  return `${year}-${m}-${d}`;
+}
 
-  /* ── real estate ─────────────────────────────────────── */
-  {
-    id: "VAL-011",
-    name: "Heirs Place HQ — Lagos",
-    type: "real_estate",
-    sector: "Commercial Real Estate",
-    currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 42600,
-    noi: 3850,
-    capRate: 0.082,
-  },
-  {
-    id: "VAL-012",
-    name: "Heirs Tower — Abuja",
-    type: "real_estate",
-    sector: "Commercial Real Estate",
-    currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 18400,
-    noi: 1680,
-    capRate: 0.088,
-  },
+function shiftYears(iso: string, years: number): string {
+  const [y, m, d] = iso.split("-").map(Number);
+  return isoDate(y + years, m, d);
+}
 
-  /* ── bonds ───────────────────────────────────────────── */
+/* ─── 4 instruments straight from the spec ──────────────── */
+const SPEC_INSTRUMENTS: Instrument[] = [
   {
-    id: "VAL-013",
-    name: "FGN Bond 14.55% 2031",
-    type: "bond",
-    sector: "Sovereign Bond",
+    id: "INV-046",
+    name: "FGN Bond 13.98% 2028",
+    instrumentType: "FGN Bond",
+    issuer: "FGN",
+    sector: "Sovereign",
+    classification: "AC",
+    ifrs13Level: "L1",
     currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 78000,
-    faceValue: 80000,
+    faceValue: 1_000_000_000,
+    purchasePrice: 980_000_000,
+    purchaseDate: "2021-02-23",
+    maturityDate: "2028-02-23",
+    couponRate: 0.1398,
+    couponFrequency: "Semi",
+    status: "Active",
+    impairmentStage: "Stage 2",
+    eclProvision: 2_500_000,
+  },
+  {
+    id: "INV-047",
+    name: "FGN Bond 14.55% 2029",
+    instrumentType: "FGN Bond",
+    issuer: "FGN",
+    sector: "Sovereign",
+    classification: "FVOCI",
+    ifrs13Level: "L1",
+    currency: "NGN",
+    faceValue: 500_000_000,
+    purchasePrice: 485_000_000,
+    purchaseDate: "2022-04-15",
+    maturityDate: "2029-04-15",
     couponRate: 0.1455,
-    yearsToMaturity: 5,
-    ytm: 0.152,
-    paymentsPerYear: 2,
+    couponFrequency: "Semi",
+    status: "Active",
+    impairmentStage: "Stage 2",
+    eclProvision: 1_250_000,
   },
   {
-    id: "VAL-014",
-    name: "FGN Bond 16.25% 2033",
-    type: "bond",
-    sector: "Sovereign Bond",
+    id: "INV-039",
+    name: "NNPC CP 270D",
+    instrumentType: "Commercial Paper",
+    issuer: "NNPC Ltd",
+    sector: "Energy",
+    classification: "FVTPL",
+    ifrs13Level: "L2",
     currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 24600,
-    faceValue: 25000,
-    couponRate: 0.1625,
-    yearsToMaturity: 7,
-    ytm: 0.158,
-    paymentsPerYear: 2,
+    faceValue: 400_000_000,
+    purchasePrice: 345_200_000,
+    purchaseDate: "2025-11-01",
+    maturityDate: "2026-07-28",
+    couponRate: 0,
+    couponFrequency: "Zero",
+    status: "Active",
+    impairmentStage: "N/A",
+    eclProvision: 0,
   },
   {
-    id: "VAL-015",
-    name: "Dangote Cement Corporate Bond",
-    type: "bond",
-    sector: "Corporate Bond",
-    currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 12400,
-    faceValue: 12500,
-    couponRate: 0.138,
-    yearsToMaturity: 4,
-    ytm: 0.142,
-    paymentsPerYear: 2,
-  },
-
-  /* ── cash equivalents ────────────────────────────────── */
-  {
-    id: "VAL-016",
-    name: "Treasury Bills — 182 day",
-    type: "tbill",
-    sector: "Cash & Equivalents",
-    currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 18200,
-  },
-  {
-    id: "VAL-017",
-    name: "Treasury Bills — 364 day",
-    type: "tbill",
-    sector: "Cash & Equivalents",
-    currency: "NGN",
-    holdingPct: 100,
-    carryingValue: 12400,
-  },
-
-  /* ── PE fund stakes ──────────────────────────────────── */
-  {
-    id: "VAL-018",
-    name: "Africa Growth Fund III LP",
-    type: "pe_fund",
-    sector: "Private Equity",
+    id: "INV-091",
+    name: "FGN Eurobond 6.5% 2027",
+    instrumentType: "Eurobond",
+    issuer: "FGN",
+    sector: "Sovereign",
+    classification: "FVOCI",
+    ifrs13Level: "L1",
     currency: "USD",
-    holdingPct: 12,
-    carryingValue: 14800,
-    reportedNav: 16200,
-  },
-  {
-    id: "VAL-019",
-    name: "Lagos Infrastructure Fund LP",
-    type: "pe_fund",
-    sector: "Infrastructure",
-    currency: "NGN",
-    holdingPct: 8,
-    carryingValue: 6800,
-    reportedNav: 7400,
+    faceValue: 10_000_000,
+    purchasePrice: 9_850_000,
+    purchaseDate: "2017-11-28",
+    maturityDate: "2027-11-28",
+    couponRate: 0.065,
+    couponFrequency: "Semi",
+    status: "Active",
+    impairmentStage: "Stage 2",
+    eclProvision: 200_000,
   },
 ];
+
+/* ─── catalogues for generator ──────────────────────────── */
+const ISSUERS: Partial<
+  Record<InstrumentType, { issuer: string; sector: string }[]>
+> = {
+  "FGN Bond": [{ issuer: "FGN", sector: "Sovereign" }],
+  "State Bond": [
+    { issuer: "Lagos State", sector: "Government" },
+    { issuer: "Abuja FCT", sector: "Government" },
+    { issuer: "Kano State", sector: "Government" },
+    { issuer: "Delta State", sector: "Government" },
+    { issuer: "Akwa Ibom State", sector: "Government" },
+    { issuer: "Bayelsa State", sector: "Government" },
+    { issuer: "Ekiti State", sector: "Government" },
+    { issuer: "Kwara State", sector: "Government" },
+    { issuer: "Edo State", sector: "Government" },
+  ],
+  "Corporate Bond": [
+    { issuer: "Dangote Cement", sector: "Industrials" },
+    { issuer: "Airtel Africa", sector: "Telecoms" },
+    { issuer: "GTBank", sector: "Banking" },
+    { issuer: "Zenith Bank", sector: "Banking" },
+    { issuer: "NNPC", sector: "Energy" },
+    { issuer: "Seplat", sector: "Energy" },
+    { issuer: "Lafarge", sector: "Industrials" },
+    { issuer: "UBA", sector: "Banking" },
+    { issuer: "Stanbic IBTC", sector: "Banking" },
+    { issuer: "Julius Berger", sector: "Construction" },
+    { issuer: "Dangote Sugar", sector: "FMCG" },
+    { issuer: "WAPCO", sector: "Industrials" },
+    { issuer: "Total Energies", sector: "Energy" },
+    { issuer: "Coronation Merchant", sector: "Banking" },
+    { issuer: "FCMB", sector: "Banking" },
+    { issuer: "Polaris Bank", sector: "Banking" },
+    { issuer: "Nova Merchant", sector: "Banking" },
+    { issuer: "Wema Bank", sector: "Banking" },
+    { issuer: "Okomu Oil", sector: "Agric" },
+    { issuer: "CAP Plc", sector: "Industrials" },
+  ],
+  Eurobond: [
+    { issuer: "FGN", sector: "Sovereign" },
+    { issuer: "GTB", sector: "Banking" },
+    { issuer: "Zenith", sector: "Banking" },
+    { issuer: "Access", sector: "Banking" },
+    { issuer: "UBA", sector: "Banking" },
+    { issuer: "Dangote", sector: "Industrials" },
+    { issuer: "NNPC", sector: "Energy" },
+    { issuer: "Ecobank", sector: "Banking" },
+    { issuer: "MTN Nigeria", sector: "Telecoms" },
+  ],
+  "T-Bill": [{ issuer: "CBN / FGN", sector: "Money Market" }],
+  "Commercial Paper": [
+    { issuer: "Dangote Cement", sector: "Money Market" },
+    { issuer: "MTN Nigeria", sector: "Money Market" },
+    { issuer: "Flour Mills", sector: "Money Market" },
+    { issuer: "Nestle Nigeria", sector: "Money Market" },
+    { issuer: "Nigerian Breweries", sector: "Money Market" },
+  ],
+  "Promissory Note": [
+    { issuer: "FGN Promissory Note", sector: "Money Market" },
+  ],
+  "Bank Placement": [
+    { issuer: "Access Bank", sector: "Money Market" },
+    { issuer: "Zenith Bank", sector: "Money Market" },
+    { issuer: "GTBank", sector: "Money Market" },
+  ],
+  "Fixed Deposit": [
+    { issuer: "First Bank", sector: "Money Market" },
+    { issuer: "FCMB", sector: "Money Market" },
+    { issuer: "Stanbic IBTC", sector: "Money Market" },
+  ],
+  "Mutual Fund": [
+    { issuer: "ARM Investment", sector: "Collective Investment" },
+    { issuer: "Stanbic Money Market", sector: "Collective Investment" },
+    { issuer: "FBN Heritage Fund", sector: "Collective Investment" },
+  ],
+  Equity: [
+    { issuer: "GTBank", sector: "Banking" },
+    { issuer: "Zenith Bank", sector: "Banking" },
+    { issuer: "Nestle Nigeria", sector: "FMCG" },
+    { issuer: "GTCO", sector: "Banking" },
+    { issuer: "UACN", sector: "Conglomerate" },
+    { issuer: "Dangote Cement", sector: "Industrials" },
+  ],
+};
+
+const TYPE_DEFAULTS: Record<
+  InstrumentType,
+  {
+    classification: Classification[];
+    coupon: { min: number; max: number };
+    freq: CouponFrequency;
+    tenorYears: { min: number; max: number };
+    faceMin: number;
+    faceMax: number;
+    discountPct: { min: number; max: number };
+    level: "L1" | "L2" | "L3";
+  }
+> = {
+  "FGN Bond": {
+    classification: ["AC", "FVOCI"],
+    coupon: { min: 0.12, max: 0.225 },
+    freq: "Semi",
+    tenorYears: { min: 2, max: 25 },
+    faceMin: 100_000_000,
+    faceMax: 1_000_000_000,
+    discountPct: { min: -0.05, max: 0.05 },
+    level: "L1",
+  },
+  "State Bond": {
+    classification: ["FVOCI"],
+    coupon: { min: 0.135, max: 0.18 },
+    freq: "Semi",
+    tenorYears: { min: 4, max: 10 },
+    faceMin: 50_000_000,
+    faceMax: 500_000_000,
+    discountPct: { min: -0.04, max: 0.04 },
+    level: "L2",
+  },
+  "Corporate Bond": {
+    classification: ["AC", "FVOCI"],
+    coupon: { min: 0.14, max: 0.185 },
+    freq: "Semi",
+    tenorYears: { min: 3, max: 8 },
+    faceMin: 30_000_000,
+    faceMax: 500_000_000,
+    discountPct: { min: -0.05, max: 0.05 },
+    level: "L2",
+  },
+  Eurobond: {
+    classification: ["FVOCI", "FVTPL"],
+    coupon: { min: 0.0625, max: 0.095 },
+    freq: "Semi",
+    tenorYears: { min: 3, max: 12 },
+    faceMin: 5_000_000,
+    faceMax: 20_000_000,
+    discountPct: { min: -0.02, max: 0.02 },
+    level: "L1",
+  },
+  "T-Bill": {
+    classification: ["AC", "FVTPL"],
+    coupon: { min: 0, max: 0 },
+    freq: "Zero",
+    tenorYears: { min: 0.25, max: 1 },
+    faceMin: 100_000_000,
+    faceMax: 500_000_000,
+    discountPct: { min: 0.05, max: 0.2 },
+    level: "L1",
+  },
+  "Commercial Paper": {
+    classification: ["FVTPL", "AC"],
+    coupon: { min: 0, max: 0 },
+    freq: "Zero",
+    tenorYears: { min: 0.25, max: 1 },
+    faceMin: 100_000_000,
+    faceMax: 400_000_000,
+    discountPct: { min: 0.06, max: 0.18 },
+    level: "L2",
+  },
+  "Promissory Note": {
+    classification: ["AC"],
+    coupon: { min: 0, max: 0 },
+    freq: "Zero",
+    tenorYears: { min: 1, max: 3 },
+    faceMin: 100_000_000,
+    faceMax: 300_000_000,
+    discountPct: { min: 0.05, max: 0.15 },
+    level: "L2",
+  },
+  "Bank Placement": {
+    classification: ["AC"],
+    coupon: { min: 0.14, max: 0.22 },
+    freq: "Quarterly",
+    tenorYears: { min: 0.25, max: 1 },
+    faceMin: 80_000_000,
+    faceMax: 250_000_000,
+    discountPct: { min: 0, max: 0 },
+    level: "L2",
+  },
+  "Fixed Deposit": {
+    classification: ["AC"],
+    coupon: { min: 0.13, max: 0.2 },
+    freq: "Quarterly",
+    tenorYears: { min: 0.25, max: 1 },
+    faceMin: 50_000_000,
+    faceMax: 250_000_000,
+    discountPct: { min: 0, max: 0 },
+    level: "L2",
+  },
+  "Mutual Fund": {
+    classification: ["FVTPL"],
+    coupon: { min: 0, max: 0 },
+    freq: "N/A",
+    tenorYears: { min: 1, max: 5 },
+    faceMin: 50_000_000,
+    faceMax: 200_000_000,
+    discountPct: { min: -0.2, max: -0.05 },
+    level: "L2",
+  },
+  Equity: {
+    classification: ["FVOCI", "FVTPL"],
+    coupon: { min: 0, max: 0 },
+    freq: "N/A",
+    tenorYears: { min: 10, max: 20 },
+    faceMin: 5_000_000,
+    faceMax: 70_000_000,
+    discountPct: { min: -0.2, max: -0.05 },
+    level: "L1",
+  },
+};
+
+const VALUATION_REFERENCE = new Date("2026-05-28T00:00:00Z");
+
+function randomPurchaseAndMaturity(tenor: { min: number; max: number }): {
+  purchase: string;
+  maturity: string;
+} {
+  const totalTenor = between(tenor.min, tenor.max);
+  // for some, the purchase date is in the past; for others may be recent
+  const yearsHeld = between(0.1, Math.min(totalTenor - 0.1, 6));
+  const purchaseDate = new Date(
+    VALUATION_REFERENCE.getTime() - yearsHeld * 365.25 * 86_400_000,
+  );
+  const maturityDate = new Date(
+    purchaseDate.getTime() + totalTenor * 365.25 * 86_400_000,
+  );
+  return {
+    purchase: purchaseDate.toISOString().slice(0, 10),
+    maturity: maturityDate.toISOString().slice(0, 10),
+  };
+}
+
+function generateInstrument(id: string, type: InstrumentType): Instrument {
+  const def = TYPE_DEFAULTS[type];
+  const cat = ISSUERS[type] || [{ issuer: "Unknown", sector: "Other" }];
+  const issuerInfo = pick(cat);
+  const classification = pick(def.classification);
+  const { purchase, maturity } = randomPurchaseAndMaturity(def.tenorYears);
+  const faceValue =
+    Math.round(between(def.faceMin, def.faceMax) / 1_000_000) * 1_000_000;
+  const discountPct = between(def.discountPct.min, def.discountPct.max);
+  const purchasePrice = Math.round(faceValue * (1 - discountPct));
+  const coupon =
+    def.coupon.max === 0
+      ? 0
+      : Math.round(between(def.coupon.min, def.coupon.max) * 10000) / 10000;
+
+  const currency: Currency = type === "Eurobond" ? "USD" : "NGN";
+
+  const stages: ImpairmentStage[] = [
+    "Stage 1",
+    "Stage 1",
+    "Stage 1",
+    "Stage 2",
+  ];
+  const stage: ImpairmentStage =
+    classification === "FVTPL" || type === "Equity" ? "N/A" : pick(stages);
+
+  const eclProvision =
+    stage === "Stage 1"
+      ? Math.round(faceValue * 0.001)
+      : stage === "Stage 2"
+        ? Math.round(faceValue * 0.005)
+        : 0;
+
+  return {
+    id,
+    name: makeName(type, issuerInfo.issuer, coupon, maturity),
+    instrumentType: type,
+    issuer: issuerInfo.issuer,
+    sector: issuerInfo.sector,
+    classification,
+    ifrs13Level: def.level,
+    currency,
+    faceValue:
+      currency === "USD" ? Math.round(faceValue / 1000) * 1000 : faceValue,
+    purchasePrice:
+      currency === "USD"
+        ? Math.round(purchasePrice / 1000) * 1000
+        : purchasePrice,
+    purchaseDate: purchase,
+    maturityDate: maturity,
+    couponRate: coupon,
+    couponFrequency: def.freq,
+    status: "Active",
+    impairmentStage: stage,
+    eclProvision,
+  };
+}
+
+function makeName(
+  type: InstrumentType,
+  issuer: string,
+  coupon: number,
+  maturity: string,
+): string {
+  const yr = maturity.slice(0, 4);
+  const pct = (coupon * 100).toFixed(2).replace(/\.00$/, "");
+  switch (type) {
+    case "FGN Bond":
+      return `FGN Bond ${pct}% ${yr}`;
+    case "State Bond":
+      return `${issuer} Bond ${pct}% ${yr}`;
+    case "Corporate Bond":
+      return `${issuer} Bond ${pct}% ${yr}`;
+    case "Eurobond":
+      return `${issuer} Eurobond ${pct}% ${yr}`;
+    case "T-Bill":
+      return `T-Bill ${yr}`;
+    case "Commercial Paper":
+      return `${issuer} CP ${yr}`;
+    case "Promissory Note":
+      return `${issuer} ${yr}`;
+    case "Bank Placement":
+      return `${issuer} Placement ${pct}%`;
+    case "Fixed Deposit":
+      return `${issuer} FD ${pct}%`;
+    case "Mutual Fund":
+      return `${issuer} Fund`;
+    case "Equity":
+      return `${issuer} Equity`;
+  }
+}
+
+/* ─── distribution of 200 instruments ───────────────────── */
+const TYPE_PLAN: { type: InstrumentType; count: number }[] = [
+  { type: "FGN Bond", count: 20 },
+  { type: "Corporate Bond", count: 31 },
+  { type: "Fixed Deposit", count: 25 },
+  { type: "T-Bill", count: 15 },
+  { type: "Commercial Paper", count: 15 },
+  { type: "State Bond", count: 15 },
+  { type: "Bank Placement", count: 15 },
+  { type: "Mutual Fund", count: 15 },
+  { type: "Promissory Note", count: 10 },
+  { type: "Equity", count: 24 },
+  { type: "Eurobond", count: 15 },
+];
+
+export const SAMPLE_INSTRUMENTS: Instrument[] = (() => {
+  const list: Instrument[] = [...SPEC_INSTRUMENTS];
+  const usedIds = new Set(list.map((i) => i.id));
+  let n = 1;
+  for (const { type, count } of TYPE_PLAN) {
+    let added = 0;
+    while (added < count) {
+      let id = `INV-${String(n).padStart(3, "0")}`;
+      n++;
+      if (usedIds.has(id)) continue;
+      list.push(generateInstrument(id, type));
+      usedIds.add(id);
+      added++;
+    }
+  }
+  // sort by id
+  list.sort((a, b) => a.id.localeCompare(b.id));
+  return list;
+})();

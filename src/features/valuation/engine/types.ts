@@ -1,155 +1,245 @@
 /* ───────────────────────────────────────────────────────────
-   Heirs Quanta Valuation Engine — Types
+   Heirs Quanta Valuation Engine — Fixed Income Types
    ─────────────────────────────────────────────────────────── */
 
-export type AssetType =
-  | "subsidiary" // wholly/majority-owned operating company
-  | "equity_listed" // listed equity holding
-  | "equity_unlisted" // private equity holding / minority
-  | "real_estate" // PPE / investment property
-  | "bond" // fixed-income security
-  | "tbill" // short-term treasury
-  | "pe_fund" // limited partner stake
-  | "joint_venture"; // JV / associate
-
-export type IFRS13Level = "Level 1" | "Level 2" | "Level 3";
-
-export type ValuationMethod =
-  | "DCF"
-  | "Market Price"
-  | "Comparable Multiples"
-  | "Net Asset Value"
-  | "Income Capitalization"
-  | "Discounted Cash Flow (Bond)"
-  | "Par Value";
-
+export type Classification = "AC" | "FVOCI" | "FVTPL";
+export type IFRS13Level = "L1" | "L2" | "L3";
 export type Currency = "NGN" | "USD" | "GBP" | "EUR";
+export type CouponFrequency =
+  | "Annual"
+  | "Semi"
+  | "Quarterly"
+  | "Monthly"
+  | "Zero"
+  | "N/A";
+export type ImpairmentStage = "Stage 1" | "Stage 2" | "Stage 3" | "N/A";
+export type InstrumentStatus = "Active" | "Matured" | "Sold";
 
-/* ─── source asset ──────────────────────────────────────── */
-export interface Asset {
+export type InstrumentType =
+  | "FGN Bond"
+  | "Corporate Bond"
+  | "State Bond"
+  | "Eurobond"
+  | "T-Bill"
+  | "Commercial Paper"
+  | "Promissory Note"
+  | "Bank Placement"
+  | "Fixed Deposit"
+  | "Mutual Fund"
+  | "Equity";
+
+/* ─── core instrument record ────────────────────────────── */
+export interface Instrument {
   id: string;
   name: string;
-  type: AssetType;
+  instrumentType: InstrumentType;
+  issuer: string;
   sector: string;
+
+  classification: Classification;
+  ifrs13Level: IFRS13Level;
   currency: Currency;
-  holdingPct: number; // % of entity owned (e.g. 100, 51, 12.7)
-  carryingValue: number; // current book value (NGN millions)
 
-  /* DCF inputs (subsidiaries, unlisted, JVs) */
-  freeCashFlowYear1?: number; // NGN millions
-  growthRate?: number; // explicit period growth, fraction (0.08 = 8%)
-  terminalGrowth?: number; // fraction
-  projectionYears?: number; // default 5
-  beta?: number; // for WACC build-up
+  faceValue: number; // local currency, absolute units
+  purchasePrice: number; // local currency, absolute units
+  purchaseDate: string; // ISO yyyy-mm-dd
+  maturityDate: string; // ISO yyyy-mm-dd
 
-  /* Market-price inputs (listed) */
-  sharesHeld?: number;
-  lastPrice?: number; // currency-native
-  marketSnapshotDate?: string;
+  couponRate: number; // fraction e.g. 0.1398; 0 if zero/equity
+  couponFrequency: CouponFrequency;
 
-  /* Comparable inputs */
-  revenue?: number; // last twelve months, NGN millions
-  ebitda?: number;
-  netIncome?: number;
-  bookValue?: number;
+  status: InstrumentStatus;
+  bookedBy?: string;
 
-  /* Bond inputs */
-  faceValue?: number; // NGN millions
-  couponRate?: number; // fraction (0.135 = 13.5%)
-  yearsToMaturity?: number;
-  ytm?: number; // fraction
-  paymentsPerYear?: number; // default 2
+  /* Market overrides */
+  marketYield?: number; // fraction; overrides curve interpolation
+  marketPrice?: number; // absolute (local ccy) clean fair value override
 
-  /* Real estate inputs */
-  noi?: number; // net operating income, NGN millions
-  capRate?: number; // fraction
-
-  /* PE / NAV inputs */
-  reportedNav?: number; // NGN millions
+  /* Impairment */
+  impairmentStage?: ImpairmentStage;
+  eclProvision?: number; // local currency
 }
 
-/* ─── global assumptions ────────────────────────────────── */
+/* ─── valuation engine assumptions ──────────────────────── */
 export interface Assumptions {
-  /* WACC build-up */
-  riskFreeRate: number; // Nigerian 10yr FGN
-  equityRiskPremium: number;
-  countryRiskPremium: number;
-  sizePremium: number;
-  costOfDebt: number;
-  taxRate: number;
-  targetDebtRatio: number; // D / (D+E)
+  valuationDate: string; // ISO yyyy-mm-dd
 
-  /* Multiples for cross-check */
-  peMultiple: number;
-  evEbitdaMultiple: number;
-  pbMultiple: number;
-  psMultiple: number;
+  /* Yield curves (used for DCF if instrument lacks marketYield) */
+  fgnYieldCurve: YieldCurvePoint[]; // NGN sovereign
+  usdYieldCurve: YieldCurvePoint[]; // USD benchmark
+  corporateSpread: number; // additional bps for corporates (decimal, e.g. 0.02)
+  stateSpread: number; // additional spread for state bonds
 
-  /* Real estate */
-  defaultCapRate: number;
-
-  /* FX (snapshot rates against NGN) */
+  /* FX (snapshot rates vs NGN) */
   fxUSD: number;
   fxGBP: number;
   fxEUR: number;
 
-  /* Reporting */
-  valuationDate: string;
-  reportingCurrency: Currency;
+  /* Tax for OCI recycling simulation */
+  taxRate: number;
 }
 
-/* ─── per-asset DCF projection ──────────────────────────── */
-export interface DCFProjection {
-  assetId: string;
-  wacc: number;
-  years: number[];
-  fcfs: number[];
-  discountFactors: number[];
-  presentValues: number[];
-  terminalValue: number;
-  terminalPV: number;
-  explicitPV: number;
-  enterpriseValue: number;
-  equityValueAttributable: number; // EV * holdingPct
+export interface YieldCurvePoint {
+  tenorYears: number;
+  yield: number; // fraction
 }
 
-/* ─── per-asset comparable result ───────────────────────── */
-export interface ComparableResult {
-  assetId: string;
-  fromPE: number | null;
-  fromEvEbitda: number | null;
-  fromPB: number | null;
-  fromPS: number | null;
-  average: number;
+/* ─── derived schedules / metrics ───────────────────────── */
+export interface AmortRow {
+  period: number;
+  date: string;
+  openingBalance: number;
+  eirIncome: number;
+  couponCF: number;
+  amortisation: number;
+  closingBalance: number;
+  status: "Past" | "Current" | "Future";
 }
 
-/* ─── per-asset final valuation ─────────────────────────── */
-export interface AssetValuation {
-  assetId: string;
-  method: ValuationMethod;
-  fairValue: number; // attributable to Heirs (NGN millions)
-  fairValueLow: number;
-  fairValueHigh: number;
-  ifrs13Level: IFRS13Level;
-  uplift: number; // fairValue - carryingValue
-  upliftPct: number;
-  dcf?: DCFProjection;
-  comparable?: ComparableResult;
-  notes: string;
+export interface CashFlowRow {
+  period: number;
+  date: string;
+  type: "Coupon" | "Principal" | "Coupon + Principal";
+  amount: number;
+  daysToCF: number;
+  pvOfCF: number | null;
+  status: "Past" | "Current" | "Future";
 }
 
-/* ─── portfolio-wide engine result ──────────────────────── */
-export interface EngineResult {
-  valuations: AssetValuation[];
-  totalCarryingValue: number;
-  totalFairValue: number;
-  totalFairValueLow: number;
-  totalFairValueHigh: number;
-  totalUplift: number;
-  totalUpliftPct: number;
-  level1Total: number;
-  level2Total: number;
-  level3Total: number;
-  byType: { type: AssetType; carrying: number; fair: number; count: number }[];
-  bySector: { sector: string; carrying: number; fair: number; count: number }[];
+export interface OCIRow {
+  period: number;
+  date: string;
+  acCarryingValue: number;
+  fairValueEst: number;
+  ociReserve: number;
+}
+
+export interface RiskMetrics {
+  remainingTenorYears: number;
+  macaulayDuration: number;
+  modifiedDuration: number;
+  dv01: number;
+  convexity: number;
+  nextCouponDate: string | null;
+  nextCouponAmount: number;
+  daysToNextCoupon: number | null;
+}
+
+/* ─── per-instrument valuation result ───────────────────── */
+export interface InstrumentValuation {
+  instrument: Instrument;
+
+  /* EIR & amortisation */
+  eir: number; // fraction
+  discountAtPurchase: number;
+  amortSchedule: AmortRow[];
+  acCarryingValue: number; // clean AC value at valuation date
+  accruedInterest: number;
+  totalBookValueDirty: number; // AC dirty (AC + accrued) — for AC class
+
+  /* Cash flow PV / fair value */
+  cleanFairValue: number;
+  dirtyFairValue: number;
+  cashFlowSchedule: CashFlowRow[];
+  totalFuturePV: number;
+
+  /* FVOCI specific */
+  ociReserve: number; // FV - AC (FVOCI only)
+  ociMovement: OCIRow[];
+
+  /* FVTPL specific */
+  unrealisedGL: number; // FV - purchasePrice (FVTPL)
+
+  /* IFRS 13 / market */
+  marketYieldUsed: number;
+  yieldCurveLabel: string;
+
+  /* Risk */
+  risk: RiskMetrics;
+
+  /* Income */
+  annualEIRIncome: number;
+
+  /* NGN balance sheet value (after FX) */
+  balanceSheetValueNGN: number;
+}
+
+/* ─── portfolio rollups ─────────────────────────────────── */
+export interface PortfolioByClassification {
+  classification: Classification;
+  count: number;
+  faceValueNGN: number;
+  bsValueNGN: number;
+  eclNGN: number;
+}
+
+export interface PortfolioByType {
+  type: InstrumentType;
+  count: number;
+  faceValueNGN: number;
+  bsValueNGN: number;
+}
+
+export interface PortfolioBySector {
+  sector: string;
+  count: number;
+  faceValueNGN: number;
+  bsValueNGN: number;
+  pctOfPortfolio: number;
+}
+
+export interface MaturityBucket {
+  bucket: string;
+  minDays: number;
+  maxDays: number;
+  count: number;
+  faceValueNGN: number;
+}
+
+export interface TopExposure {
+  rank: number;
+  id: string;
+  name: string;
+  type: InstrumentType;
+  classification: Classification;
+  bsValueNGN: number;
+}
+
+export interface IncomeSummary {
+  ac: {
+    instruments: number;
+    totalCarryingValueNGN: number;
+    totalAccruedInterestNGN: number;
+    totalECLNGN: number;
+  };
+  fvoci: {
+    instruments: number;
+    totalACCarryingValueNGN: number;
+    totalFairValueNGN: number;
+    totalOCIReserveNGN: number;
+    totalECLNGN: number;
+  };
+  fvtpl: {
+    instruments: number;
+    totalFairValueNGN: number;
+    totalUnrealisedGLNGN: number;
+  };
+}
+
+export interface PortfolioResult {
+  valuations: InstrumentValuation[];
+  totals: {
+    instruments: number;
+    totalFaceValueNGN: number;
+    totalBSValueNGN: number;
+    totalECLNGN: number;
+    totalOCIReserveNGN: number;
+    totalFVTPLUnrealisedGLNGN: number;
+  };
+  byClassification: PortfolioByClassification[];
+  byType: PortfolioByType[];
+  bySector: PortfolioBySector[];
+  maturityProfile: MaturityBucket[];
+  topExposures: TopExposure[];
+  income: IncomeSummary;
 }

@@ -1,0 +1,460 @@
+import { useState } from "react";
+import { Save, RotateCcw, Info } from "lucide-react";
+
+type FormState = {
+  instrumentType: string;
+  isin: string;
+  instrumentName: string;
+  issuer: string;
+  sector: string;
+  currency: string;
+  classification: string;
+  ifrs13Level: string;
+  faceValue: string;
+  purchasePrice: string;
+  purchaseYield: string;
+  couponRate: string;
+  couponFrequency: string;
+  purchaseDate: string;
+  maturityDate: string;
+  settlementDate: string;
+  custodian: string;
+  counterparty: string;
+  dayCount: string;
+  portfolio: string;
+  notes: string;
+};
+
+const EMPTY: FormState = {
+  instrumentType: "",
+  isin: "",
+  instrumentName: "",
+  issuer: "",
+  sector: "",
+  currency: "NGN",
+  classification: "AC",
+  ifrs13Level: "Level 2",
+  faceValue: "",
+  purchasePrice: "1.00",
+  purchaseYield: "",
+  couponRate: "",
+  couponFrequency: "Semi-Annual",
+  purchaseDate: "2026-05-28",
+  maturityDate: "",
+  settlementDate: "2026-05-30",
+  custodian: "",
+  counterparty: "",
+  dayCount: "Actual/365",
+  portfolio: "Trading Book",
+  notes: "",
+};
+
+const INST_TYPES = [
+  "FGN Bond",
+  "Treasury Bill",
+  "Corporate Bond",
+  "Eurobond",
+  "Commercial Paper",
+  "Equity",
+  "Sukuk",
+  "Money Market",
+];
+const CURRENCIES = ["NGN", "USD", "GBP", "EUR"];
+const CLASSIFICATIONS = ["AC", "FVOCI", "FVTPL"];
+const IFRS13_LEVELS = ["Level 1", "Level 2", "Level 3"];
+const FREQ_OPTIONS = ["Monthly", "Quarterly", "Semi-Annual", "Annual", "Zero"];
+const DAY_COUNTS = ["Actual/365", "Actual/360", "30/360", "Actual/Actual"];
+const PORTFOLIOS = ["Trading Book", "Banking Book", "Held-to-Maturity"];
+const SECTORS = [
+  "Federal Government",
+  "Banking",
+  "Telecoms",
+  "Oil & Gas",
+  "Consumer Goods",
+  "Real Estate",
+  "Infrastructure",
+  "Utilities",
+];
+
+function FieldLabel({
+  children,
+  tip,
+}: {
+  children: React.ReactNode;
+  tip?: string;
+}) {
+  return (
+    <label className="flex items-center gap-1 text-xs font-medium text-gray-500">
+      {children}
+      {tip && (
+        <Info className="h-3 w-3 text-gray-400 cursor-help" aria-label={tip} />
+      )}
+    </label>
+  );
+}
+
+function TextInput({
+  value,
+  onChange,
+  placeholder,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  placeholder?: string;
+}) {
+  return (
+    <input
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      placeholder={placeholder}
+      className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-gray-300"
+    />
+  );
+}
+
+function SelectInput({
+  value,
+  onChange,
+  options,
+}: {
+  value: string;
+  onChange: (v: string) => void;
+  options: string[];
+}) {
+  return (
+    <select
+      value={value}
+      onChange={(e) => onChange(e.target.value)}
+      className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+    >
+      <option value="">— Select —</option>
+      {options.map((o) => (
+        <option key={o} value={o}>
+          {o}
+        </option>
+      ))}
+    </select>
+  );
+}
+
+export function NewBooking() {
+  const [form, setForm] = useState<FormState>(EMPTY);
+  const [submitted, setSubmitted] = useState(false);
+
+  const set = (field: keyof FormState) => (v: string) =>
+    setForm((f) => ({ ...f, [field]: v }));
+
+  // Auto-compute EIR approximation
+  const eirApprox = form.purchaseYield
+    ? parseFloat(form.purchaseYield)
+    : form.couponRate
+      ? parseFloat(form.couponRate)
+      : null;
+
+  const handleSubmit = (e: React.FormEvent) => {
+    e.preventDefault();
+    setSubmitted(true);
+  };
+
+  if (submitted) {
+    return (
+      <div className="p-6 xl:p-8">
+        <div className="rounded-xl border border-border bg-surface p-10 flex flex-col items-center gap-4 shadow-sm">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
+            <Save className="h-7 w-7 text-success" />
+          </div>
+          <div className="text-center">
+            <p className="text-lg font-bold text-dark-gray">
+              Deal Submitted for Approval
+            </p>
+            <p className="mt-1 text-sm text-gray-400">
+              {form.instrumentName || "New instrument"} has been submitted to
+              the maker-checker queue. Reference:{" "}
+              <span className="font-mono font-semibold">
+                DL-{Date.now().toString().slice(-6)}
+              </span>
+            </p>
+          </div>
+          <button
+            onClick={() => {
+              setForm(EMPTY);
+              setSubmitted(false);
+            }}
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-gray-500 hover:bg-pale-red hover:text-primary"
+          >
+            <RotateCcw className="h-4 w-4" /> Book another deal
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6 xl:p-8">
+      <div className="mb-6">
+        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+          Deal Capture
+        </p>
+        <h1 className="mt-1 text-2xl font-bold text-dark-gray">
+          New Investment Booking
+        </h1>
+        <p className="mt-1 text-sm text-gray-500">
+          Capture instrument economics, counterparty and settlement details
+        </p>
+      </div>
+
+      <form onSubmit={handleSubmit} className="space-y-6">
+        {/* Section: Instrument Details */}
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-dark-gray">
+            Instrument Details
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <FieldLabel>Instrument Type *</FieldLabel>
+              <SelectInput
+                value={form.instrumentType}
+                onChange={set("instrumentType")}
+                options={INST_TYPES}
+              />
+            </div>
+            <div>
+              <FieldLabel tip="International Securities Identification Number">
+                ISIN
+              </FieldLabel>
+              <TextInput
+                value={form.isin}
+                onChange={set("isin")}
+                placeholder="e.g. NGFGN00001234"
+              />
+            </div>
+            <div>
+              <FieldLabel>Instrument Name *</FieldLabel>
+              <TextInput
+                value={form.instrumentName}
+                onChange={set("instrumentName")}
+                placeholder="e.g. FGN Bond 2031"
+              />
+            </div>
+            <div>
+              <FieldLabel>Issuer *</FieldLabel>
+              <TextInput
+                value={form.issuer}
+                onChange={set("issuer")}
+                placeholder="e.g. Federal Government of Nigeria"
+              />
+            </div>
+            <div>
+              <FieldLabel>Sector</FieldLabel>
+              <SelectInput
+                value={form.sector}
+                onChange={set("sector")}
+                options={SECTORS}
+              />
+            </div>
+            <div>
+              <FieldLabel>Portfolio</FieldLabel>
+              <SelectInput
+                value={form.portfolio}
+                onChange={set("portfolio")}
+                options={PORTFOLIOS}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section: IFRS 9 Classification */}
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-dark-gray">
+            IFRS 9 Classification
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <FieldLabel>Classification *</FieldLabel>
+              <SelectInput
+                value={form.classification}
+                onChange={set("classification")}
+                options={CLASSIFICATIONS}
+              />
+            </div>
+            <div>
+              <FieldLabel>IFRS 13 Fair Value Level</FieldLabel>
+              <SelectInput
+                value={form.ifrs13Level}
+                onChange={set("ifrs13Level")}
+                options={IFRS13_LEVELS}
+              />
+            </div>
+            <div>
+              <FieldLabel>Currency *</FieldLabel>
+              <SelectInput
+                value={form.currency}
+                onChange={set("currency")}
+                options={CURRENCIES}
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Economics */}
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-dark-gray">
+            Deal Economics
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-3">
+            <div>
+              <FieldLabel tip="Nominal / par value in instrument currency">
+                Face Value *
+              </FieldLabel>
+              <TextInput
+                value={form.faceValue}
+                onChange={set("faceValue")}
+                placeholder="e.g. 100000000"
+              />
+            </div>
+            <div>
+              <FieldLabel tip="As decimal, e.g. 0.98 for 98%">
+                Purchase Price (decimal)
+              </FieldLabel>
+              <TextInput
+                value={form.purchasePrice}
+                onChange={set("purchasePrice")}
+                placeholder="e.g. 0.9850"
+              />
+            </div>
+            <div>
+              <FieldLabel tip="Annual yield to maturity at purchase">
+                Purchase Yield (%)
+              </FieldLabel>
+              <TextInput
+                value={form.purchaseYield}
+                onChange={set("purchaseYield")}
+                placeholder="e.g. 0.185 for 18.5%"
+              />
+            </div>
+            <div>
+              <FieldLabel>Coupon Rate (annual, decimal)</FieldLabel>
+              <TextInput
+                value={form.couponRate}
+                onChange={set("couponRate")}
+                placeholder="e.g. 0.1500 for 15%"
+              />
+            </div>
+            <div>
+              <FieldLabel>Coupon Frequency</FieldLabel>
+              <SelectInput
+                value={form.couponFrequency}
+                onChange={set("couponFrequency")}
+                options={FREQ_OPTIONS}
+              />
+            </div>
+            <div>
+              <FieldLabel>Day Count Convention</FieldLabel>
+              <SelectInput
+                value={form.dayCount}
+                onChange={set("dayCount")}
+                options={DAY_COUNTS}
+              />
+            </div>
+          </div>
+          {eirApprox !== null && (
+            <div className="mt-4 rounded-lg bg-pale-red/40 border border-primary/20 px-4 py-3">
+              <p className="text-xs text-primary">
+                <span className="font-semibold">Estimated EIR:</span>{" "}
+                {(eirApprox * 100).toFixed(4)}% — precise EIR will be computed
+                on deal booking.
+              </p>
+            </div>
+          )}
+        </div>
+
+        {/* Section: Dates */}
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-dark-gray">Dates</h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+            <div>
+              <FieldLabel>Trade / Purchase Date *</FieldLabel>
+              <TextInput
+                value={form.purchaseDate}
+                onChange={set("purchaseDate")}
+                placeholder="YYYY-MM-DD"
+              />
+            </div>
+            <div>
+              <FieldLabel>Settlement Date</FieldLabel>
+              <TextInput
+                value={form.settlementDate}
+                onChange={set("settlementDate")}
+                placeholder="YYYY-MM-DD"
+              />
+            </div>
+            <div>
+              <FieldLabel>Maturity Date</FieldLabel>
+              <TextInput
+                value={form.maturityDate}
+                onChange={set("maturityDate")}
+                placeholder="YYYY-MM-DD"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Counterparty */}
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-dark-gray">
+            Counterparty &amp; Custody
+          </h2>
+          <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div>
+              <FieldLabel>Custodian</FieldLabel>
+              <TextInput
+                value={form.custodian}
+                onChange={set("custodian")}
+                placeholder="e.g. First Bank Custodial"
+              />
+            </div>
+            <div>
+              <FieldLabel>Counterparty</FieldLabel>
+              <TextInput
+                value={form.counterparty}
+                onChange={set("counterparty")}
+                placeholder="e.g. Stanbic IBTC Securities"
+              />
+            </div>
+          </div>
+        </div>
+
+        {/* Section: Notes */}
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-dark-gray">
+            Notes / Rationale
+          </h2>
+          <textarea
+            value={form.notes}
+            onChange={(e) => set("notes")(e.target.value)}
+            rows={3}
+            placeholder="Investment rationale, IC approval reference, or other notes..."
+            className="block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray outline-none focus:border-primary focus:ring-1 focus:ring-primary placeholder:text-gray-300 resize-none"
+          />
+        </div>
+
+        {/* Actions */}
+        <div className="flex items-center justify-end gap-3">
+          <button
+            type="button"
+            onClick={() => setForm(EMPTY)}
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-gray-500 hover:bg-pale-red hover:text-primary"
+          >
+            <RotateCcw className="h-4 w-4" /> Reset
+          </button>
+          <button
+            type="submit"
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+          >
+            <Save className="h-4 w-4" /> Book Deal
+          </button>
+        </div>
+      </form>
+    </div>
+  );
+}

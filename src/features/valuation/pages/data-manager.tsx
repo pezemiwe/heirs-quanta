@@ -1,252 +1,188 @@
 import { useRef, useState } from "react";
 import {
-  Upload,
   Database,
-  FileSpreadsheet,
+  Upload,
+  FileText,
+  Sparkles,
   Trash2,
   CheckCircle2,
   AlertTriangle,
-  Download,
 } from "lucide-react";
 import { useValuation } from "../store";
-import { CSV_TEMPLATE_HEADER } from "../engine/parsing";
-import { fmtNGN, ASSET_TYPE_LABEL } from "../utils";
+import { SectionCard } from "../../../components/shared/section-card";
+import { fmtNumber } from "../utils";
 
 export function ValuationDataManager() {
   const v = useValuation();
   const fileRef = useRef<HTMLInputElement>(null);
-  const [status, setStatus] = useState<{ ok: boolean; msg: string } | null>(
-    null,
-  );
+  const [dragOver, setDragOver] = useState(false);
+  const [lastImportSummary, setLastImportSummary] = useState<{
+    ok: boolean;
+    count: number;
+  } | null>(null);
 
-  function handleFile(file: File) {
+  const handleFile = (file: File) => {
     const reader = new FileReader();
     reader.onload = () => {
-      const text = reader.result as string;
-      const res = v.loadFromCSV(text, file.name);
-      setStatus({
-        ok: res.ok,
-        msg: res.ok
-          ? `Loaded ${res.count} assets from ${file.name}.`
-          : `Failed to load. ${res.errors.length} error(s).`,
-      });
+      const text = String(reader.result || "");
+      const r = v.loadFromCSV(text, file.name);
+      setLastImportSummary({ ok: r.ok, count: r.count });
     };
     reader.readAsText(file);
-  }
-
-  function downloadTemplate() {
-    const blob = new Blob([CSV_TEMPLATE_HEADER + "\n"], { type: "text/csv" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = "valuation-template.csv";
-    a.click();
-    URL.revokeObjectURL(url);
-  }
+  };
 
   return (
     <div className="p-6 xl:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">Data Manager</h1>
         <p className="mt-1 text-sm text-gray-500">
-          Upload an asset register or start with the Heirs Holdings sample
+          Upload your fixed-income inventory or load the demonstration
           portfolio.
         </p>
       </div>
 
-      {/* status banner */}
-      {status && (
-        <div
-          className={`flex items-center gap-3 rounded-lg border p-3 text-sm ${
-            status.ok
-              ? "border-teal-200 bg-teal-50 text-success"
-              : "border-red-200 bg-red-50 text-danger"
-          }`}
-        >
-          {status.ok ? (
-            <CheckCircle2 className="h-4 w-4" />
-          ) : (
-            <AlertTriangle className="h-4 w-4" />
-          )}
-          {status.msg}
-        </div>
-      )}
-
-      {/* action cards */}
-      <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
+      <div className="grid gap-6 lg:grid-cols-2">
         {/* upload */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <div className="mb-3 flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-pale-red text-primary">
-              <Upload className="h-5 w-5" />
-            </span>
+        <SectionCard
+          title="Upload Instruments CSV"
+          description="Drag a CSV file or browse from disk."
+        >
+          <div
+            onDragOver={(e) => {
+              e.preventDefault();
+              setDragOver(true);
+            }}
+            onDragLeave={() => setDragOver(false)}
+            onDrop={(e) => {
+              e.preventDefault();
+              setDragOver(false);
+              const f = e.dataTransfer.files[0];
+              if (f) handleFile(f);
+            }}
+            className={`flex flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 text-center transition-colors ${
+              dragOver
+                ? "border-primary bg-pale-red"
+                : "border-border bg-gray-50"
+            }`}
+          >
+            <Upload className="h-8 w-8 text-gray-400" />
             <div>
-              <p className="font-semibold text-dark-gray">Upload CSV</p>
-              <p className="text-xs text-gray-400">
-                Asset register from custodian or treasury
+              <p className="text-sm font-medium text-dark-gray">
+                Drop CSV file here
               </p>
+              <p className="text-xs text-gray-400">or click below to browse</p>
             </div>
-          </div>
-          <p className="mb-4 text-xs text-gray-500">
-            Required columns: id, name, type, sector, currency, holdingPct,
-            carryingValue. Method-specific fields (DCF inputs, bond inputs,
-            etc.) are optional per row.
-          </p>
-          <div className="flex gap-2">
-            <button
-              onClick={() => fileRef.current?.click()}
-              className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
-            >
-              Choose file…
-            </button>
-            <button
-              onClick={downloadTemplate}
-              className="flex items-center gap-1.5 rounded-lg border border-border bg-surface px-4 py-2 text-sm text-gray-600 hover:border-primary hover:text-primary"
-            >
-              <Download className="h-3.5 w-3.5" /> Template
-            </button>
             <input
               ref={fileRef}
               type="file"
-              accept=".csv,text/csv"
+              accept=".csv"
               hidden
               onChange={(e) => {
                 const f = e.target.files?.[0];
                 if (f) handleFile(f);
-                e.target.value = "";
               }}
             />
+            <button
+              onClick={() => fileRef.current?.click()}
+              className="mt-1 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-white hover:bg-mid-red"
+            >
+              Browse files
+            </button>
           </div>
-        </div>
+        </SectionCard>
 
         {/* sample */}
-        <div className="rounded-xl border border-border bg-surface p-6 shadow-sm">
-          <div className="mb-3 flex items-center gap-3">
-            <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-pale-red text-primary">
-              <FileSpreadsheet className="h-5 w-5" />
-            </span>
+        <SectionCard
+          title="Import from Portfolio Management"
+          description="Load the live 204-instrument book from the Portfolio Management module."
+        >
+          <div className="flex flex-col items-center justify-center gap-3 rounded-xl border border-border bg-gradient-to-br from-pale-red to-white p-10 text-center">
+            <Sparkles className="h-8 w-8 text-primary" />
             <div>
-              <p className="font-semibold text-dark-gray">
-                Load Sample Portfolio
+              <p className="text-sm font-medium text-dark-gray">
+                Portfolio Management Book
               </p>
               <p className="text-xs text-gray-400">
-                19 demonstration assets across the Group
+                204 instruments · FGN bonds, corporates, Eurobonds, CPs,
+                T-Bills, equities &amp; more
               </p>
             </div>
-          </div>
-          <p className="mb-4 text-xs text-gray-500">
-            Spans Heirs Insurance, Heirs Life, Heirs Oil & Gas (Tenoil),
-            Transcorp Plc, Transcorp Hotels, United Capital, Africa Prudential,
-            Heritage Bank, real estate, FGN bonds, T-Bills, and PE funds.
-          </p>
-          <button
-            onClick={() => {
-              v.loadSample();
-              setStatus({
-                ok: true,
-                msg: "Sample Heirs Holdings portfolio loaded.",
-              });
-            }}
-            className="rounded-lg border border-primary bg-pale-red px-4 py-2 text-sm font-medium text-primary hover:bg-primary hover:text-white"
-          >
-            Load sample data
-          </button>
-        </div>
-      </div>
-
-      {/* current dataset */}
-      <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
-        <div className="mb-4 flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Database className="h-4 w-4 text-primary" />
-            <h2 className="text-sm font-semibold text-dark-gray">
-              Active Dataset
-            </h2>
-          </div>
-          {v.hasData && (
             <button
-              onClick={v.clear}
-              className="flex items-center gap-1 text-xs text-gray-400 hover:text-danger"
+              onClick={() => {
+                v.loadSample();
+                setLastImportSummary({ ok: true, count: 204 });
+              }}
+              className="mt-1 rounded-lg bg-primary px-4 py-1.5 text-xs font-medium text-white hover:bg-mid-red"
             >
-              <Trash2 className="h-3.5 w-3.5" /> Clear
+              Import from Portfolio
             </button>
-          )}
-        </div>
-        {!v.hasData ? (
-          <p className="text-sm text-gray-400">
-            No data loaded. Upload a CSV or load the sample portfolio above.
-          </p>
-        ) : (
-          <>
-            <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 mb-4">
-              <div>
-                <p className="text-xs text-gray-400">Source</p>
-                <p className="text-xs font-medium text-dark-gray truncate">
-                  {v.lastUploadedFile}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Total Assets</p>
-                <p className="text-sm font-bold text-dark-gray">
-                  {v.assets.length}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Carrying Value</p>
-                <p className="text-sm font-bold text-dark-gray">
-                  {fmtNGN(v.result.totalCarryingValue)}
-                </p>
-              </div>
-              <div>
-                <p className="text-xs text-gray-400">Fair Value (Base)</p>
-                <p className="text-sm font-bold text-primary">
-                  {fmtNGN(v.result.totalFairValue)}
-                </p>
-              </div>
-            </div>
-
-            {/* breakdown */}
-            <div className="border-t border-border pt-4">
-              <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-gray-400">
-                Composition by asset type
-              </p>
-              <div className="grid grid-cols-2 gap-2 sm:grid-cols-4">
-                {v.result.byType.map((t) => (
-                  <div
-                    key={t.type}
-                    className="rounded-lg border border-border bg-surface-muted p-3"
-                  >
-                    <p className="text-xs text-gray-500">
-                      {ASSET_TYPE_LABEL[t.type]}
-                    </p>
-                    <p className="text-sm font-semibold">{t.count} assets</p>
-                    <p className="text-xs text-primary">{fmtNGN(t.fair)}</p>
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        )}
+          </div>
+        </SectionCard>
       </div>
 
-      {/* parse errors */}
-      {v.parseErrors.length > 0 && (
-        <div className="rounded-xl border border-red-200 bg-red-50 p-4">
-          <p className="mb-2 text-sm font-semibold text-danger">
-            {v.parseErrors.length} parse error(s)
-          </p>
-          <ul className="space-y-1 text-xs text-danger">
+      {/* status */}
+      <SectionCard title="Portfolio Status">
+        <div className="grid gap-4 sm:grid-cols-3">
+          <div className="rounded-lg border border-border bg-surface p-4">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-gray-400">
+              <Database className="h-3.5 w-3.5" /> Instruments loaded
+            </div>
+            <p className="mt-2 text-2xl font-bold text-dark-gray">
+              {fmtNumber(v.instruments.length)}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-4">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-gray-400">
+              <FileText className="h-3.5 w-3.5" /> Last source
+            </div>
+            <p className="mt-2 text-sm font-medium text-dark-gray truncate">
+              {v.lastUploadedFile || "—"}
+            </p>
+          </div>
+          <div className="rounded-lg border border-border bg-surface p-4">
+            <div className="flex items-center gap-2 text-xs uppercase tracking-wider text-gray-400">
+              <AlertTriangle className="h-3.5 w-3.5" /> Parse warnings
+            </div>
+            <p className="mt-2 text-2xl font-bold text-dark-gray">
+              {v.parseErrors.length}
+            </p>
+          </div>
+        </div>
+
+        {lastImportSummary && (
+          <div className="mt-4 flex items-center gap-2 rounded-lg bg-teal-50 px-3 py-2 text-xs text-success">
+            <CheckCircle2 className="h-4 w-4" />
+            Imported {lastImportSummary.count} instruments successfully.
+          </div>
+        )}
+
+        {v.parseErrors.length > 0 && (
+          <div className="mt-3 max-h-48 overflow-y-auto rounded-lg bg-red-50 p-3 text-xs text-primary">
             {v.parseErrors.slice(0, 10).map((e, i) => (
-              <li key={i}>
+              <div key={i}>
                 Row {e.row}: {e.message}
-              </li>
+              </div>
             ))}
             {v.parseErrors.length > 10 && (
-              <li className="italic">…and {v.parseErrors.length - 10} more</li>
+              <div className="mt-1">… and {v.parseErrors.length - 10} more</div>
             )}
-          </ul>
-        </div>
-      )}
+          </div>
+        )}
+
+        {v.hasData && (
+          <div className="mt-4 flex justify-end">
+            <button
+              onClick={() => {
+                v.clear();
+                setLastImportSummary(null);
+              }}
+              className="inline-flex items-center gap-1.5 rounded-lg border border-border bg-surface px-3 py-1.5 text-xs text-gray-500 hover:bg-pale-red hover:text-primary hover:border-primary"
+            >
+              <Trash2 className="h-3.5 w-3.5" /> Clear portfolio
+            </button>
+          </div>
+        )}
+      </SectionCard>
     </div>
   );
 }
