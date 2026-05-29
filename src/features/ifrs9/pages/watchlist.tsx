@@ -71,7 +71,10 @@ function toWatchRow(r: SecurityComputed, idx: number): WatchRow {
   };
 }
 
-const PERF_VARIANT: Record<string, "danger" | "warning" | "neutral" | "success"> = {
+const PERF_VARIANT: Record<
+  string,
+  "danger" | "warning" | "neutral" | "success"
+> = {
   Performing: "success",
   Watchlist: "warning",
   Substandard: "warning",
@@ -107,7 +110,8 @@ export function IFRS9Watchlist() {
     };
   }, [result.rows]);
 
-  const totalStage23 = stage2Rows.length + stage3Rows.length + watchlistRows.length;
+  const totalStage23 =
+    stage2Rows.length + stage3Rows.length + watchlistRows.length;
   const totalExposure = [...stage2Rows, ...stage3Rows, ...watchlistRows].reduce(
     (s, r) => s + r.carryingAmountLcy,
     0,
@@ -142,7 +146,10 @@ export function IFRS9Watchlist() {
       key: "performanceStatus",
       header: "Performance",
       render: (r) => (
-        <Badge variant={PERF_VARIANT[r.performanceStatus] ?? "neutral"} size="sm">
+        <Badge
+          variant={PERF_VARIANT[r.performanceStatus] ?? "neutral"}
+          size="sm"
+        >
           {r.performanceStatus}
         </Badge>
       ),
@@ -200,7 +207,8 @@ export function IFRS9Watchlist() {
             Watchlist Management
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Instruments under heightened credit monitoring · Reporting date: {VALUATION_DATE}
+            Instruments under heightened credit monitoring · Reporting date:{" "}
+            {VALUATION_DATE}
           </p>
         </div>
       </div>
@@ -211,21 +219,18 @@ export function IFRS9Watchlist() {
           value={String(totalStage23)}
           subtitle="Stage 2, Stage 3 & Watchlist"
           variant="warning"
-
         />
         <StatCard
           title="Stage 3 (Credit-Impaired)"
           value={String(stage3Rows.length)}
           subtitle="Requires impairment committee review"
           variant="danger"
-
         />
         <StatCard
           title="Stage 2 (SICR)"
           value={String(stage2Rows.length)}
           subtitle="Significant increase in credit risk"
           variant="warning"
-
         />
         <StatCard
           title="Total Exposure"
@@ -240,7 +245,6 @@ export function IFRS9Watchlist() {
         <SectionCard
           title="Stage 3 — Credit-Impaired Instruments"
           description="Lifetime ECL applied. Impairment committee approval required for material movements."
-
         >
           <DataTable<WatchRow>
             columns={cols}
@@ -257,7 +261,6 @@ export function IFRS9Watchlist() {
         <SectionCard
           title="Stage 2 — Significant Increase in Credit Risk"
           description="Lifetime ECL. Management review required. Instruments must be monitored until downgrade or upgrade resolved."
-
         >
           <DataTable<WatchRow>
             columns={cols}
@@ -274,7 +277,6 @@ export function IFRS9Watchlist() {
         <SectionCard
           title="Stage 1 — Performance Status: Watchlist"
           description="Currently Stage 1 but flagged as Watchlist by credit analyst. Monitor for SICR indicators."
-
         >
           <DataTable<WatchRow>
             columns={cols}
@@ -325,7 +327,9 @@ export function IFRS9Watchlist() {
                   label: "Performance Status",
                   value: (
                     <Badge
-                      variant={PERF_VARIANT[selected.performanceStatus] ?? "neutral"}
+                      variant={
+                        PERF_VARIANT[selected.performanceStatus] ?? "neutral"
+                      }
                       size="sm"
                     >
                       {selected.performanceStatus}
@@ -336,7 +340,10 @@ export function IFRS9Watchlist() {
                   label: "Final Stage",
                   value: <StageBadge stage={selected.finalStage} />,
                 },
-                { label: "Rating Equivalent", value: selected.ratingEquivalent },
+                {
+                  label: "Rating Equivalent",
+                  value: selected.ratingEquivalent,
+                },
                 {
                   label: "ECL (LCY)",
                   value: (
@@ -354,7 +361,10 @@ export function IFRS9Watchlist() {
                   value: actionMap[selected.sn] ?? selected.action,
                   wide: true,
                 },
-                { label: "Added to Watchlist", value: selected.addedToWatchlist },
+                {
+                  label: "Added to Watchlist",
+                  value: selected.addedToWatchlist,
+                },
               ]
             : []
         }

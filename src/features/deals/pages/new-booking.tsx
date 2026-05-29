@@ -1,6 +1,18 @@
-import { useState } from "react";
-import { Save, RotateCcw, Info, Loader2, Paperclip, X } from "lucide-react";
+import { useState, useMemo } from "react";
+import {
+  Save,
+  RotateCcw,
+  Info,
+  Loader2,
+  Paperclip,
+  X,
+  AlertTriangle,
+} from "lucide-react";
 import { usePortfolioRegistry } from "../../portfolio/portfolio-registry";
+import { GovernanceBar } from "../../../components/shared/governance-bar";
+import { useGovernance } from "../../../context/governance";
+import { usePersona } from "../../../context/persona";
+import { BOOK_COMPUTED } from "../../portfolio/engine/book-compute";
 
 type FormState = {
   instrumentType: string;
@@ -145,7 +157,11 @@ export function NewBooking() {
   const [submitting, setSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
   const { getPortfolioNames } = usePortfolioRegistry();
+  const { logAction, hasPermission } = useGovernance();
+  const { persona } = usePersona();
   const PORTFOLIOS = getPortfolioNames();
+
+  const canCreate = hasPermission(persona.role, "deal.create");
 
   const set = (field: keyof FormState) => (v: string) =>
     setForm((f) => ({ ...f, [field]: v }));
@@ -157,9 +173,36 @@ export function NewBooking() {
       ? parseFloat(form.couponRate)
       : null;
 
+  // Investment limit check: single-issuer concentration
+  const limitWarning = useMemo(() => {
+    if (!form.issuer || !form.faceValue) return null;
+    const fv = parseFloat(form.faceValue);
+    if (isNaN(fv) || fv <= 0) return null;
+    const totalBSV = BOOK_COMPUTED.totals.totalBSValueNGN;
+    const proposedPct = (fv / (totalBSV + fv)) * 100;
+    if (proposedPct > 10) {
+      return `Single-issuer concentration would reach ${proposedPct.toFixed(1)}% (NAICOM limit: 10%)`;
+    }
+    if (proposedPct > 8) {
+      return `Single-issuer concentration approaching limit: ${proposedPct.toFixed(1)}% (limit: 10%)`;
+    }
+    return null;
+  }, [form.issuer, form.faceValue]);
+
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
+    if (!canCreate) return;
     setSubmitting(true);
+    const ref = `DL-${Date.now().toString().slice(-6)}`;
+    logAction({
+      user: persona.name,
+      role: persona.role,
+      module: "Deals",
+      action: "New Booking Submitted",
+      detail: `${form.instrumentName || form.instrumentType} — ₦${form.faceValue || "0"} face value submitted for checker approval. Ref: ${ref}`,
+      status: limitWarning ? "warning" : "success",
+      ip: "10.0.1.xx",
+    });
     setTimeout(() => {
       setSubmitting(false);
       setSubmitted(true);
@@ -201,6 +244,21 @@ export function NewBooking() {
 
   return (
     <div className="p-6 xl:p-8">
+      <GovernanceBar
+        requiredPermission="deal.create"
+        context="maker"
+        contextNote="Submit booking → awaits CFO checker approval"
+        showPendingApprovals
+      />
+
+      {/* Limit warning banner */}
+      {limitWarning && (
+        <div className="mb-4 flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 px-4 py-3 text-sm text-amber-800">
+          <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+          <span>{limitWarning}</span>
+        </div>
+      )}
+
       <div className="mb-6">
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">
           Deal Capture
@@ -522,8 +580,13 @@ export function NewBooking() {
           </button>
           <button
             type="submit"
-            disabled={submitting}
-            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 disabled:opacity-70"
+            disabled={submitting || !canCreate}
+            title={
+              !canCreate
+                ? `${persona.role} does not have deal.create permission`
+                : undefined
+            }
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {submitting ? (
               <>

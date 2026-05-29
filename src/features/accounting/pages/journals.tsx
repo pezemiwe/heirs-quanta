@@ -7,6 +7,7 @@ import {
   type DataTableColumn,
 } from "../../../components/shared/data-table";
 import { RowDetailModal } from "../../../components/shared/row-detail-modal";
+import { GovernanceBar } from "../../../components/shared/governance-bar";
 import {
   BOOK_COMPUTED,
   fmtCompact,
@@ -147,6 +148,12 @@ export function Journals() {
 
   return (
     <div className="space-y-6 p-6">
+      <GovernanceBar
+        requiredPermission="journal.post"
+        context="maker"
+        contextNote="Post EIR journals to draft → CFO checker approval → SAP GL batch"
+        showPendingApprovals
+      />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
           EIR Journal Entries

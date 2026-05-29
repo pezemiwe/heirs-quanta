@@ -252,6 +252,7 @@ export function PortfolioPipeline() {
   const [draft, setDraft] = useState<Omit<Deal, "id">>(EMPTY_DRAFT);
   const [sortField, setSortField] = useState<keyof Deal>("stage");
   const [sortDir, setSortDir] = useState<1 | -1>(1);
+  const [deletingDeal, setDeletingDeal] = useState<Deal | null>(null);
 
   const sel = selected
     ? (deals.find((d) => d.id === selected.id) ?? null)
@@ -300,9 +301,15 @@ export function PortfolioPipeline() {
   };
 
   const removeDeal = (id: string) => {
-    if (!confirm("Remove this deal from pipeline?")) return;
-    setDeals((prev) => prev.filter((d) => d.id !== id));
+    const deal = deals.find((d) => d.id === id);
+    if (deal) setDeletingDeal(deal);
+  };
+
+  const confirmRemoveDeal = () => {
+    if (!deletingDeal) return;
+    setDeals((prev) => prev.filter((d) => d.id !== deletingDeal.id));
     setSelected(null);
+    setDeletingDeal(null);
   };
 
   const dealsByStage = (s: Stage) => filtered.filter((d) => d.stage === s);
@@ -860,6 +867,47 @@ export function PortfolioPipeline() {
         )}
       </Drawer>
 
+      {/* ── Remove Deal Confirmation Modal ───────────────────────── */}
+      {deletingDeal && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setDeletingDeal(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-red-50">
+              <Trash2 className="h-5 w-5 text-danger" />
+            </div>
+            <h3 className="mt-3 text-base font-semibold text-dark-gray">
+              Remove Deal
+            </h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Remove{" "}
+              <span className="font-medium text-dark-gray">
+                {deletingDeal.name}
+              </span>{" "}
+              from the pipeline? This cannot be undone.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setDeletingDeal(null)}
+                className="rounded-lg border border-border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmRemoveDeal}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
       {/* ── New Deal Drawer ──────────────────────────────────────── */}
       <Drawer
         isOpen={adding}
@@ -889,7 +937,9 @@ export function PortfolioPipeline() {
               className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red disabled:opacity-50"
             >
               {submittingDeal ? (
-                <><Loader2 className="h-4 w-4 animate-spin" /> Adding…</>
+                <>
+                  <Loader2 className="h-4 w-4 animate-spin" /> Adding…
+                </>
               ) : (
                 "Add to Pipeline"
               )}
