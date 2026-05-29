@@ -1,6 +1,6 @@
 export const CollapsedLogo = ({ size = 40 }: { size?: number }) => (
   <div
-    className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-[0_4px_14px_-4px_rgba(204,0,0,0.40)] ring-2 ring-primary/30"
+    className="inline-flex shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_4px_14px_-4px_rgba(204,0,0,0.40)] ring-2 ring-primary/30"
     style={{ width: size, height: size }}
   >
     <img
@@ -16,7 +16,7 @@ export const CollapsedLogo = ({ size = 40 }: { size?: number }) => (
 export const Logo = ({ collapsed = false }: { collapsed?: boolean }) => {
   if (collapsed) {
     return (
-      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-[0_4px_14px_-4px_rgba(204,0,0,0.30)] ring-1 ring-primary/20">
+      <div className="inline-flex h-10 w-10 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_4px_14px_-4px_rgba(204,0,0,0.30)] ring-1 ring-primary/20">
         <img
           src="/Heirs.png"
           alt="Heirs Holdings"
@@ -28,7 +28,7 @@ export const Logo = ({ collapsed = false }: { collapsed?: boolean }) => {
   }
   return (
     <div className="inline-flex items-center gap-3">
-      <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-xl bg-white shadow-[0_6px_18px_-4px_rgba(204,0,0,0.35)] ring-2 ring-primary/30">
+      <div className="inline-flex h-11 w-11 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white shadow-[0_6px_18px_-4px_rgba(204,0,0,0.35)] ring-2 ring-primary/30">
         <img
           src="/Heirs.png"
           alt="Heirs Holdings"

@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Bar,
   BarChart,
@@ -75,7 +75,7 @@ export function DurationRiskStressTest() {
   });
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-bold text-dark-gray">
@@ -86,18 +86,23 @@ export function DurationRiskStressTest() {
             for economic display only; FVOCI/FVTPL flow through OCI and P&amp;L.
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          {(["All", "AC", "FVOCI", "FVTPL"] as Group[]).map((g) => (
+        <div className="flex items-center gap-2 flex-wrap">
+          {[
+            { value: "All" as Group, label: "All" },
+            { value: "AC" as Group, label: "Amortised Cost" },
+            { value: "FVOCI" as Group, label: "Fair Value (OCI)" },
+            { value: "FVTPL" as Group, label: "Fair Value (P&L)" },
+          ].map(({ value, label }) => (
             <button
-              key={g}
-              onClick={() => setGroup(g)}
+              key={value}
+              onClick={() => setGroup(value)}
               className={`rounded-lg px-3 py-1.5 text-xs font-medium ${
-                group === g
+                group === value
                   ? "bg-primary text-white"
                   : "border border-border bg-surface text-gray-500 hover:bg-pale-red hover:text-primary"
               }`}
             >
-              {g}
+              {label}
             </button>
           ))}
         </div>
@@ -176,9 +181,9 @@ export function DurationRiskStressTest() {
                 <th className="px-4 py-2.5 text-right">Shock</th>
                 <th className="px-4 py-2.5 text-right">Total P&amp;L (NGN)</th>
                 <th className="px-4 py-2.5 text-right">% of Book</th>
-                <th className="px-4 py-2.5 text-right">AC</th>
-                <th className="px-4 py-2.5 text-right">FVOCI</th>
-                <th className="px-4 py-2.5 text-right">FVTPL</th>
+                <th className="px-4 py-2.5 text-right">Amortised Cost</th>
+                <th className="px-4 py-2.5 text-right">Fair Value (OCI)</th>
+                <th className="px-4 py-2.5 text-right">Fair Value (P&amp;L)</th>
               </tr>
             </thead>
             <tbody>
@@ -236,7 +241,7 @@ export function DurationRiskStressTest() {
 
       {/* heatmap */}
       <SectionCard
-        title="Chart 7 — Stress Test Heatmap: Top 30 Instruments × Rate Scenarios"
+        title="Chart 7 — Stress Test Heatmap: Top 30 Instruments — Rate Scenarios"
         description="P&L impact in NGN. Green = gain, red = loss. Colour intensity scales with absolute impact."
         noPadding
       >

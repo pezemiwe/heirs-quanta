@@ -87,7 +87,7 @@ const LIQ_COLS: DataTableColumn<LiqRow>[] = [
 
 export function IFRS7Disclosures() {
   return (
-    <div className="p-6 xl:p-8 space-y-8">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-8">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">
           Disclosures

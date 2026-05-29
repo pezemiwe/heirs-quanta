@@ -6,7 +6,7 @@ import {
 
 export function Disposals() {
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">
           Lifecycle

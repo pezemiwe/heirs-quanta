@@ -1,4 +1,4 @@
-﻿import {
+import {
   TrendingUp,
   TrendingDown,
   DollarSign,
@@ -104,7 +104,7 @@ export function PortfolioDashboard({ persona }: Props) {
   ];
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       {/* header */}
       <div className="flex items-start justify-between">
         <div>
@@ -165,7 +165,7 @@ export function PortfolioDashboard({ persona }: Props) {
               <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
               <YAxis
                 tick={{ fontSize: 10 }}
-                tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(0)}B`}
+                tickFormatter={(v: number) => `?${(v / 1e9).toFixed(0)}B`}
               />
               <Tooltip
                 formatter={

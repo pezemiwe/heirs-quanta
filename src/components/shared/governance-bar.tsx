@@ -64,11 +64,11 @@ export function GovernanceBar({
 
   return (
     <div
-      className={`mb-4 flex flex-wrap items-center justify-between gap-3 rounded-lg border px-4 py-2.5 text-sm ${
+      className={`mb-4 flex flex-col sm:flex-row sm:items-center justify-between gap-2 sm:gap-3 rounded-lg border px-3 py-2.5 sm:px-4 text-sm ${
         !canAct ? "border-amber-200 bg-amber-50/60" : "border-border bg-surface"
       }`}
     >
-      <div className="flex flex-wrap items-center gap-3">
+      <div className="flex flex-wrap items-center gap-2 sm:gap-3">
         {/* User pill */}
         <div className="flex items-center gap-2">
           <div className="flex h-7 w-7 items-center justify-center rounded-full bg-primary/10 text-xs font-bold text-primary">

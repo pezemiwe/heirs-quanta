@@ -15,7 +15,8 @@ export type ModuleId =
   | "performance"
   | "duration-risk"
   | "accounting"
-  | "reporting";
+  | "reporting"
+  | "governance";
 
 export type AccessLevel = "full" | "read-only" | "none";
 
@@ -31,6 +32,7 @@ const ALL_FULL: RoleMatrix = {
   "duration-risk": "full",
   accounting: "full",
   reporting: "full",
+  governance: "none",
 };
 
 const ALL_READ: RoleMatrix = {
@@ -43,6 +45,7 @@ const ALL_READ: RoleMatrix = {
   "duration-risk": "read-only",
   accounting: "read-only",
   reporting: "read-only",
+  governance: "none",
 };
 
 /**
@@ -67,6 +70,7 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
     "duration-risk": "full",
     accounting: "none",
     reporting: "full",
+    governance: "none",
   },
 
   /**
@@ -83,6 +87,7 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
     "duration-risk": "none",
     accounting: "none",
     reporting: "read-only",
+    governance: "none",
   },
 
   /**
@@ -100,6 +105,7 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
     "duration-risk": "full",
     accounting: "none",
     reporting: "read-only",
+    governance: "none",
   },
 
   /**
@@ -116,6 +122,7 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
     "duration-risk": "read-only",
     accounting: "read-only",
     reporting: "full",
+    governance: "none",
   },
 
   /**
@@ -123,6 +130,23 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
    * No write operations permitted anywhere.
    */
   "Internal Auditor": ALL_READ,
+
+  /**
+   * System Admin — exclusive access to Governance & Controls only.
+   * No access to financial analysis modules.
+   */
+  "System Admin": {
+    portfolio: "none",
+    "deal-capture": "none",
+    "market-data": "none",
+    valuation: "none",
+    ifrs9: "none",
+    performance: "none",
+    "duration-risk": "none",
+    accounting: "none",
+    reporting: "none",
+    governance: "full",
+  },
 };
 
 /** Returns the access level for a given role + module, defaulting to "none". */

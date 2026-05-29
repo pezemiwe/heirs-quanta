@@ -198,7 +198,7 @@ export function Approvals() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <GovernanceBar
         requiredPermission="deal.approve"
         context="checker"

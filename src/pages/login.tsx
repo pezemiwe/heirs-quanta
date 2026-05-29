@@ -63,6 +63,14 @@ const PERSONAS = [
     password: "Audit#Heirs2026",
     access: "Read-only audit trail",
   },
+  {
+    name: "Seun Adesanya",
+    role: "System Admin",
+    avatar: "SA",
+    email: "s.adesanya@heirsholdings.com",
+    password: "SysAdmin#Heirs2026",
+    access: "Governance & Controls",
+  },
 ];
 
 /* ── Login Page ──────────────────────────────────────────────── */
@@ -149,13 +157,14 @@ export function LoginPage() {
         <div className="relative z-10 flex h-full flex-col justify-between p-12 xl:p-16">
           {/* Logo */}
           <div className="flex items-center gap-3">
-            <img
-              src="/Heirs.png"
-              alt="Heirs Holdings"
-              className="h-10 w-10 object-contain"
-              style={{ filter: "brightness(0) invert(1) opacity(0.9)" }}
-              draggable={false}
-            />
+            <div className="flex h-14 w-14 shrink-0 items-center justify-center rounded-full bg-white shadow-[0_4px_16px_rgba(0,0,0,0.18)]">
+              <img
+                src="/Heirs.png"
+                alt="Heirs Holdings"
+                className="h-9 w-9 object-contain"
+                draggable={false}
+              />
+            </div>
             <div>
               <p className="text-base font-bold text-white">Heirs Quanta</p>
               <p
@@ -188,7 +197,7 @@ export function LoginPage() {
 
             <div className="space-y-3.5">
               {[
-                "Real-time loan book analytics & staging",
+                "Real-time investment portfolio analytics & staging",
                 "Automated IFRS 9 expected credit loss",
                 "IFRS 13 fair-value valuation engine",
                 "CBN regulatory reporting & audit trail",
@@ -227,7 +236,7 @@ export function LoginPage() {
       {/* ── Right panel (form) ───────────────────────────────── */}
       <div className="flex flex-1 flex-col bg-white">
         {/* Top bar */}
-        <div className="flex items-center justify-between border-b border-border px-8 py-4">
+        <div className="flex items-center justify-between border-b border-border px-4 py-3 sm:px-8 sm:py-4">
           <button
             onClick={onBack}
             className="flex items-center gap-1.5 text-sm font-medium text-dark-gray/50 transition-colors hover:text-dark-gray"
@@ -254,7 +263,7 @@ export function LoginPage() {
         </div>
 
         {/* Form area */}
-        <div className="flex flex-1 items-center justify-center px-8 py-12">
+        <div className="flex flex-1 items-center justify-center px-4 py-8 sm:px-8 sm:py-12">
           <div className="w-full max-w-100">
             {/* Heading */}
             <div className="mb-8">

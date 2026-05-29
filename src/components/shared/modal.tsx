@@ -20,10 +20,10 @@ type ModalProps = {
 };
 
 const sizeClasses: Record<ModalSize, string> = {
-  sm: "max-w-sm",
-  md: "max-w-lg",
-  lg: "max-w-2xl",
-  xl: "max-w-4xl",
+  sm: "sm:max-w-sm",
+  md: "sm:max-w-lg",
+  lg: "sm:max-w-2xl",
+  xl: "sm:max-w-4xl",
 };
 
 export const Modal = ({
@@ -59,7 +59,7 @@ export const Modal = ({
       role="dialog"
       aria-modal="true"
       aria-labelledby={title ? "modal-title" : undefined}
-      className="fixed inset-0 z-50 flex items-center justify-center p-4"
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center sm:p-4"
     >
       <div
         aria-hidden="true"
@@ -68,12 +68,12 @@ export const Modal = ({
       />
       <div
         className={cn(
-          "relative z-10 flex w-full flex-col rounded-2xl border border-border bg-surface shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)] max-h-[calc(100vh-3rem)] overflow-hidden",
+          "relative z-10 flex w-full flex-col border border-border bg-surface shadow-[0_20px_60px_-20px_rgba(0,0,0,0.35)] max-h-[92dvh] overflow-hidden rounded-t-2xl sm:rounded-2xl",
           sizeClasses[size],
         )}
       >
         {(title || description) && (
-          <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-6 py-5">
+          <div className="flex shrink-0 items-start justify-between gap-4 border-b border-border px-4 py-4 sm:px-6 sm:py-5">
             <div>
               {title && (
                 <h2
@@ -97,9 +97,11 @@ export const Modal = ({
             </button>
           </div>
         )}
-        <div className="flex-1 overflow-y-auto px-6 py-5">{children}</div>
+        <div className="flex-1 overflow-y-auto px-4 py-4 sm:px-6 sm:py-5">
+          {children}
+        </div>
         {footer && (
-          <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border px-6 py-4">
+          <div className="flex shrink-0 flex-wrap items-center justify-end gap-3 border-t border-border px-4 py-3 sm:px-6 sm:py-4">
             {footer}
           </div>
         )}

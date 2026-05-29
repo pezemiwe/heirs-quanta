@@ -343,7 +343,7 @@ export function PortfolioPipeline() {
     ) : null;
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       {/* ── Header ─────────────────────────────────────────────── */}
       <div className="flex flex-wrap items-start justify-between gap-4">
         <div>
@@ -621,8 +621,8 @@ export function PortfolioPipeline() {
 
       {/* ── List View ────────────────────────────────────────────── */}
       {view === "list" && (
-        <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden">
-          <table className="w-full text-sm">
+        <div className="rounded-xl border border-border bg-surface shadow-sm overflow-hidden overflow-x-auto">
+          <table className="w-full min-w-[700px] text-sm">
             <thead>
               <tr className="border-b border-border bg-surface-muted">
                 {(
@@ -641,7 +641,7 @@ export function PortfolioPipeline() {
                   <th
                     key={col.field}
                     onClick={() => toggleSort(col.field)}
-                    className="px-4 py-3 text-left text-xs font-semibold text-dark-gray/50 uppercase tracking-wider cursor-pointer hover:text-dark-gray select-none"
+                    className="px-3 py-2.5 sm:px-4 sm:py-3 text-left text-xs font-semibold text-dark-gray/50 uppercase tracking-wider cursor-pointer hover:text-dark-gray select-none whitespace-nowrap"
                   >
                     <span className="flex items-center gap-1">
                       {col.label}
@@ -649,7 +649,7 @@ export function PortfolioPipeline() {
                     </span>
                   </th>
                 ))}
-                <th className="px-4 py-3 w-10" />
+                <th className="px-3 py-2.5 w-10" />
               </tr>
             </thead>
             <tbody>
@@ -665,20 +665,20 @@ export function PortfolioPipeline() {
                       i % 2 === 0 ? "bg-white" : "bg-surface-muted/50"
                     } ${isActive ? "bg-pale-red/20" : "hover:bg-pale-red/10"}`}
                   >
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                       <p className="font-semibold text-dark-gray text-xs">
                         {deal.name}
                       </p>
                       <p className="text-xs text-dark-gray/40">{deal.id}</p>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium ${SECTOR_COLORS[deal.sector] ?? "bg-gray-100 text-gray-500"}`}
                       >
                         {deal.sector}
                       </span>
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-semibold ${cfg.bg} ${cfg.label}`}
                       >
@@ -694,7 +694,7 @@ export function PortfolioPipeline() {
                     <td className="px-4 py-3 text-xs font-semibold text-dark-gray">
                       {fmtSize(deal.size, deal.currency)}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                       <span
                         className={`rounded-full px-2 py-0.5 text-xs font-medium capitalize ${pc.badge}`}
                       >
@@ -704,7 +704,7 @@ export function PortfolioPipeline() {
                     <td className="px-4 py-3 text-xs text-dark-gray/60">
                       {deal.targetClose || "—"}
                     </td>
-                    <td className="px-4 py-3">
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                       <div className="flex items-center gap-1.5">
                         <span className="flex h-6 w-6 items-center justify-center rounded-full bg-primary/10 text-[10px] font-bold text-primary">
                           {initials(deal.lead || "?")}
@@ -714,7 +714,7 @@ export function PortfolioPipeline() {
                         </span>
                       </div>
                     </td>
-                    <td className="px-4 py-3" />
+                    <td className="px-3 py-2.5 sm:px-4 sm:py-3" />
                   </tr>
                 );
               })}
@@ -874,7 +874,7 @@ export function PortfolioPipeline() {
           onClick={() => setDeletingDeal(null)}
         >
           <div
-            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+            className="mx-4 w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
             onClick={(e) => e.stopPropagation()}
           >
             <div className="mb-1 flex h-10 w-10 items-center justify-center rounded-full bg-red-50">

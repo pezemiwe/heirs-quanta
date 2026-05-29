@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import { useState, useMemo } from "react";
 import { Download, Search, Filter } from "lucide-react";
 import { SectionCard } from "../../../components/shared/section-card";
@@ -51,8 +52,40 @@ export function AuditLog() {
   const warningCount = auditLog.filter((e) => e.status === "warning").length;
   const blockedCount = auditLog.filter((e) => e.status === "blocked").length;
 
+  const exportXlsx = () => {
+    const headers = [
+      "ID",
+      "Timestamp",
+      "User",
+      "Role",
+      "Module",
+      "Action",
+      "Detail",
+      "Status",
+      "IP",
+    ];
+    const data = filtered.map((e) => [
+      e.id,
+      e.timestamp,
+      e.user,
+      e.role,
+      e.module,
+      e.action,
+      e.detail,
+      e.status,
+      e.ip,
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Audit Log");
+    XLSX.writeFile(
+      wb,
+      `audit-log-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
+  };
+
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div className="flex items-start justify-between gap-4 flex-wrap">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
@@ -63,7 +96,10 @@ export function AuditLog() {
             {auditLog.length} total entries
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray hover:bg-pale-red hover:text-primary transition-colors">
+        <button
+          onClick={exportXlsx}
+          className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray hover:bg-pale-red hover:text-primary transition-colors"
+        >
           <Download className="h-4 w-4" />
           Export CSV
         </button>

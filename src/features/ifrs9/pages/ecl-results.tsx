@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import { Download } from "lucide-react";
 import { SectionCard } from "../../../components/shared/section-card";
 import { Button } from "../../../components/shared/button";
@@ -15,47 +16,22 @@ import type {
   SpecificationSummary,
 } from "../engine/types";
 
-function exportCSV(rows: SecurityComputed[]) {
+function exportXlsx(rows: SecurityComputed[]) {
   const headers = [
-    "SN",
-    "Counterparty",
-    "Specification",
-    "Currency",
-    "Carrying LCY",
-    "Rating Eq.",
-    "Final Stage",
-    "TTM (months)",
-    "EAD[0]",
-    "LGD[0]",
-    "ECL",
-    "Coverage",
+    "SN", "Counterparty", "Specification", "Currency",
+    "Carrying LCY", "Rating Eq.", "Final Stage", "TTM (months)",
+    "EAD[0]", "LGD[0]", "ECL", "Coverage",
   ];
-  const lines = [headers.join(",")];
-  for (const r of rows) {
-    lines.push(
-      [
-        r.sn,
-        `"${r.counterparty.replace(/"/g, '""')}"`,
-        r.assetSpecification,
-        r.currency,
-        r.carryingAmountLcy.toFixed(2),
-        r.ratingEquivalent,
-        r.finalStage,
-        r.ttm,
-        (r.ead[0] ?? r.carryingAmountLcy).toFixed(2),
-        (r.lgd[0] ?? 0).toFixed(4),
-        r.ecl.toFixed(2),
-        r.coverageRatio.toFixed(6),
-      ].join(","),
-    );
-  }
-  const blob = new Blob([lines.join("\n")], { type: "text/csv" });
-  const url = URL.createObjectURL(blob);
-  const a = document.createElement("a");
-  a.href = url;
-  a.download = "ifrs9-ecl-results.csv";
-  a.click();
-  URL.revokeObjectURL(url);
+  const data = rows.map((r) => [
+    r.sn, r.counterparty, r.assetSpecification, r.currency,
+    +r.carryingAmountLcy.toFixed(2), r.ratingEquivalent, r.finalStage,
+    r.ttm, +(r.ead[0] ?? r.carryingAmountLcy).toFixed(2),
+    +(r.lgd[0] ?? 0).toFixed(4), +r.ecl.toFixed(2), +r.coverageRatio.toFixed(6),
+  ]);
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "ECL Results");
+  XLSX.writeFile(wb, "ifrs9-ecl-results.xlsx");
 }
 
 const STAGE_LABEL: Record<Stage | "TOTAL", string> = {
@@ -185,7 +161,7 @@ export function IFRS9ECLResults() {
   ];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
@@ -200,9 +176,9 @@ export function IFRS9ECLResults() {
           variant="outline"
           size="sm"
           leftIcon={<Download className="h-3.5 w-3.5" />}
-          onClick={() => exportCSV(result.rows)}
+          onClick={() => exportXlsx(result.rows)}
         >
-          Export CSV
+          Export Excel
         </Button>
       </div>
 

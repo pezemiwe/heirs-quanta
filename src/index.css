@@ -27,6 +27,9 @@
   --color-focus: #cc0000;
   --color-success: #0f766e;
   --color-danger: #b91c1c;
+
+  /* Extra-small breakpoint for 2-column mobile grids */
+  --breakpoint-xs: 480px;
 }
 
 @custom-variant dark (&:where(.dark, .dark *));
