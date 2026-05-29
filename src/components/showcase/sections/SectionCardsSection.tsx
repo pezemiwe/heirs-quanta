@@ -19,7 +19,7 @@ export function SectionCardsSection() {
         }
       >
         <p className="text-sm text-dark-gray/55">
-          Card body content — tables, charts, or any other content.
+          Card body content tables, charts, or any other content.
         </p>
       </SectionCard>
       <SectionCard noPadding>
@@ -28,12 +28,12 @@ export function SectionCardsSection() {
           <code className="rounded bg-slate-100 px-1 text-xs font-mono">
             noPadding
           </code>{" "}
-          — useful for full-width table borders.
+          useful for full-width table borders.
         </div>
       </SectionCard>
       <SectionCard>
         <p className="text-sm text-dark-gray/55">
-          Card without header — just content.
+          Card without header just content.
         </p>
       </SectionCard>
     </S>

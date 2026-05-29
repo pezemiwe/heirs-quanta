@@ -45,12 +45,6 @@ const NAV: {
   group: string;
 }[] = [
   {
-    id: "data-manager",
-    label: "Data Manager",
-    icon: <Database className="h-4 w-4" />,
-    group: "data",
-  },
-  {
     id: "dashboard",
     label: "Dashboard",
     icon: <LayoutDashboard className="h-4 w-4" />,
@@ -93,6 +87,12 @@ const NAV: {
     group: "alm",
   },
   {
+    id: "data-manager",
+    label: "Data Manager",
+    icon: <Database className="h-4 w-4" />,
+    group: "alm",
+  },
+  {
     id: "liabilities",
     label: "Liabilities",
     icon: <Activity className="h-4 w-4" />,
@@ -101,7 +101,6 @@ const NAV: {
 ];
 
 const GROUPS: Record<string, string> = {
-  data: "Data",
   risk: "Interest Rate Risk",
   analytics: "Analytics",
   alm: "ALM",
@@ -181,7 +180,9 @@ export function DurationRiskModule() {
                     {groupLabel}
                   </p>
                   {items.map((item) => {
-                    const active = page === item.id;
+                    const active =
+                      page === item.id ||
+                      (page === "asset-detail" && item.id === "duration-table");
                     return (
                       <button
                         key={item.id}

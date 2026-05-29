@@ -1,9 +1,12 @@
-import { Search, Download, SlidersHorizontal } from "lucide-react";
-import { useState, useMemo } from "react";
+import { Search, Download, SlidersHorizontal, Plus, Loader2 } from "lucide-react";
+import { useState, useMemo, useEffect } from "react";
 import {
   DataTable,
   type DataTableColumn,
 } from "../../../components/shared/data-table";
+import { AcronymTip } from "../../../components/shared/acronym-tip";
+import { Drawer } from "../../../components/shared/drawer";
+import { Button } from "../../../components/shared/button";
 import {
   BOOK_INSTRUMENTS,
   BOOK_COMPUTED,
@@ -11,6 +14,42 @@ import {
   fmtPct,
   fmtDate,
 } from "../../../features/portfolio/engine/book-compute";
+import type { Instrument } from "../../../features/valuation/engine/types";
+
+const CUSTOM_KEY = "portfolio_custom_instruments";
+
+const INSTRUMENT_TYPES = [
+  "FGN Bond", "Corporate Bond", "State Bond", "Eurobond",
+  "T-Bill", "Commercial Paper", "Promissory Note",
+  "Bank Placement", "Fixed Deposit", "Mutual Fund", "Equity",
+] as const;
+
+const BLANK: Omit<Instrument, "id"> = {
+  name: "",
+  instrumentType: "FGN Bond",
+  issuer: "",
+  sector: "",
+  classification: "AC",
+  ifrs13Level: "L1",
+  currency: "NGN",
+  faceValue: 0,
+  purchasePrice: 0,
+  purchaseDate: new Date().toISOString().slice(0, 10),
+  maturityDate: "",
+  couponRate: 0,
+  couponFrequency: "Semi",
+  status: "Active",
+  impairmentStage: "Stage 1",
+};
+
+function loadCustom(): Instrument[] {
+  try {
+    const raw = localStorage.getItem(CUSTOM_KEY);
+    return raw ? (JSON.parse(raw) as Instrument[]) : [];
+  } catch {
+    return [];
+  }
+}
 
 type HoldingRow = {
   id: string;
@@ -34,7 +73,7 @@ const valMap = new Map(
   BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
 );
 
-const ALL_ROWS: HoldingRow[] = BOOK_INSTRUMENTS.map((inst) => {
+function instrumentToRow(inst: Instrument): HoldingRow {
   const v = valMap.get(inst.id);
   return {
     id: inst.id,
@@ -52,11 +91,13 @@ const ALL_ROWS: HoldingRow[] = BOOK_INSTRUMENTS.map((inst) => {
     stage: inst.impairmentStage ?? "N/A",
     status: inst.status as string,
   } as HoldingRow;
-});
+}
+
+const STATIC_ROWS: HoldingRow[] = BOOK_INSTRUMENTS.map(instrumentToRow);
 
 const ALL_TYPES = [
   "All",
-  ...Array.from(new Set(BOOK_INSTRUMENTS.map((i) => i.instrumentType))),
+  ...INSTRUMENT_TYPES,
 ].sort();
 const ALL_CLASSIFICATIONS = ["All", "AC", "FVOCI", "FVTPL"];
 
@@ -89,17 +130,19 @@ const COLUMNS: DataTableColumn<HoldingRow>[] = [
   },
   {
     key: "classification",
-    header: "Class",
+    header: "Classification",
     render: (r) => (
-      <span
-        className="rounded-full px-2 py-0.5 text-xs font-semibold"
-        style={{
-          background: CLASS_STYLE[r.classification]?.bg,
-          color: CLASS_STYLE[r.classification]?.text,
-        }}
-      >
-        {r.classification}
-      </span>
+      <AcronymTip term={r.classification}>
+        <span
+          className="rounded-full px-2 py-0.5 text-xs font-semibold"
+          style={{
+            background: CLASS_STYLE[r.classification]?.bg,
+            color: CLASS_STYLE[r.classification]?.text,
+          }}
+        >
+          {r.classification}
+        </span>
+      </AcronymTip>
     ),
   },
   {
@@ -136,7 +179,7 @@ const COLUMNS: DataTableColumn<HoldingRow>[] = [
   },
   {
     key: "eirPct",
-    header: "EIR",
+    header: <AcronymTip term="EIR" />,
     align: "right",
     render: (r) => (
       <span className="text-xs text-dark-gray/70">
@@ -180,6 +223,19 @@ export function PortfolioHoldings() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [classFilter, setClassFilter] = useState("All");
+  const [customInstruments, setCustomInstruments] = useState<Instrument[]>([]);
+  const [addOpen, setAddOpen] = useState(false);
+  const [form, setForm] = useState<Omit<Instrument, "id">>(BLANK);
+  const [saving, setSaving] = useState(false);
+
+  useEffect(() => {
+    setCustomInstruments(loadCustom());
+  }, []);
+
+  const ALL_ROWS = useMemo(
+    () => [...STATIC_ROWS, ...customInstruments.map(instrumentToRow)],
+    [customInstruments],
+  );
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
@@ -196,9 +252,40 @@ export function PortfolioHoldings() {
         return false;
       return true;
     });
-  }, [search, typeFilter, classFilter]);
+  }, [ALL_ROWS, search, typeFilter, classFilter]);
 
   const totalBookValue = filtered.reduce((s, r) => s + r.bookValueNGN, 0);
+
+  function handleSave() {
+    setSaving(true);
+    setTimeout(() => {
+      const newInst: Instrument = {
+        ...form,
+        id: `INV-${Date.now().toString(36).toUpperCase().slice(-5)}`,
+      };
+      const next = [...customInstruments, newInst];
+      setCustomInstruments(next);
+      try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      setSaving(false);
+      setAddOpen(false);
+      setForm(BLANK);
+    }, 500);
+  }
+
+  const formValid = form.name.trim() !== "" && form.issuer.trim() !== "" && form.faceValue > 0;
+
+  const Field = ({
+    label, hint, children,
+  }: { label: string; hint?: string; children: React.ReactNode }) => (
+    <div>
+      <label className="mb-1 block text-xs font-medium text-dark-gray">{label}</label>
+      {hint && <p className="mb-1 text-xs text-dark-gray/50">{hint}</p>}
+      {children}
+    </div>
+  );
+
+  const inp = "w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
+  const sel = inp;
 
   return (
     <div className="p-6 xl:p-8 space-y-6">
@@ -213,24 +300,33 @@ export function PortfolioHoldings() {
             </span>
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray/60 shadow-sm hover:border-primary hover:text-primary">
-          <Download className="h-4 w-4" /> Export
-        </button>
+        <div className="flex items-center gap-2">
+          <Button
+            variant="primary"
+            size="sm"
+            onClick={() => setAddOpen(true)}
+          >
+            <Plus className="h-3.5 w-3.5" /> Add Instrument
+          </Button>
+          <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray/60 shadow-sm hover:border-primary hover:text-primary">
+            <Download className="h-4 w-4" /> Export
+          </button>
+        </div>
       </div>
 
       {/* summary strip */}
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           {
-            label: "AC Instruments",
+            label: "Amortised Cost",
             value: ALL_ROWS.filter((r) => r.classification === "AC").length,
           },
           {
-            label: "FVOCI Instruments",
+            label: "Fair Value (OCI)",
             value: ALL_ROWS.filter((r) => r.classification === "FVOCI").length,
           },
           {
-            label: "FVTPL Instruments",
+            label: "Fair Value (P&L)",
             value: ALL_ROWS.filter((r) => r.classification === "FVTPL").length,
           },
           {
@@ -276,7 +372,17 @@ export function PortfolioHoldings() {
             className="rounded-lg border border-border bg-surface py-2 px-3 text-sm outline-none focus:border-primary"
           >
             {ALL_CLASSIFICATIONS.map((c) => (
-              <option key={c}>{c}</option>
+              <option key={c} value={c}>
+                {c === "All"
+                  ? "All Classifications"
+                  : c === "AC"
+                    ? "AC \u2014 Amortised Cost"
+                    : c === "FVOCI"
+                      ? "FVOCI \u2014 Fair Value (OCI)"
+                      : c === "FVTPL"
+                        ? "FVTPL \u2014 Fair Value (P&L)"
+                        : c}
+              </option>
             ))}
           </select>
         </div>
@@ -289,6 +395,140 @@ export function PortfolioHoldings() {
         pageSize={25}
         emptyMessage="No instruments match your filters"
       />
+
+      {/* ── Add Instrument Drawer ── */}
+      <Drawer
+        isOpen={addOpen}
+        onClose={() => { setAddOpen(false); setForm(BLANK); }}
+        title="Add Instrument"
+        description="Enter the instrument details. It will be saved locally and appear in Holdings."
+        size="lg"
+        footer={
+          <div className="flex justify-end gap-2">
+            <Button variant="ghost" size="sm" onClick={() => { setAddOpen(false); setForm(BLANK); }}>
+              Cancel
+            </Button>
+            <Button
+              variant="primary"
+              size="sm"
+              disabled={!formValid || saving}
+              onClick={handleSave}
+            >
+              {saving ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…</> : "Save Instrument"}
+            </Button>
+          </div>
+        }
+      >
+        <div className="space-y-5 pb-2">
+          {/* Section: Identification */}
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">Identification</p>
+            <div className="grid grid-cols-2 gap-3">
+              <div className="col-span-2">
+                <Field label="Instrument Name *">
+                  <input className={inp} placeholder="e.g. FGN Bond 14.55% 2030"
+                    value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+                </Field>
+              </div>
+              <Field label="Type *">
+                <select className={sel} value={form.instrumentType}
+                  onChange={(e) => setForm(f => ({ ...f, instrumentType: e.target.value as Instrument["instrumentType"] }))}>
+                  {INSTRUMENT_TYPES.map(t => <option key={t}>{t}</option>)}
+                </select>
+              </Field>
+              <Field label="Status">
+                <select className={sel} value={form.status}
+                  onChange={(e) => setForm(f => ({ ...f, status: e.target.value as Instrument["status"] }))}>
+                  <option>Active</option><option>Matured</option><option>Sold</option>
+                </select>
+              </Field>
+              <Field label="Issuer *">
+                <input className={inp} placeholder="e.g. FGN, Access Bank"
+                  value={form.issuer} onChange={(e) => setForm(f => ({ ...f, issuer: e.target.value }))} />
+              </Field>
+              <Field label="Sector">
+                <input className={inp} placeholder="e.g. Sovereign, Banking"
+                  value={form.sector} onChange={(e) => setForm(f => ({ ...f, sector: e.target.value }))} />
+              </Field>
+            </div>
+          </div>
+
+          {/* Section: Classification */}
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">Classification &amp; Risk</p>
+            <div className="grid grid-cols-3 gap-3">
+              <Field label="IFRS 9 Classification *">
+                <select className={sel} value={form.classification}
+                  onChange={(e) => setForm(f => ({ ...f, classification: e.target.value as Instrument["classification"] }))}>
+                  <option value="AC">AC — Amortised Cost</option>
+                  <option value="FVOCI">FVOCI — Fair Value (OCI)</option>
+                  <option value="FVTPL">FVTPL — Fair Value (P&L)</option>
+                </select>
+              </Field>
+              <Field label="IFRS 13 Level">
+                <select className={sel} value={form.ifrs13Level}
+                  onChange={(e) => setForm(f => ({ ...f, ifrs13Level: e.target.value as Instrument["ifrs13Level"] }))}>
+                  <option>L1</option><option>L2</option><option>L3</option>
+                </select>
+              </Field>
+              <Field label="Impairment Stage">
+                <select className={sel} value={form.impairmentStage ?? "Stage 1"}
+                  onChange={(e) => setForm(f => ({ ...f, impairmentStage: e.target.value as Instrument["impairmentStage"] }))}>
+                  <option>Stage 1</option><option>Stage 2</option><option>Stage 3</option><option>N/A</option>
+                </select>
+              </Field>
+            </div>
+          </div>
+
+          {/* Section: Economics */}
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">Economics</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Currency">
+                <select className={sel} value={form.currency}
+                  onChange={(e) => setForm(f => ({ ...f, currency: e.target.value as Instrument["currency"] }))}>
+                  <option>NGN</option><option>USD</option><option>GBP</option><option>EUR</option>
+                </select>
+              </Field>
+              <Field label="Face Value *" hint="In instrument currency (absolute units)">
+                <input type="number" min={0} className={inp} placeholder="1000000000"
+                  value={form.faceValue || ""} onChange={(e) => setForm(f => ({ ...f, faceValue: Number(e.target.value) }))} />
+              </Field>
+              <Field label="Purchase Price" hint="In instrument currency">
+                <input type="number" min={0} className={inp} placeholder="Same as face value if at par"
+                  value={form.purchasePrice || ""} onChange={(e) => setForm(f => ({ ...f, purchasePrice: Number(e.target.value) }))} />
+              </Field>
+              <Field label="Coupon Rate (%)" hint="Enter as percentage e.g. 14.55">
+                <input type="number" min={0} max={100} step={0.01} className={inp} placeholder="0 for zero-coupon"
+                  value={form.couponRate ? (form.couponRate * 100).toFixed(4) : ""}
+                  onChange={(e) => setForm(f => ({ ...f, couponRate: Number(e.target.value) / 100 }))} />
+              </Field>
+              <Field label="Coupon Frequency">
+                <select className={sel} value={form.couponFrequency}
+                  onChange={(e) => setForm(f => ({ ...f, couponFrequency: e.target.value as Instrument["couponFrequency"] }))}>
+                  <option>Annual</option><option>Semi</option><option>Quarterly</option>
+                  <option>Monthly</option><option>Zero</option><option>N/A</option>
+                </select>
+              </Field>
+            </div>
+          </div>
+
+          {/* Section: Dates */}
+          <div>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">Dates</p>
+            <div className="grid grid-cols-2 gap-3">
+              <Field label="Purchase Date *">
+                <input type="date" className={inp}
+                  value={form.purchaseDate} onChange={(e) => setForm(f => ({ ...f, purchaseDate: e.target.value }))} />
+              </Field>
+              <Field label="Maturity Date">
+                <input type="date" className={inp}
+                  value={form.maturityDate} onChange={(e) => setForm(f => ({ ...f, maturityDate: e.target.value }))} />
+              </Field>
+            </div>
+          </div>
+        </div>
+      </Drawer>
     </div>
   );
 }

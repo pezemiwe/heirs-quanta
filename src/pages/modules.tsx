@@ -39,7 +39,6 @@ const MODULES = [
     ],
     accent: "#CC0000",
     lightBg: "#FFF5F5",
-    tag: "Live",
   },
   {
     id: "deal-capture",
@@ -48,7 +47,7 @@ const MODULES = [
     title: "Deal Capture & Trade Management",
     subtitle: "End-to-end trade lifecycle & settlement workflow",
     description:
-      "Capture, validate, and manage the full lifecycle of investment trades — from order entry and counterparty confirmation through settlement and post-trade reconciliation — with real-time blotter and STP support.",
+      "Capture, validate, and manage the full lifecycle of investment trades from order entry and counterparty confirmation through settlement and post-trade reconciliation with real-time blotter and STP support.",
     features: [
       { icon: Database, label: "Order entry & pre-trade validation" },
       { icon: Activity, label: "Counterparty & broker management" },
@@ -58,7 +57,6 @@ const MODULES = [
     ],
     accent: "#B30000",
     lightBg: "#FDF0F0",
-    tag: "Beta",
   },
   {
     id: "market-data",
@@ -67,7 +65,7 @@ const MODULES = [
     title: "Market Data & Trend Analytics",
     subtitle: "Live prices, yields, indices & macro signals",
     description:
-      "Aggregate and normalise market data across asset classes — government bonds, equities, FX, and money market rates — and overlay macro-economic trend signals to inform investment decisions.",
+      "Aggregate and normalise market data across asset classes government bonds, equities, FX, and money market rates and overlay macro-economic trend signals to inform investment decisions.",
     features: [
       { icon: TrendingUp, label: "Government bond yield curve construction" },
       { icon: Activity, label: "Equity price & index feeds" },
@@ -77,7 +75,6 @@ const MODULES = [
     ],
     accent: "#1A6B8A",
     lightBg: "#EFF7FA",
-    tag: "Live",
   },
   {
     id: "valuation",
@@ -86,7 +83,7 @@ const MODULES = [
     title: "Valuation Engine",
     subtitle: "Fair value & investment instrument valuation",
     description:
-      "Compute fair values across the investment portfolio — bonds, equities, mutual funds and money market instruments — using industry-standard models with IFRS 13 hierarchy disclosures.",
+      "Compute fair values across the investment portfolio bonds, equities, mutual funds and money market instruments using industry-standard models with IFRS 13 hierarchy disclosures.",
     features: [
       { icon: Calculator, label: "Discounted cash flow (DCF)" },
       { icon: Activity, label: "Yield curve & benchmark feeds" },
@@ -96,7 +93,6 @@ const MODULES = [
     ],
     accent: "#5C0000",
     lightBg: "#F0EDED",
-    tag: "Live",
   },
   {
     id: "ifrs9",
@@ -105,7 +101,7 @@ const MODULES = [
     title: "IFRS 9 — Expected Credit Loss",
     subtitle: "Automated ECL computation aligned to CBN guidelines",
     description:
-      "Automate the full IFRS 9 impairment lifecycle — from SICR detection and stage allocation through PD/LGD/EAD parameterisation to ECL charge computation aligned with CBN prudential guidelines.",
+      "Automate the full IFRS 9 impairment lifecycle from SICR detection and stage allocation through PD/LGD/EAD parameterisation to ECL charge computation aligned with CBN prudential guidelines.",
     features: [
       { icon: AlertTriangle, label: "Automated SICR detection & staging" },
       { icon: Calculator, label: "PD · LGD · EAD parameters" },
@@ -115,7 +111,6 @@ const MODULES = [
     ],
     accent: "#800000",
     lightBg: "#F5F0F0",
-    tag: "Live",
   },
   {
     id: "performance",
@@ -134,7 +129,6 @@ const MODULES = [
     ],
     accent: "#1A7A4A",
     lightBg: "#EFF8F3",
-    tag: "Beta",
   },
   {
     id: "duration-risk",
@@ -143,7 +137,7 @@ const MODULES = [
     title: "Duration & Risk Analytics",
     subtitle: "Interest rate sensitivity, VaR & stress testing",
     description:
-      "Quantify and manage portfolio risk exposures — duration, convexity, value-at-risk, and credit spread sensitivity — and run stress scenarios across interest rate and FX shock assumptions.",
+      "Quantify and manage portfolio risk exposures duration, convexity, value-at-risk, and credit spread sensitivity and run stress scenarios across interest rate and FX shock assumptions.",
     features: [
       { icon: Calculator, label: "Modified duration & convexity" },
       { icon: Activity, label: "DV01 & PV01 sensitivity measures" },
@@ -153,7 +147,6 @@ const MODULES = [
     ],
     accent: "#3A3A6A",
     lightBg: "#F0F0F8",
-    tag: "Coming Soon",
   },
   {
     id: "accounting",
@@ -162,7 +155,7 @@ const MODULES = [
     title: "Accounting & GL Integration",
     subtitle: "Automated journal entries & general ledger sync",
     description:
-      "Generate IFRS-compliant accounting entries for all investment transactions — purchases, disposals, accruals, fair value adjustments, and impairment charges — and sync directly to the general ledger.",
+      "Generate IFRS-compliant accounting entries for all investment transactions purchases, disposals, accruals, fair value adjustments, and impairment charges — and sync directly to the general ledger.",
     features: [
       { icon: FileText, label: "IFRS-compliant journal entry generation" },
       { icon: Calculator, label: "Fair value & amortised cost accounting" },
@@ -172,7 +165,6 @@ const MODULES = [
     ],
     accent: "#7A5A1A",
     lightBg: "#FAF5EF",
-    tag: "Beta",
   },
   {
     id: "reporting",
@@ -181,7 +173,7 @@ const MODULES = [
     title: "Reporting & Dashboard",
     subtitle: "Board, ALCO & regulatory reporting suite",
     description:
-      "Generate Investment Committee packs, ALCO reports, CBN/SEC regulatory submissions, and interactive management dashboards — all from a single reporting hub with scheduled distribution.",
+      "Generate Investment Committee packs, ALCO reports, CBN/SEC regulatory submissions, and interactive management dashboards all from a single reporting hub with scheduled distribution.",
     features: [
       { icon: FileText, label: "Investment Committee report packs" },
       { icon: PieChart, label: "ALCO & board-level dashboards" },
@@ -191,7 +183,6 @@ const MODULES = [
     ],
     accent: "#4A4A8A",
     lightBg: "#F0F0F8",
-    tag: "Beta",
   },
 ];
 
@@ -315,13 +306,6 @@ export function ModulesPage() {
                       }}
                     />
                     <div className="relative">
-                      {/* Tag */}
-                      <span
-                        className="mb-4 inline-block rounded-full px-2.5 py-1 text-[10px] font-bold uppercase tracking-wider text-white"
-                        style={{ background: m.accent }}
-                      >
-                        {m.tag}
-                      </span>
 
                       {/* Icon */}
                       <div

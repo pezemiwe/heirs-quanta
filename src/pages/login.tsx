@@ -183,7 +183,7 @@ export function LoginPage() {
               style={{ color: "rgba(255,255,255,0.58)" }}
             >
               Portfolio management, IFRS 9 & ECL computation, and fair-value
-              valuation — unified in one audit-ready platform.
+              valuation unified in one audit-ready platform.
             </p>
 
             <div className="space-y-3.5">

@@ -35,13 +35,13 @@ export function MarketDataDashboard() {
   const { state, asOf } = useMarketData();
   const { snapshot, history } = state;
 
-  const usdngn = snapshot.fx.find((f) => f.pair === "USDNGN")!;
-  const usdngnHist = history.fx.map((d) => ({
+  const usdNgn = snapshot.fx.find((f) => f.pair === "USD-NGN")!;
+  const usdNgnHist = history.fx.map((d) => ({
     date: fmtShortDate(d.date),
-    rate: d.rates.USDNGN,
+    rate: d.rates["USD-NGN"],
   }));
-  const usdngnPrev = history.fx[0].rates.USDNGN;
-  const fxChange = ((usdngn.rate - usdngnPrev) / usdngnPrev) * 100;
+  const usdNgnPrev = history.fx[0].rates["USD-NGN"];
+  const fxChange = ((usdNgn.rate - usdNgnPrev) / usdNgnPrev) * 100;
 
   const ten = snapshot.ngnCurve.find((p) => p.tenor === 10)!;
   const tenPrev = history.ngnCurve[0].yields[10];
@@ -74,7 +74,7 @@ export function MarketDataDashboard() {
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard
           title="USD/NGN"
-          value={fmtFx(usdngn.rate)}
+          value={fmtFx(usdNgn.rate)}
           subtitle={`90-day Δ ${fxChange >= 0 ? "+" : ""}${fxChange.toFixed(2)}%`}
           icon={<Coins className="h-4 w-4" />}
           variant="highlight"
@@ -158,12 +158,12 @@ export function MarketDataDashboard() {
 
         <SectionCard
           title="USD/NGN 90-day"
-          description={`Latest: ₦${fmtFx(usdngn.rate)} per USD`}
+          description={`Latest: ₦${fmtFx(usdNgn.rate)} per USD`}
         >
           <div className="h-72">
             <ResponsiveContainer>
               <AreaChart
-                data={usdngnHist}
+                data={usdNgnHist}
                 margin={{ left: 4, right: 12, top: 8 }}
               >
                 <defs>
@@ -184,7 +184,7 @@ export function MarketDataDashboard() {
                 <XAxis
                   dataKey="date"
                   tick={{ fontSize: 11 }}
-                  interval={Math.ceil(usdngnHist.length / 8)}
+                  interval={Math.ceil(usdNgnHist.length / 8)}
                 />
                 <YAxis
                   tick={{ fontSize: 11 }}

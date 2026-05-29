@@ -8,7 +8,7 @@ const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 export type DataTableColumn<T> = {
   key: keyof T | string;
-  header: string;
+  header: ReactNode;
   width?: string;
   render?: (row: T, index: number) => ReactNode;
   align?: "left" | "center" | "right";
@@ -24,6 +24,8 @@ type DataTableProps<T> = {
   striped?: boolean;
   className?: string;
   pageSize?: number;
+  onRowClick?: (row: T) => void;
+  rowClassName?: (row: T) => string;
 };
 
 export const DataTable = <T extends Record<string, unknown>>({
@@ -36,8 +38,18 @@ export const DataTable = <T extends Record<string, unknown>>({
   striped = true,
   className,
   pageSize,
+  onRowClick,
+  rowClassName,
 }: DataTableProps<T>) => {
   const [page, setPage] = useState(1);
+  const [mounted, setMounted] = useState(false);
+
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 800);
+    return () => clearTimeout(t);
+  }, []);
+
+  const showSkeleton = loading || !mounted;
 
   // Reset to page 1 when data changes
   useEffect(() => {
@@ -94,7 +106,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                 key={String(col.key)}
                 style={col.width ? { width: col.width } : undefined}
                 className={cn(
-                  "border-b border-border bg-deep-red px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white first:rounded-tl-xl last:rounded-tr-xl",
+                  "border-b border-border bg-deep-red px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white first:rounded-tl-xl last:rounded-tr-xl whitespace-nowrap",
                   alignCls[col.align ?? "left"],
                 )}
               >
@@ -104,7 +116,7 @@ export const DataTable = <T extends Record<string, unknown>>({
           </tr>
         </thead>
         <tbody>
-          {loading ? (
+          {showSkeleton ? (
             Array.from({ length: 5 }).map((_, i) => (
               <tr key={i}>
                 <td colSpan={columns.length} className="px-4 py-3">
@@ -127,16 +139,19 @@ export const DataTable = <T extends Record<string, unknown>>({
             pagedData.map((row, i) => (
               <tr
                 key={keyExtractor(row, (page - 1) * (pageSize ?? 0) + i)}
+                onClick={onRowClick ? () => onRowClick(row) : undefined}
                 className={cn(
                   "border-b border-border last:border-0 transition-colors hover:bg-pale-red/40",
                   striped && i % 2 !== 0 && "bg-[#F8F8F8]",
+                  onRowClick && "cursor-pointer",
+                  rowClassName?.(row),
                 )}
               >
                 {columns.map((col) => (
                   <td
                     key={String(col.key)}
                     className={cn(
-                      "px-4 py-3 text-dark-gray/80",
+                      "px-4 py-3 text-dark-gray/80 whitespace-nowrap",
                       alignCls[col.align ?? "left"],
                     )}
                   >

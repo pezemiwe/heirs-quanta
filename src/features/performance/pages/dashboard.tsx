@@ -34,9 +34,9 @@ const COLORS = [
 ];
 
 function fmtAxis(v: number) {
-  if (v >= 1e9) return `â‚¦${(v / 1e9).toFixed(1)}B`;
-  if (v >= 1e6) return `â‚¦${(v / 1e6).toFixed(0)}M`;
-  return `â‚¦${v.toFixed(0)}`;
+  if (v >= 1e9) return `₦${(v / 1e9).toFixed(1)}B`;
+  if (v >= 1e6) return `₦${(v / 1e6).toFixed(0)}M`;
+  return `₦${v.toFixed(0)}`;
 }
 
 export function PerformanceDashboard() {
@@ -91,7 +91,7 @@ export function PerformanceDashboard() {
           Performance Dashboard
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          Portfolio Management book Â· {BOOK_INSTRUMENTS.length} instruments Â·
+          Portfolio Management book · {BOOK_INSTRUMENTS.length} instruments ·
           Valuation date 28 May 2026
         </p>
       </div>
@@ -157,7 +157,7 @@ export function PerformanceDashboard() {
                     </span>
                   </span>
                   <span className="text-xs font-medium text-dark-gray/70">
-                    {fmtCompact(b.bsValueNGN)} Â·{" "}
+                    {fmtCompact(b.bsValueNGN)}{" "}
                     {fmtPct(b.bsValueNGN / totals.totalBSValueNGN)}
                   </span>
                 </div>

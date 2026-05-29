@@ -98,7 +98,7 @@ export function DurationRiskALMGap() {
         {positiveGap ? (
           <p>
             <strong>Positive duration gap.</strong> Assets are longer than
-            liabilities — a 100 bp rate rise would reduce equity by
+            liabilities a 100 bp rate rise would reduce equity by
             approximately{" "}
             <span className="font-mono">
               {fmtCompactNGN(-alm.dv01Gap * 100)}

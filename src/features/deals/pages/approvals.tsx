@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { AlertTriangle } from "lucide-react";
+import { useState, useMemo } from "react";
+import { AlertTriangle, CheckCircle, XCircle } from "lucide-react";
 import {
   DataTable,
   type DataTableColumn,
@@ -37,6 +37,13 @@ const STAGE_REASON: Record<string, string> = {
 };
 
 export function Approvals() {
+  const [decisions, setDecisions] = useState<
+    Record<string, "approved" | "rejected">
+  >({});
+
+  const decide = (id: string, decision: "approved" | "rejected") =>
+    setDecisions((prev) => ({ ...prev, [id]: decision }));
+
   const { stage2, stage3, totalECL, totalExposure } = useMemo(() => {
     const valMap = new Map(
       BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
@@ -128,6 +135,44 @@ export function Approvals() {
           {r.reason}
         </span>
       ),
+    },
+    {
+      key: "_actions" as never,
+      header: "Decision",
+      width: "140px",
+      render: (r) => {
+        const d = decisions[String(r.id)];
+        if (d === "approved")
+          return (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Approved
+            </span>
+          );
+        if (d === "rejected")
+          return (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-red-500">
+              <XCircle className="h-3.5 w-3.5" />
+              Rejected
+            </span>
+          );
+        return (
+          <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => decide(String(r.id), "approved")}
+              className="rounded px-2 py-1 text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100"
+            >
+              Approve
+            </button>
+            <button
+              onClick={() => decide(String(r.id), "rejected")}
+              className="rounded px-2 py-1 text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100"
+            >
+              Reject
+            </button>
+          </div>
+        );
+      },
     },
   ];
 

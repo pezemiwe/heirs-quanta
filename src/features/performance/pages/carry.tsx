@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   DataTable,
   type DataTableColumn,
@@ -6,6 +6,7 @@ import {
 import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
+import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
   BOOK_COMPUTED,
   fmtCompact,
@@ -27,6 +28,7 @@ interface CarryRow {
 type Row = CarryRow & Record<string, unknown>;
 
 export function Carry() {
+  const [selected, setSelected] = useState<Row | null>(null);
   const { rows, positiveCarry, negativeCarry, totalCarryIncome } =
     useMemo(() => {
       const result: CarryRow[] = BOOK_COMPUTED.valuations
@@ -190,8 +192,84 @@ export function Carry() {
           data={rows}
           keyExtractor={(r) => r.id}
           emptyMessage="No coupon-bearing instruments with market yield"
+          pageSize={20}
+          onRowClick={setSelected}
         />
       </SectionCard>
+
+      <RowDetailModal
+        isOpen={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? "Carry Detail"}
+        subtitle={selected?.id}
+        fields={
+          selected
+            ? [
+                { label: "ID", value: selected.id },
+                {
+                  label: "Type",
+                  value: (
+                    <Badge variant="neutral" size="sm">
+                      {selected.type}
+                    </Badge>
+                  ),
+                },
+                {
+                  label: "Classification",
+                  value: (
+                    <Badge
+                      variant={
+                        selected.classification === "AC"
+                          ? "info"
+                          : selected.classification === "FVOCI"
+                            ? "success"
+                            : "warning"
+                      }
+                      size="sm"
+                    >
+                      {selected.classification}
+                    </Badge>
+                  ),
+                },
+                { label: "Coupon Rate", value: fmtPct(selected.couponRate) },
+                { label: "Market Yield", value: fmtPct(selected.marketYield) },
+                {
+                  label: "Carry Spread",
+                  value: (
+                    <span
+                      className={
+                        selected.carrySpread >= 0
+                          ? "text-emerald-600 font-semibold"
+                          : "text-primary font-semibold"
+                      }
+                    >
+                      {(selected.carrySpread >= 0 ? "+" : "") +
+                        fmtPct(selected.carrySpread)}
+                    </span>
+                  ),
+                },
+                {
+                  label: "Book Value (NGN)",
+                  value: fmtCompact(selected.bsValue),
+                },
+                {
+                  label: "Annual Carry Income",
+                  value: (
+                    <span
+                      className={
+                        selected.carryIncome >= 0
+                          ? "text-emerald-600 font-semibold"
+                          : "text-primary font-semibold"
+                      }
+                    >
+                      {fmtCompact(Math.abs(selected.carryIncome))}
+                    </span>
+                  ),
+                },
+              ]
+            : []
+        }
+      />
     </div>
   );
 }

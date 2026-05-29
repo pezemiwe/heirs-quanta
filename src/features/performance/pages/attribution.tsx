@@ -79,7 +79,7 @@ export function Attribution() {
           Sector Attribution
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          Portfolio weight by sector Â· Valuation date 28 May 2026
+          Portfolio weight by sector Valuation date 28 May 2026
         </p>
       </div>
 
@@ -92,7 +92,7 @@ export function Attribution() {
         />
         <StatCard
           title="Largest Sector"
-          value={topSector?.sector ?? "â€”"}
+          value={topSector?.sector ?? " "}
           subtitle={fmtPct(topSector?.pctOfPortfolio ?? 0) + " of portfolio"}
           variant="default"
         />

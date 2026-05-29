@@ -152,7 +152,7 @@ export function MultiCurrency() {
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           FX translation and revaluation for {ROWS.length} foreign-currency
-          instruments — as at 28 May 2026
+          instruments as at 28 May 2026
         </p>
       </div>
 

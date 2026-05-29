@@ -98,7 +98,6 @@ export function DealsModule() {
   return (
     <ModuleShell
       moduleLabel="Deal Capture & Trade Management"
-      badge="Beta"
       basePath="/deal-capture"
       activePage={page}
       nav={NAV}

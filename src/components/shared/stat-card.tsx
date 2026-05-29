@@ -1,4 +1,4 @@
-import type { ReactNode } from "react";
+import { type ReactNode, useState, useEffect } from "react";
 import clsx, { type ClassValue } from "clsx";
 import { twMerge } from "tailwind-merge";
 import { TrendingUp, TrendingDown, Minus } from "lucide-react";
@@ -64,6 +64,13 @@ export const StatCard = ({
   className,
   loading = false,
 }: StatCardProps) => {
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => {
+    const t = setTimeout(() => setMounted(true), 800);
+    return () => clearTimeout(t);
+  }, []);
+
+  const showSkeleton = loading || !mounted;
   const { card, icon: iconCls } = variantClasses[variant];
   return (
     <div
@@ -86,7 +93,7 @@ export const StatCard = ({
           </span>
         )}
       </div>
-      {loading ? (
+      {showSkeleton ? (
         <div className="space-y-2">
           <div className="shimmer-skeleton h-8 w-28 rounded-md" />
           <div className="shimmer-skeleton h-4 w-20 rounded-md" />

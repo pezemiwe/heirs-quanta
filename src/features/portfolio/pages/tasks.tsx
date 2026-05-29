@@ -1,5 +1,14 @@
 import { useState } from "react";
-import { CheckCircle2, Circle, Clock, ChevronDown } from "lucide-react";
+import {
+  CheckCircle2,
+  Circle,
+  Clock,
+  ChevronDown,
+  Plus,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 
 type TaskStatus = "pending" | "in-progress" | "done";
 type TaskPriority = "high" | "medium" | "low";
@@ -115,6 +124,38 @@ function fmtDue(iso: string): { label: string; cls: string } {
 export function PortfolioTasks() {
   const [tasks, setTasks] = useState<Task[]>(INITIAL_TASKS);
   const [expanded, setExpanded] = useState<string | null>(null);
+  const [formOpen, setFormOpen] = useState(false);
+  const [editingTask, setEditingTask] = useState<Task | null>(null);
+  const [deletingTask, setDeletingTask] = useState<Task | null>(null);
+
+  function openAdd() {
+    setEditingTask(null);
+    setFormOpen(true);
+  }
+
+  function openEdit(task: Task) {
+    setEditingTask(task);
+    setFormOpen(true);
+  }
+
+  function saveTask(data: Omit<Task, "id">) {
+    if (editingTask) {
+      setTasks((prev) =>
+        prev.map((t) => (t.id === editingTask.id ? { ...t, ...data } : t)),
+      );
+    } else {
+      const id = `T${String(tasks.length + 1).padStart(3, "0")}`;
+      setTasks((prev) => [{ id, ...data }, ...prev]);
+    }
+    setFormOpen(false);
+    setEditingTask(null);
+  }
+
+  function confirmDelete() {
+    if (!deletingTask) return;
+    setTasks((prev) => prev.filter((t) => t.id !== deletingTask.id));
+    setDeletingTask(null);
+  }
 
   function cycleStatus(id: string) {
     setTasks((prev) =>
@@ -160,9 +201,17 @@ export function PortfolioTasks() {
             {" · "}Click status icon to cycle
           </p>
         </div>
-        <span className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-white">
-          {open}
-        </span>
+        <div className="flex items-center gap-3">
+          <button
+            onClick={openAdd}
+            className="flex items-center gap-1.5 rounded-lg bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-mid-red"
+          >
+            <Plus className="h-3.5 w-3.5" /> Add Task
+          </button>
+          <span className="rounded-full bg-primary px-3 py-1 text-xs font-bold text-white">
+            {open}
+          </span>
+        </div>
       </div>
 
       <div className="space-y-2">
@@ -233,6 +282,26 @@ export function PortfolioTasks() {
                       />
                     </button>
                   )}
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEdit(task);
+                    }}
+                    className="rounded p-1 text-gray-300 hover:bg-gray-100 hover:text-primary"
+                    title="Edit task"
+                  >
+                    <Pencil className="h-3.5 w-3.5" />
+                  </button>
+                  <button
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      setDeletingTask(task);
+                    }}
+                    className="rounded p-1 text-gray-300 hover:bg-red-50 hover:text-danger"
+                    title="Delete task"
+                  >
+                    <Trash2 className="h-3.5 w-3.5" />
+                  </button>
                 </div>
               </div>
 
@@ -250,6 +319,222 @@ export function PortfolioTasks() {
             </div>
           );
         })}
+      </div>
+
+      {formOpen && (
+        <TaskFormModal
+          initial={editingTask ?? undefined}
+          onSave={saveTask}
+          onClose={() => {
+            setFormOpen(false);
+            setEditingTask(null);
+          }}
+        />
+      )}
+
+      {deletingTask && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setDeletingTask(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-dark-gray">
+              Delete Task
+            </h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Remove{" "}
+              <span className="font-medium text-dark-gray">
+                &ldquo;{deletingTask.title}&rdquo;
+              </span>{" "}
+              from the task list? This cannot be undone.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setDeletingTask(null)}
+                className="rounded-lg border border-border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={confirmDelete}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
+              >
+                Delete
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── task form modal ───────────────────────────────────── */
+const inputCls =
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
+
+function TaskFormModal({
+  initial,
+  onSave,
+  onClose,
+}: {
+  initial?: Task;
+  onSave: (data: Omit<Task, "id">) => void;
+  onClose: () => void;
+}) {
+  const [title, setTitle] = useState(initial?.title ?? "");
+  const [source, setSource] = useState(initial?.source ?? "");
+  const [due, setDue] = useState(
+    initial?.due ?? new Date().toISOString().slice(0, 10),
+  );
+  const [priority, setPriority] = useState<TaskPriority>(
+    initial?.priority ?? "medium",
+  );
+  const [status, setStatus] = useState<TaskStatus>(
+    initial?.status ?? "pending",
+  );
+  const [notes, setNotes] = useState(initial?.notes ?? "");
+  const [err, setErr] = useState<string | null>(null);
+
+  function submit() {
+    if (!title.trim()) {
+      setErr("Title is required.");
+      return;
+    }
+    onSave({
+      title: title.trim(),
+      source: source.trim(),
+      due,
+      priority,
+      status,
+      notes: notes.trim() || undefined,
+    });
+  }
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center bg-black/40 p-4"
+      onClick={onClose}
+    >
+      <div
+        className="w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-4 flex items-start justify-between">
+          <h3 className="text-base font-semibold text-dark-gray">
+            {initial ? "Edit Task" : "New Task"}
+          </h3>
+          <button
+            onClick={onClose}
+            className="rounded p-1 text-gray-400 hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        {err && (
+          <p className="mb-3 rounded-lg bg-red-50 px-3 py-2 text-xs text-primary">
+            {err}
+          </p>
+        )}
+
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+              Title *
+            </label>
+            <input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              className={inputCls}
+              placeholder="Task description…"
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Source
+              </label>
+              <input
+                value={source}
+                onChange={(e) => setSource(e.target.value)}
+                className={inputCls}
+                placeholder="e.g. Group Finance"
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Due Date
+              </label>
+              <input
+                type="date"
+                value={due}
+                onChange={(e) => setDue(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Priority
+              </label>
+              <select
+                value={priority}
+                onChange={(e) => setPriority(e.target.value as TaskPriority)}
+                className={inputCls}
+              >
+                <option value="high">High</option>
+                <option value="medium">Medium</option>
+                <option value="low">Low</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Status
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value as TaskStatus)}
+                className={inputCls}
+              >
+                <option value="pending">Pending</option>
+                <option value="in-progress">In Progress</option>
+                <option value="done">Done</option>
+              </select>
+            </div>
+          </div>
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+              Notes
+            </label>
+            <textarea
+              value={notes}
+              onChange={(e) => setNotes(e.target.value)}
+              rows={3}
+              className={inputCls}
+              placeholder="Additional context or details…"
+            />
+          </div>
+        </div>
+
+        <div className="mt-5 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={submit}
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
+          >
+            {initial ? "Save Changes" : "Add Task"}
+          </button>
+        </div>
       </div>
     </div>
   );

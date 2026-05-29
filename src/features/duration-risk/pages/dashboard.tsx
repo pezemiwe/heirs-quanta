@@ -35,7 +35,7 @@ function shockBarColor(bps: number): string {
 
 const fmtNGNBillions = (v: number) => {
   const b = v / 1e9;
-  return `â‚¦${Math.abs(b).toFixed(1)}B`;
+  return `₦${Math.abs(b).toFixed(1)}B`;
 };
 
 export function DurationRiskDashboard() {
@@ -65,7 +65,7 @@ export function DurationRiskDashboard() {
           Duration &amp; Risk Dashboard
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Portfolio interest-rate risk as at {v.assumptions.valuationDate} Â·{" "}
+          Portfolio interest-rate risk as at {v.assumptions.valuationDate}{" "}
           {totals.instruments} duration-eligible instruments
         </p>
       </div>
@@ -91,7 +91,7 @@ export function DurationRiskDashboard() {
           subtitle={
             totalBase > 0
               ? `${fmtPct(totals.ir100bp / totalBase, 2)} of book`
-              : "â€”"
+              : " "
           }
           icon={<TrendingDown className="h-4 w-4" />}
           variant={totals.ir100bp < 0 ? "danger" : "default"}
@@ -102,16 +102,16 @@ export function DurationRiskDashboard() {
           subtitle={
             totalBase > 0
               ? `${fmtPct(totals.ir200bp / totalBase, 2)} of book`
-              : "â€”"
+              : " "
           }
           icon={<Gauge className="h-4 w-4" />}
           variant={totals.ir200bp < 0 ? "danger" : "default"}
         />
       </div>
 
-      {/* Chart 5 â€” Parallel Shock P&L */}
+      {/* Chart 5   Parallel Shock P&L */}
       <SectionCard
-        title="Chart 5 â€” Parallel Shock Stress Test: Portfolio P&L Impact"
+        title="Chart 5   Parallel Shock Stress Test: Portfolio P&L Impact"
         description="NGN P&L from instantaneous parallel yield curve shifts. Green = rate cut (gain), red = tightening (loss)."
       >
         <ResponsiveContainer width="100%" height={280}>
@@ -132,7 +132,7 @@ export function DurationRiskDashboard() {
               axisLine={false}
               tickLine={false}
               label={{
-                value: "Portfolio P&L Impact (â‚¦ Billions)",
+                value: "Portfolio P&L Impact (₦ Billions)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -8,
@@ -154,18 +154,18 @@ export function DurationRiskDashboard() {
         <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-[#2ecc71]" />
-            Rate Cut â€” Portfolio Gain
+            Rate Cut Portfolio Gain
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-[#e74c3c]" />
-            Rate Hike â€” Portfolio Loss
+            Rate Hike Portfolio Loss
           </span>
         </div>
       </SectionCard>
 
-      {/* Chart 4 â€” Duration Distribution Histogram */}
+      {/* Chart 4   Duration Distribution Histogram */}
       <SectionCard
-        title="Chart 4 â€” Duration Distribution Across Portfolio"
+        title="Chart 4   Duration Distribution Across Portfolio"
         description="Number of duration-eligible instruments by modified-duration bucket."
       >
         <ResponsiveContainer width="100%" height={240}>
@@ -217,10 +217,10 @@ export function DurationRiskDashboard() {
         </ResponsiveContainer>
       </SectionCard>
 
-      {/* Chart 3 â€” Cash Flow Projection */}
+      {/* Chart 3   Cash Flow Projection */}
       <SectionCard
-        title="Chart 3 â€” Cash Flow Projection by Maturity Bucket"
-        description="Future coupon (blue) and principal (orange) inflows in â‚¦."
+        title="Chart 3   Cash Flow Projection by Maturity Bucket"
+        description="Future coupon (blue) and principal (orange) inflows in ₦."
       >
         <ResponsiveContainer width="100%" height={280}>
           <BarChart
@@ -235,12 +235,12 @@ export function DurationRiskDashboard() {
               tickLine={false}
             />
             <YAxis
-              tickFormatter={(v: number) => `â‚¦${(v / 1e9).toFixed(0)}B`}
+              tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(0)}B`}
               tick={{ fontSize: 11, fill: "#6b7280" }}
               axisLine={false}
               tickLine={false}
               label={{
-                value: "Cash Flow (â‚¦ Billions)",
+                value: "Cash Flow (₦ Billions)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -8,

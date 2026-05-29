@@ -149,8 +149,7 @@ export function CouponRecognition() {
           Coupon Recognition
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Coupon income schedule for {ROWS.length} interest-bearing instruments
-          — as at 28 May 2026
+          Coupon income schedule for {ROWS.length} interest-bearing instruments as at 28 May 2026
         </p>
       </div>
 

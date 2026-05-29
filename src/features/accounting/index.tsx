@@ -117,7 +117,6 @@ export function AccountingModule() {
   return (
     <ModuleShell
       moduleLabel="Accounting & GL Integration"
-      badge="Beta"
       basePath="/accounting"
       activePage={page}
       nav={NAV}

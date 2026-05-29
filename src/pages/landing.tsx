@@ -413,16 +413,16 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
 
             {/* Headline */}
             <h1 className="mb-5 text-4xl font-bold leading-[1.08] tracking-tight text-dark-gray lg:text-5xl xl:text-[3.5rem]">
-              Unified investment intelligence
+              One platform for
               <br />
-              <span className="text-primary">for Africa's leading</span>
+              <span className="text-primary">every investment</span>
               <br />
-              conglomerate.
+              decision.
             </h1>
 
             {/* Sub */}
             <p className="mb-8 max-w-lg text-base leading-relaxed text-dark-gray/60">
-              Heirs Quanta brings together{" "}
+              Nine integrated modules{" "}
               <strong className="font-semibold text-dark-gray">
                 Portfolio Management
               </strong>
@@ -432,12 +432,11 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
               </strong>
               ,{" "}
               <strong className="font-semibold text-dark-gray">
-                IFRS 9 & ECL
+                IFRS 9 &amp; ECL
               </strong>
-              , Deal Capture, Performance Analytics, Duration & Risk, Market
-              Data, Accounting integration, and Reporting — into a single,
-              audit-ready platform — engineered for CBN compliance and real-time
-              decision making.
+              , Deal Capture, Performance Analytics, Duration &amp; Risk, Market
+              Data, Accounting, and Reporting unified in a single audit-ready
+              platform built for CBN compliance.
             </p>
 
             {/* CTAs */}
@@ -518,7 +517,7 @@ const MODULES = [
     title: "Portfolio Management",
     subtitle: "Real-time investment portfolio analytics & monitoring",
     description:
-      "Gain complete visibility into the Heirs Holdings investment portfolio. Monitor security performance, track allocations, analyse concentration risk, and generate executive-level portfolio reports — all in real time.",
+      "Gain complete visibility into the Heirs Holdings investment portfolio. Monitor security performance, track allocations, analyse concentration risk, and generate executive-level portfolio reports all in real time.",
     capabilities: [
       "Securities ingestion & classification",
       "Concentration & sector analysis",
@@ -536,7 +535,7 @@ const MODULES = [
     title: "Deal Capture & Trade Management",
     subtitle: "End-to-end trade lifecycle & settlement workflow",
     description:
-      "Capture, validate, and manage the full lifecycle of investment trades — from order entry and counterparty confirmation through settlement and post-trade reconciliation — with real-time blotter and STP support.",
+      "Capture, validate, and manage the full lifecycle of investment trades from order entry and counterparty confirmation through settlement and post-trade reconciliation with real-time blotter and STP support.",
     capabilities: [
       "Order entry & pre-trade validation",
       "Counterparty & broker management",
@@ -554,7 +553,7 @@ const MODULES = [
     title: "Market Data & Trend Analytics",
     subtitle: "Live prices, yields, indices & macro signals",
     description:
-      "Aggregate and normalise market data across asset classes — government bonds, equities, FX, and money market rates — and overlay macro-economic trend signals to inform investment decisions.",
+      "Aggregate and normalise market data across asset classes government bonds, equities, FX, and money market rates and overlay macro-economic trend signals to inform investment decisions.",
     capabilities: [
       "Government bond yield curve construction",
       "Equity price & index feeds",
@@ -572,7 +571,7 @@ const MODULES = [
     title: "Valuation Engine",
     subtitle: "Fair value & investment instrument valuation",
     description:
-      "Compute fair values across Heirs Holdings' investment portfolio — bonds, equities, mutual funds and money market instruments — using industry-standard models. Supports IFRS 13 disclosures and mark-to-market reporting.",
+      "Compute fair values across Heirs Holdings' investment portfolio bonds, equities, mutual funds and money market instruments using industry-standard models. Supports IFRS 13 disclosures and mark-to-market reporting.",
     capabilities: [
       "Discounted cash flow (DCF) engine",
       "Yield curve & benchmark rate feeds",
@@ -590,7 +589,7 @@ const MODULES = [
     title: "IFRS 9 — Expected Credit Loss",
     subtitle: "Automated ECL computation aligned to CBN guidelines",
     description:
-      "Automate the full IFRS 9 impairment workflow — from SICR detection and stage allocation through PD/LGD/EAD estimation to ECL charge computation. Built to CBN reporting standards, with full audit trail.",
+      "Automate the full IFRS 9 impairment workflow from SICR detection and stage allocation through PD/LGD/EAD estimation to ECL charge computation. Built to CBN reporting standards, with full audit trail.",
     capabilities: [
       "Automated SICR detection & staging",
       "PD · LGD · EAD parameterisation",
@@ -626,7 +625,7 @@ const MODULES = [
     title: "Duration & Risk Analytics",
     subtitle: "Interest rate sensitivity, VaR & stress testing",
     description:
-      "Quantify and manage portfolio risk exposures — duration, convexity, value-at-risk, and credit spread sensitivity — and run stress scenarios across interest rate and FX shock assumptions.",
+      "Quantify and manage portfolio risk exposures — duration, convexity, value-at-risk, and credit spread sensitivity and run stress scenarios across interest rate and FX shock assumptions.",
     capabilities: [
       "Modified duration & convexity analytics",
       "DV01 & PV01 sensitivity measures",
@@ -644,7 +643,7 @@ const MODULES = [
     title: "Accounting & GL Integration",
     subtitle: "Automated journal entries & general ledger sync",
     description:
-      "Generate IFRS-compliant accounting entries for all investment transactions — purchases, disposals, accruals, fair value adjustments, and impairment charges — and sync directly to the general ledger.",
+      "Generate IFRS-compliant accounting entries for all investment transactions purchases, disposals, accruals, fair value adjustments, and impairment charges and sync directly to the general ledger.",
     capabilities: [
       "IFRS-compliant journal entry generation",
       "Fair value & amortised cost accounting",
@@ -662,7 +661,7 @@ const MODULES = [
     title: "Reporting & Dashboard",
     subtitle: "Board, ALCO & regulatory reporting suite",
     description:
-      "Generate Investment Committee packs, ALCO reports, CBN/SEC regulatory submissions, and interactive management dashboards — all from a single reporting hub with scheduled distribution.",
+      "Generate Investment Committee packs, ALCO reports, CBN/SEC regulatory submissions, and interactive management dashboards all from a single reporting hub with scheduled distribution.",
     capabilities: [
       "Investment Committee report packs",
       "ALCO & board-level dashboards",
@@ -697,7 +696,7 @@ const ModulesSection = () => {
           </h2>
           <p className="max-w-xl text-base leading-relaxed text-dark-gray/58">
             Each module is purpose-built for a distinct investment management
-            workflow, yet seamlessly integrated — data flows across modules
+            workflow, yet seamlessly integrated data flows across modules
             without manual intervention.
           </p>
         </div>
@@ -862,7 +861,7 @@ const StatsBanner = () => {
   const { ref, inView } = useInView();
   const stats = [
     {
-      value: "3",
+      value: "9",
       label: "Integrated modules",
       icon: <Layers className="h-5 w-5" />,
     },
@@ -980,8 +979,7 @@ const ComplianceSection = () => {
             </h2>
             <p className="mb-8 text-base leading-relaxed text-dark-gray/58">
               From CBN supervisory guidelines to IFRS standards, Heirs Quanta
-              was designed with the regulatory framework baked in — not bolted
-              on.
+              was designed with the regulatory framework baked in not bolted on.
             </p>
             <div className="overflow-hidden rounded-2xl border border-border">
               <img
@@ -992,9 +990,9 @@ const ComplianceSection = () => {
               />
               <div className="bg-surface-muted px-5 py-4">
                 <p className="text-xs leading-relaxed text-dark-gray/55">
-                  Every computation is fully traceable — from raw data ingestion
-                  through model parameters to final ECL charge — with a
-                  complete, immutable audit record.
+                  Every computation is fully traceable from raw data ingestion
+                  through model parameters to final ECL charge with a complete,
+                  immutable audit record.
                 </p>
               </div>
             </div>
@@ -1061,8 +1059,7 @@ const CTASection = ({ onEnter }: { onEnter: () => void }) => {
             </h2>
             <p className="mx-auto mb-10 max-w-lg text-base leading-relaxed text-dark-gray/58">
               Access Portfolio Management, IFRS 9 & ECL computation, and
-              Valuation tools — integrated in one secure, audit-ready
-              environment.
+              Valuation tools integrated in one secure, audit-ready environment.
             </p>
 
             <div className="flex flex-wrap justify-center gap-4">
@@ -1109,7 +1106,7 @@ const Footer = () => (
           </div>
           <p className="text-xs leading-relaxed text-dark-gray/45">
             Enterprise financial analytics platform for the Heirs Holdings
-            Group. Portfolio management, IFRS 9 & ECL, and valuation — in one
+            Group. Portfolio management, IFRS 9 & ECL, and valuation in one
             integrated environment.
           </p>
         </div>

@@ -1,9 +1,17 @@
-﻿import { Search, Download, SlidersHorizontal } from "lucide-react";
+﻿import {
+  Search,
+  Download,
+  SlidersHorizontal,
+  Pencil,
+  Trash2,
+  X,
+} from "lucide-react";
 import { useState, useMemo } from "react";
 import {
   DataTable,
   type DataTableColumn,
 } from "../../../components/shared/data-table";
+import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
   BOOK_INSTRUMENTS,
   BOOK_COMPUTED,
@@ -177,13 +185,44 @@ const COLUMNS: DataTableColumn<HoldingRow>[] = [
 ];
 
 export function PortfolioHoldings() {
+  const [rows, setRows] = useState<HoldingRow[]>(ALL_ROWS);
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [classFilter, setClassFilter] = useState("All");
+  const [selected, setSelected] = useState<HoldingRow | null>(null);
+  const [editing, setEditing] = useState<HoldingRow | null>(null);
+  const [deleting, setDeleting] = useState<HoldingRow | null>(null);
+
+  const actionsColumn: DataTableColumn<HoldingRow> = {
+    key: "_actions" as never,
+    header: "",
+    width: "72px",
+    render: (r) => (
+      <div
+        className="flex items-center justify-end gap-1"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <button
+          onClick={() => setEditing(r)}
+          className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-primary"
+          title="Edit"
+        >
+          <Pencil className="h-3.5 w-3.5" />
+        </button>
+        <button
+          onClick={() => setDeleting(r)}
+          className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-danger"
+          title="Delete"
+        >
+          <Trash2 className="h-3.5 w-3.5" />
+        </button>
+      </div>
+    ),
+  };
 
   const filtered = useMemo(() => {
     const q = search.toLowerCase();
-    return ALL_ROWS.filter((r) => {
+    return rows.filter((r) => {
       if (typeFilter !== "All" && r.instrumentType !== typeFilter) return false;
       if (classFilter !== "All" && r.classification !== classFilter)
         return false;
@@ -196,7 +235,7 @@ export function PortfolioHoldings() {
         return false;
       return true;
     });
-  }, [search, typeFilter, classFilter]);
+  }, [rows, search, typeFilter, classFilter]);
 
   const totalBookValue = filtered.reduce((s, r) => s + r.bookValueNGN, 0);
 
@@ -223,19 +262,19 @@ export function PortfolioHoldings() {
         {[
           {
             label: "AC Instruments",
-            value: ALL_ROWS.filter((r) => r.classification === "AC").length,
+            value: rows.filter((r) => r.classification === "AC").length,
           },
           {
             label: "FVOCI Instruments",
-            value: ALL_ROWS.filter((r) => r.classification === "FVOCI").length,
+            value: rows.filter((r) => r.classification === "FVOCI").length,
           },
           {
             label: "FVTPL Instruments",
-            value: ALL_ROWS.filter((r) => r.classification === "FVTPL").length,
+            value: rows.filter((r) => r.classification === "FVTPL").length,
           },
           {
             label: "Stage 2/3 Watch",
-            value: ALL_ROWS.filter((r) => r.stage !== "Stage 1").length,
+            value: rows.filter((r) => r.stage !== "Stage 1").length,
           },
         ].map((s) => (
           <div
@@ -283,12 +322,270 @@ export function PortfolioHoldings() {
       </div>
 
       <DataTable<HoldingRow>
-        columns={COLUMNS}
+        columns={[...COLUMNS, actionsColumn]}
         data={filtered}
         keyExtractor={(r) => r.id}
         pageSize={25}
         emptyMessage="No instruments match your filters"
+        onRowClick={setSelected}
       />
+
+      <RowDetailModal
+        isOpen={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? "Holding Detail"}
+        subtitle={selected?.id}
+        fields={
+          selected
+            ? [
+                { label: "ID", value: selected.id },
+                { label: "Type", value: selected.instrumentType },
+                { label: "Issuer", value: selected.issuer },
+                { label: "Sector", value: selected.sector },
+                { label: "Classification", value: selected.classification },
+                { label: "Currency", value: selected.currency },
+                { label: "Face Value", value: fmtCompact(selected.faceValue) },
+                {
+                  label: "Book Value (NGN)",
+                  value: fmtCompact(selected.bookValueNGN),
+                },
+                {
+                  label: "EIR",
+                  value: selected.eirPct > 0 ? fmtPct(selected.eirPct) : "—",
+                },
+                {
+                  label: "Coupon Rate",
+                  value:
+                    selected.couponRate > 0 ? fmtPct(selected.couponRate) : "—",
+                },
+                {
+                  label: "Maturity Date",
+                  value: fmtDate(selected.maturityDate),
+                },
+                { label: "Stage", value: selected.stage },
+                { label: "Status", value: selected.status },
+              ]
+            : []
+        }
+      />
+
+      {editing && (
+        <EditHoldingDrawer
+          row={editing}
+          onSave={(patch) => {
+            setRows((prev) =>
+              prev.map((r) => (r.id === editing.id ? { ...r, ...patch } : r)),
+            );
+            setEditing(null);
+          }}
+          onClose={() => setEditing(null)}
+        />
+      )}
+
+      {deleting && (
+        <div
+          className="fixed inset-0 z-50 flex items-center justify-center bg-black/40"
+          onClick={() => setDeleting(null)}
+        >
+          <div
+            className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl"
+            onClick={(e) => e.stopPropagation()}
+          >
+            <h3 className="text-base font-semibold text-dark-gray">
+              Remove Holding
+            </h3>
+            <p className="mt-2 text-sm text-gray-500">
+              Remove{" "}
+              <span className="font-medium text-dark-gray">
+                {deleting.name}
+              </span>{" "}
+              ({deleting.id}) from the holdings list? This cannot be undone.
+            </p>
+            <div className="mt-5 flex justify-end gap-2">
+              <button
+                onClick={() => setDeleting(null)}
+                className="rounded-lg border border-border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={() => {
+                  setRows((prev) => prev.filter((r) => r.id !== deleting.id));
+                  setDeleting(null);
+                }}
+                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
+              >
+                Remove
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+/* ─── edit holding drawer ───────────────────────────────── */
+const inputCls =
+  "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
+
+function EditHoldingDrawer({
+  row,
+  onSave,
+  onClose,
+}: {
+  row: HoldingRow;
+  onSave: (patch: Partial<HoldingRow>) => void;
+  onClose: () => void;
+}) {
+  const [name, setName] = useState(row.name);
+  const [issuer, setIssuer] = useState(row.issuer);
+  const [sector, setSector] = useState(row.sector);
+  const [faceValue, setFaceValue] = useState(row.faceValue);
+  const [couponRate, setCouponRate] = useState(row.couponRate);
+  const [stage, setStage] = useState(row.stage);
+  const [status, setStatus] = useState(row.status);
+
+  return (
+    <div
+      className="fixed inset-0 z-50 flex justify-end bg-black/40"
+      onClick={onClose}
+    >
+      <div
+        className="h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-2xl"
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="mb-5 flex items-start justify-between">
+          <div>
+            <h3 className="text-base font-semibold text-dark-gray">
+              Edit Holding
+            </h3>
+            <p className="mt-0.5 text-xs text-gray-500">{row.id}</p>
+          </div>
+          <button
+            onClick={onClose}
+            className="rounded-md p-1 text-gray-400 hover:bg-gray-100"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        </div>
+
+        <div className="space-y-3">
+          <div>
+            <label className="mb-1 block text-xs font-medium text-gray-500">
+              Name
+            </label>
+            <input
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              className={inputCls}
+            />
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Issuer
+              </label>
+              <input
+                value={issuer}
+                onChange={(e) => setIssuer(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Sector
+              </label>
+              <input
+                value={sector}
+                onChange={(e) => setSector(e.target.value)}
+                className={inputCls}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Face Value (NGN)
+              </label>
+              <input
+                type="number"
+                value={faceValue}
+                onChange={(e) => setFaceValue(Number(e.target.value))}
+                className={inputCls}
+              />
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Coupon Rate
+              </label>
+              <input
+                type="number"
+                step="0.001"
+                value={couponRate}
+                onChange={(e) => setCouponRate(Number(e.target.value))}
+                className={inputCls}
+              />
+            </div>
+          </div>
+          <div className="grid grid-cols-2 gap-3">
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Impairment Stage
+              </label>
+              <select
+                value={stage}
+                onChange={(e) => setStage(e.target.value)}
+                className={inputCls}
+              >
+                <option>Stage 1</option>
+                <option>Stage 2</option>
+                <option>Stage 3</option>
+                <option>N/A</option>
+              </select>
+            </div>
+            <div>
+              <label className="mb-1 block text-xs font-medium text-gray-500">
+                Status
+              </label>
+              <select
+                value={status}
+                onChange={(e) => setStatus(e.target.value)}
+                className={inputCls}
+              >
+                <option>Active</option>
+                <option>Matured</option>
+                <option>Disposed</option>
+              </select>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 flex justify-end gap-2">
+          <button
+            onClick={onClose}
+            className="rounded-lg border border-border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50"
+          >
+            Cancel
+          </button>
+          <button
+            onClick={() =>
+              onSave({
+                name,
+                issuer,
+                sector,
+                faceValue,
+                couponRate,
+                stage,
+                status,
+              })
+            }
+            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
+          >
+            Save Changes
+          </button>
+        </div>
+      </div>
     </div>
   );
 }

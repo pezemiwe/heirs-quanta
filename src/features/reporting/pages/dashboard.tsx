@@ -57,8 +57,8 @@ export function ReportingDashboard() {
           Executive Summary
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          Investment portfolio overview Â· {BOOK_INSTRUMENTS.length} instruments
-          Â· Valuation date 28 May 2026
+          Investment portfolio overview {BOOK_INSTRUMENTS.length} instruments
+          Valuation date 28 May 2026
         </p>
       </div>
 
@@ -156,7 +156,7 @@ export function ReportingDashboard() {
                     </span>
                   </span>
                   <span className="text-xs font-medium">
-                    {fmtCompact(b.bsValueNGN)} Â·{" "}
+                    {fmtCompact(b.bsValueNGN)}{" "}
                     {fmtPct(b.bsValueNGN / totals.totalBSValueNGN)}
                   </span>
                 </div>

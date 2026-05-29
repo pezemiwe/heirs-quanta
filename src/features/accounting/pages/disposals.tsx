@@ -15,8 +15,8 @@ export function Disposals() {
           Disposal Accounting
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Realised gain/loss computation and OCI recycling on disposal — as at
-          28 May 2026
+          Realised gain/loss computation and OCI recycling on disposal as at 28
+          May 2026
         </p>
       </div>
 
