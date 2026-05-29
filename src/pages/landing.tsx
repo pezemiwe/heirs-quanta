@@ -284,7 +284,7 @@ const Navbar = ({ onEnter }: { onEnter: () => void }) => {
         backdropFilter: "blur(12px)",
       }}
     >
-      <nav className="mx-auto flex h-16 max-w-7xl items-center justify-between px-5 lg:px-8">
+      <nav className="mx-auto flex h-16 max-w-[1440px] items-center justify-between px-4 lg:px-6">
         {/* Brand */}
         <div className="flex items-center gap-3">
           <img
@@ -378,41 +378,98 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
       ref={ref}
       id="hero"
       className="relative overflow-hidden pt-16"
-      style={{ background: "#F7F7F8" }}
+      style={{
+        background:
+          "linear-gradient(135deg, #08081A 0%, #110407 55%, #06080F 100%)",
+      }}
     >
-      {/* Subtle top-left red wash */}
-      <div
-        className="pointer-events-none absolute -top-40 -left-40 h-150 w-150 rounded-full opacity-10 blur-3xl"
-        style={{
-          background: "radial-gradient(circle, #CC0000, transparent 70%)",
-        }}
-      />
       {/* Fine grid texture */}
       <div
         className="pointer-events-none absolute inset-0"
         style={{
           backgroundImage:
-            "linear-gradient(rgba(0,0,0,0.025) 1px, transparent 1px), linear-gradient(90deg, rgba(0,0,0,0.025) 1px, transparent 1px)",
-          backgroundSize: "40px 40px",
+            "linear-gradient(rgba(255,255,255,0.04) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.04) 1px, transparent 1px)",
+          backgroundSize: "60px 60px",
         }}
       />
+      {/* Red glow — top-left */}
+      <div
+        className="pointer-events-none absolute -top-60 -left-60 h-[700px] w-[700px] rounded-full opacity-25"
+        style={{
+          background: "radial-gradient(circle, #CC0000, transparent 70%)",
+          filter: "blur(100px)",
+        }}
+      />
+      {/* Deep-blue glow — bottom-right */}
+      <div
+        className="pointer-events-none absolute -bottom-40 -right-20 h-[500px] w-[500px] rounded-full"
+        style={{
+          background: "radial-gradient(circle, #1E3A5F, transparent 70%)",
+          filter: "blur(80px)",
+          opacity: 0.12,
+        }}
+      />
+      {/* Financial chart SVG decoration */}
+      <svg
+        className="pointer-events-none absolute inset-0 h-full w-full"
+        viewBox="0 0 1440 700"
+        preserveAspectRatio="xMidYMid slice"
+        fill="none"
+        aria-hidden="true"
+      >
+        {[35, 55, 45, 70, 60, 80, 65, 90, 75, 55, 85, 70, 95, 60, 80, 72, 88, 65, 78, 92].map(
+          (h, i) => (
+            <rect
+              key={i}
+              x={920 + i * 26}
+              y={320 - h}
+              width={10}
+              height={h}
+              rx={1.5}
+              fill="#CC0000"
+              opacity={0.04 + i * 0.007}
+            />
+          ),
+        )}
+        <path
+          d="M860 520 C940 490 1000 440 1100 415 C1180 394 1240 360 1340 330 C1390 315 1420 303 1440 293"
+          stroke="#CC0000"
+          strokeWidth="1.5"
+          opacity="0.22"
+        />
+        <path
+          d="M0 600 C140 578 280 558 440 528 C580 500 700 472 860 448 C980 428 1100 408 1280 382 C1360 368 1400 358 1440 348"
+          stroke="#FFFFFF"
+          strokeWidth="1"
+          opacity="0.06"
+        />
+        <line x1="860" y1="310" x2="1440" y2="310" stroke="#FFFFFF" strokeWidth="0.5" strokeDasharray="4 8" opacity="0.07" />
+        <line x1="860" y1="380" x2="1440" y2="380" stroke="#FFFFFF" strokeWidth="0.5" strokeDasharray="4 8" opacity="0.05" />
+        <line x1="860" y1="450" x2="1440" y2="450" stroke="#FFFFFF" strokeWidth="0.5" strokeDasharray="4 8" opacity="0.03" />
+      </svg>
 
-      <div className="relative mx-auto max-w-7xl px-5 py-20 lg:px-8 lg:py-28">
+      <div className="relative mx-auto max-w-[1440px] px-4 py-20 lg:px-6 lg:py-28">
         <div className="grid items-center gap-14 lg:grid-cols-2">
           {/* Left */}
           <div
             className={`transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           >
             {/* Eyebrow */}
-            <div className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-primary/20 bg-pale-red px-4 py-1.5">
+            <div
+              className="mb-6 inline-flex items-center gap-2.5 rounded-full border border-white/15 px-4 py-1.5"
+              style={{
+                background: "rgba(255,255,255,0.07)",
+                backdropFilter: "blur(10px)",
+              }}
+            >
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
-              <span className="text-xs font-semibold tracking-wide text-primary">
+              <span className="text-xs font-semibold tracking-wide text-white/80">
                 Heirs Holdings Group · Analytics Platform
               </span>
             </div>
 
             {/* Headline */}
-            <h1 className="mb-5 text-4xl font-bold leading-[1.08] tracking-tight text-dark-gray lg:text-5xl xl:text-[3.5rem]">
+            <h1 className="mb-5 text-4xl font-bold leading-[1.08] tracking-tight text-white lg:text-5xl xl:text-[3.5rem]">
               One platform for
               <br />
               <span className="text-primary">every investment</span>
@@ -421,21 +478,21 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
             </h1>
 
             {/* Sub */}
-            <p className="mb-8 max-w-lg text-base leading-relaxed text-dark-gray/60">
+            <p className="mb-8 max-w-lg text-base leading-relaxed text-white/60">
               Nine integrated modules{" "}
-              <strong className="font-semibold text-dark-gray">
+              <strong className="font-semibold text-white/85">
                 Portfolio Management
               </strong>
               ,{" "}
-              <strong className="font-semibold text-dark-gray">
+              <strong className="font-semibold text-white/85">
                 Valuation
               </strong>
               ,{" "}
-              <strong className="font-semibold text-dark-gray">
+              <strong className="font-semibold text-white/85">
                 IFRS 9 &amp; ECL
               </strong>
               , Deal Capture, Performance Analytics, Duration &amp; Risk, Market
-              Data, Accounting, and Reporting unified in a single audit-ready
+              Data, Accounting, and Reporting — unified in a single audit-ready
               platform built for CBN compliance.
             </p>
 
@@ -444,14 +501,19 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
               <button
                 onClick={onEnter}
                 className="group inline-flex items-center gap-2 rounded-xl bg-primary px-7 py-3 text-sm font-semibold text-white transition-all hover:bg-mid-red"
-                style={{ boxShadow: "0 4px 20px rgba(204,0,0,0.28)" }}
+                style={{ boxShadow: "0 4px 24px rgba(204,0,0,0.4)" }}
               >
                 Access Platform
                 <ArrowRight className="h-4 w-4 transition-transform duration-200 group-hover:translate-x-1" />
               </button>
               <a
                 href="#modules"
-                className="inline-flex items-center gap-2 rounded-xl border border-border bg-white px-7 py-3 text-sm font-semibold text-dark-gray/70 no-underline transition-all hover:border-primary/30 hover:text-dark-gray"
+                className="inline-flex items-center gap-2 rounded-xl px-7 py-3 text-sm font-semibold text-white/80 no-underline transition-all hover:text-white"
+                style={{
+                  border: "1px solid rgba(255,255,255,0.18)",
+                  background: "rgba(255,255,255,0.07)",
+                  backdropFilter: "blur(10px)",
+                }}
               >
                 Explore Modules
               </a>
@@ -479,7 +541,7 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
               ].map(({ icon, text }) => (
                 <div
                   key={text}
-                  className="flex items-center gap-1.5 text-xs font-medium text-dark-gray/45"
+                  className="flex items-center gap-1.5 text-xs font-medium text-white/45"
                 >
                   <span className="text-primary">{icon}</span>
                   {text}
@@ -499,10 +561,8 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
 
       {/* Bottom gradient fade into white */}
       <div
-        className="pointer-events-none absolute inset-x-0 bottom-0 h-16"
-        style={{
-          background: "linear-gradient(to bottom, transparent, #F7F7F8)",
-        }}
+        className="pointer-events-none absolute inset-x-0 bottom-0 h-24"
+        style={{ background: "linear-gradient(to bottom, transparent, white)" }}
       />
     </section>
   );
@@ -678,7 +738,7 @@ const ModulesSection = () => {
   const { ref, inView } = useInView();
   return (
     <section id="modules" ref={ref} className="bg-white py-24 lg:py-32">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 lg:px-6">
         {/* Header */}
         <div
           className={`mb-16 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
@@ -813,7 +873,7 @@ const CapabilitiesSection = () => {
       className="py-24 lg:py-32"
       style={{ background: "#F7F7F8" }}
     >
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 lg:px-6">
         <div
           className={`mb-16 transition-all duration-700 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
         >
@@ -898,7 +958,7 @@ const StatsBanner = () => {
           backgroundSize: "28px 28px",
         }}
       />
-      <div className="relative mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="relative mx-auto max-w-[1440px] px-4 lg:px-6">
         <div className="grid gap-8 sm:grid-cols-2 lg:grid-cols-4">
           {stats.map((s, i) => (
             <div
@@ -960,7 +1020,7 @@ const ComplianceSection = () => {
   ];
   return (
     <section id="compliance" ref={ref} className="bg-white py-24 lg:py-32">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 lg:px-6">
         <div className="grid gap-16 lg:grid-cols-2 lg:items-center">
           {/* Left */}
           <div
@@ -1086,7 +1146,7 @@ const CTASection = ({ onEnter }: { onEnter: () => void }) => {
 /* ── Footer ─────────────────────────────────────────────────── */
 const Footer = () => (
   <footer className="border-t border-border bg-white">
-    <div className="mx-auto max-w-7xl px-5 py-12 lg:px-8">
+    <div className="mx-auto max-w-[1440px] px-4 py-12 lg:px-6">
       <div className="grid gap-10 lg:grid-cols-4">
         {/* Brand */}
         <div className="lg:col-span-1">
@@ -1187,7 +1247,7 @@ const HeirsEcosystemSection = () => {
   ];
   return (
     <div className="border-b border-t border-border bg-white py-8">
-      <div className="mx-auto max-w-7xl px-5 lg:px-8">
+      <div className="mx-auto max-w-[1440px] px-4 lg:px-6">
         <p className="mb-6 text-center text-[10px] font-bold uppercase tracking-widest text-dark-gray/30">
           Serving the Heirs Holdings Group family of companies
         </p>

@@ -1,8 +1,9 @@
 import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { PersonaProvider } from "./context/persona";
+import { GovernanceProvider } from "./context/governance";
 import { PortfolioRegistryProvider } from "./features/portfolio/portfolio-registry";
-import { RequireAuth } from "./components/shared/require-auth";
+import { RequireAuth, ProtectedModule } from "./components/shared/require-auth";
 import { LandingPage } from "./pages/landing";
 import { LoginPage } from "./pages/login";
 import { ModulesPage } from "./pages/modules";
@@ -46,210 +47,235 @@ const ReportingModule = lazy(() =>
     default: m.ReportingModule,
   })),
 );
+const GovernanceModule = lazy(() =>
+  import("./features/governance").then((m) => ({
+    default: m.GovernanceModule,
+  })),
+);
 
 export function App() {
   return (
     <PersonaProvider>
-      <PortfolioRegistryProvider>
-        <Suspense fallback={<PageLoader label="Loading module…" />}>
-          <Routes>
-          {/* Public */}
-          <Route path="/" element={<LandingPage />} />
-          <Route path="/login" element={<LoginPage />} />
+      <GovernanceProvider>
+        <PortfolioRegistryProvider>
+          <Suspense fallback={<PageLoader label="Loading module…" />}>
+            <Routes>
+              {/* Public */}
+              <Route path="/" element={<LandingPage />} />
+              <Route path="/login" element={<LoginPage />} />
 
-          {/* Module hub */}
-          <Route
-            path="/modules"
-            element={
-              <RequireAuth>
-                <ModulesPage />
-              </RequireAuth>
-            }
-          />
+              {/* Module hub */}
+              <Route
+                path="/modules"
+                element={
+                  <RequireAuth>
+                    <ModulesPage />
+                  </RequireAuth>
+                }
+              />
 
-          {/* Portfolio — all sub-pages via :page param */}
-          <Route
-            path="/portfolio"
-            element={
-              <RequireAuth>
-                <PortfolioModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/portfolio/:page"
-            element={
-              <RequireAuth>
-                <PortfolioModule />
-              </RequireAuth>
-            }
-          />
+              {/* Portfolio — all sub-pages via :page param */}
+              <Route
+                path="/portfolio"
+                element={
+                  <ProtectedModule moduleId="portfolio">
+                    <PortfolioModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/portfolio/:page"
+                element={
+                  <ProtectedModule moduleId="portfolio">
+                    <PortfolioModule />
+                  </ProtectedModule>
+                }
+              />
 
-          {/* IFRS 9 */}
-          <Route
-            path="/ifrs9"
-            element={
-              <RequireAuth>
-                <IFRS9Module />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/ifrs9/:page"
-            element={
-              <RequireAuth>
-                <IFRS9Module />
-              </RequireAuth>
-            }
-          />
+              {/* IFRS 9 */}
+              <Route
+                path="/ifrs9"
+                element={
+                  <ProtectedModule moduleId="ifrs9">
+                    <IFRS9Module />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/ifrs9/:page"
+                element={
+                  <ProtectedModule moduleId="ifrs9">
+                    <IFRS9Module />
+                  </ProtectedModule>
+                }
+              />
 
-          {/* Valuation */}
-          <Route
-            path="/valuation"
-            element={
-              <RequireAuth>
-                <ValuationModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/valuation/:page"
-            element={
-              <RequireAuth>
-                <ValuationModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/valuation/asset/:id"
-            element={
-              <RequireAuth>
-                <ValuationModule />
-              </RequireAuth>
-            }
-          />
+              {/* Valuation */}
+              <Route
+                path="/valuation"
+                element={
+                  <ProtectedModule moduleId="valuation">
+                    <ValuationModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/valuation/:page"
+                element={
+                  <ProtectedModule moduleId="valuation">
+                    <ValuationModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/valuation/asset/:id"
+                element={
+                  <ProtectedModule moduleId="valuation">
+                    <ValuationModule />
+                  </ProtectedModule>
+                }
+              />
 
-          {/* Duration & Risk */}
-          <Route
-            path="/duration-risk"
-            element={
-              <RequireAuth>
-                <DurationRiskModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/duration-risk/:page"
-            element={
-              <RequireAuth>
-                <DurationRiskModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/duration-risk/asset/:id"
-            element={
-              <RequireAuth>
-                <DurationRiskModule />
-              </RequireAuth>
-            }
-          />
+              {/* Duration & Risk */}
+              <Route
+                path="/duration-risk"
+                element={
+                  <ProtectedModule moduleId="duration-risk">
+                    <DurationRiskModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/duration-risk/:page"
+                element={
+                  <ProtectedModule moduleId="duration-risk">
+                    <DurationRiskModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/duration-risk/asset/:id"
+                element={
+                  <ProtectedModule moduleId="duration-risk">
+                    <DurationRiskModule />
+                  </ProtectedModule>
+                }
+              />
 
-          {/* Market Data & Trend Analytics */}
-          <Route
-            path="/market-data"
-            element={
-              <RequireAuth>
-                <MarketDataModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/market-data/:page"
-            element={
-              <RequireAuth>
-                <MarketDataModule />
-              </RequireAuth>
-            }
-          />
+              {/* Market Data & Trend Analytics */}
+              <Route
+                path="/market-data"
+                element={
+                  <ProtectedModule moduleId="market-data">
+                    <MarketDataModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/market-data/:page"
+                element={
+                  <ProtectedModule moduleId="market-data">
+                    <MarketDataModule />
+                  </ProtectedModule>
+                }
+              />
 
-          {/* Deal Capture & Trade Management */}
-          <Route
-            path="/deal-capture"
-            element={
-              <RequireAuth>
-                <DealsModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/deal-capture/:page"
-            element={
-              <RequireAuth>
-                <DealsModule />
-              </RequireAuth>
-            }
-          />
+              {/* Deal Capture & Trade Management */}
+              <Route
+                path="/deal-capture"
+                element={
+                  <ProtectedModule moduleId="deal-capture">
+                    <DealsModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/deal-capture/:page"
+                element={
+                  <ProtectedModule moduleId="deal-capture">
+                    <DealsModule />
+                  </ProtectedModule>
+                }
+              />
 
-          {/* Performance Analytics */}
-          <Route
-            path="/performance"
-            element={
-              <RequireAuth>
-                <PerformanceModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/performance/:page"
-            element={
-              <RequireAuth>
-                <PerformanceModule />
-              </RequireAuth>
-            }
-          />
+              {/* Performance Analytics */}
+              <Route
+                path="/performance"
+                element={
+                  <ProtectedModule moduleId="performance">
+                    <PerformanceModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/performance/:page"
+                element={
+                  <ProtectedModule moduleId="performance">
+                    <PerformanceModule />
+                  </ProtectedModule>
+                }
+              />
 
-          {/* Accounting & GL */}
-          <Route
-            path="/accounting"
-            element={
-              <RequireAuth>
-                <AccountingModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/accounting/:page"
-            element={
-              <RequireAuth>
-                <AccountingModule />
-              </RequireAuth>
-            }
-          />
+              {/* Accounting & GL */}
+              <Route
+                path="/accounting"
+                element={
+                  <ProtectedModule moduleId="accounting">
+                    <AccountingModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/accounting/:page"
+                element={
+                  <ProtectedModule moduleId="accounting">
+                    <AccountingModule />
+                  </ProtectedModule>
+                }
+              />
 
-          {/* Reporting */}
-          <Route
-            path="/reporting"
-            element={
-              <RequireAuth>
-                <ReportingModule />
-              </RequireAuth>
-            }
-          />
-          <Route
-            path="/reporting/:page"
-            element={
-              <RequireAuth>
-                <ReportingModule />
-              </RequireAuth>
-            }
-          />
+              {/* Reporting */}
+              <Route
+                path="/reporting"
+                element={
+                  <ProtectedModule moduleId="reporting">
+                    <ReportingModule />
+                  </ProtectedModule>
+                }
+              />
+              <Route
+                path="/reporting/:page"
+                element={
+                  <ProtectedModule moduleId="reporting">
+                    <ReportingModule />
+                  </ProtectedModule>
+                }
+              />
 
-          {/* Fallback */}
-          <Route path="*" element={<Navigate to="/" replace />} />
-        </Routes>
-        </Suspense>
-      </PortfolioRegistryProvider>
+              {/* Governance & Controls */}
+              <Route
+                path="/governance"
+                element={
+                  <RequireAuth>
+                    <GovernanceModule />
+                  </RequireAuth>
+                }
+              />
+              <Route
+                path="/governance/:page"
+                element={
+                  <RequireAuth>
+                    <GovernanceModule />
+                  </RequireAuth>
+                }
+              />
+
+              {/* Fallback */}
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </Suspense>
+        </PortfolioRegistryProvider>
+      </GovernanceProvider>
     </PersonaProvider>
   );
 }

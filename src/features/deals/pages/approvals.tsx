@@ -7,6 +7,9 @@ import {
 import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
+import { GovernanceBar } from "../../../components/shared/governance-bar";
+import { useGovernance } from "../../../context/governance";
+import { usePersona } from "../../../context/persona";
 import {
   BOOK_INSTRUMENTS,
   BOOK_COMPUTED,
@@ -40,9 +43,23 @@ export function Approvals() {
   const [decisions, setDecisions] = useState<
     Record<string, "approved" | "rejected">
   >({});
+  const { logAction, hasPermission } = useGovernance();
+  const { persona } = usePersona();
+  const canApprove = hasPermission(persona.role, "deal.approve");
 
-  const decide = (id: string, decision: "approved" | "rejected") =>
+  const decide = (id: string, decision: "approved" | "rejected") => {
     setDecisions((prev) => ({ ...prev, [id]: decision }));
+    logAction({
+      user: persona.name,
+      role: persona.role,
+      module: "Deals",
+      action:
+        decision === "approved" ? "ECL Stage Approved" : "ECL Stage Rejected",
+      detail: `IFRS 9 staging approval decision: ${id} — ${decision}`,
+      status: decision === "approved" ? "success" : "warning",
+      ip: "10.0.1.xx",
+    });
+  };
 
   const { stage2, stage3, totalECL, totalExposure } = useMemo(() => {
     const valMap = new Map(
@@ -159,14 +176,18 @@ export function Approvals() {
         return (
           <div className="flex gap-1" onClick={(e) => e.stopPropagation()}>
             <button
-              onClick={() => decide(String(r.id), "approved")}
-              className="rounded px-2 py-1 text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100"
+              onClick={() => canApprove && decide(String(r.id), "approved")}
+              disabled={!canApprove}
+              title={!canApprove ? "Insufficient permissions" : "Approve"}
+              className="rounded px-2 py-1 text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Approve
             </button>
             <button
-              onClick={() => decide(String(r.id), "rejected")}
-              className="rounded px-2 py-1 text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100"
+              onClick={() => canApprove && decide(String(r.id), "rejected")}
+              disabled={!canApprove}
+              title={!canApprove ? "Insufficient permissions" : "Reject"}
+              className="rounded px-2 py-1 text-xs font-medium bg-red-50 text-red-600 hover:bg-red-100 disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Reject
             </button>
@@ -178,6 +199,12 @@ export function Approvals() {
 
   return (
     <div className="space-y-6 p-6">
+      <GovernanceBar
+        requiredPermission="deal.approve"
+        context="checker"
+        contextNote="Approve / reject IFRS 9 staging changes and ECL provisions"
+        showPendingApprovals
+      />
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray flex items-center gap-2">
           <AlertTriangle className="h-6 w-6 text-primary" />
