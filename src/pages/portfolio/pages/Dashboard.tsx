@@ -114,13 +114,6 @@ export function PortfolioDashboard({ persona }: Props) {
           <h1 className="mt-0.5 text-2xl font-bold text-dark-gray">
             Portfolio Dashboard
           </h1>
-          <p className="mt-1 text-sm text-dark-gray/50">
-            As of{" "}
-            <span className="font-medium text-dark-gray">
-              28 May 2026, 12:00 PM WAT
-            </span>{" "}
-            Â· Portfolio Management Book
-          </p>
         </div>
       </div>
 
@@ -164,7 +157,7 @@ export function PortfolioDashboard({ persona }: Props) {
         {/* Maturity profile */}
         <div className="lg:col-span-2 rounded-xl border border-border bg-surface p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-dark-gray">
-            Maturity Profile â€” Face Value by Bucket
+            Maturity Profile Face Value by Bucket
           </h2>
           <ResponsiveContainer width="100%" height={180}>
             <ReBarChart data={maturityProfile} margin={{ left: 0, right: 4 }}>
@@ -329,7 +322,7 @@ export function PortfolioDashboard({ persona }: Props) {
           <p className="mt-0.5 text-xs text-amber-700">
             Total provision:{" "}
             <span className="font-bold">{fmtCompact(totals.totalECLNGN)}</span>{" "}
-            Â· Coverage:{" "}
+            Coverage:{" "}
             <span className="font-bold">
               {fmtPct(totals.totalECLNGN / totals.totalBSValueNGN)}
             </span>
@@ -344,12 +337,12 @@ export function PortfolioDashboard({ persona }: Props) {
               BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === "Stage 1")
                 .length
             }{" "}
-            Stage 1 Â·{" "}
+            Stage 1{" "}
             {
               BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === "Stage 2")
                 .length
             }{" "}
-            Stage 2 Â·{" "}
+            Stage 2{" "}
             {
               BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === "Stage 3")
                 .length
@@ -366,7 +359,7 @@ export function PortfolioDashboard({ persona }: Props) {
             <span className="font-bold">
               {fmtCompact(totals.totalOCIReserveNGN)}
             </span>{" "}
-            Â· FVTPL:{" "}
+            FVTPL:{" "}
             <span className="font-bold">
               {fmtCompact(totals.totalFVTPLUnrealisedGLNGN)}
             </span>

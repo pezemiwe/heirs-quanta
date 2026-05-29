@@ -9,6 +9,7 @@ import {
   FileText,
   Calculator,
   Database,
+  Eye,
 } from "lucide-react";
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
@@ -22,6 +23,7 @@ import { IFRS9Staging } from "./pages/staging";
 import { IFRS9PDTables } from "./pages/pd-tables";
 import { IFRS9ECLResults } from "./pages/ecl-results";
 import { IFRS9Reports } from "./pages/reports";
+import { IFRS9Watchlist } from "./pages/watchlist";
 
 export type IFRS9Page =
   | "data-manager"
@@ -31,6 +33,7 @@ export type IFRS9Page =
   | "staging"
   | "pd-tables"
   | "ecl-results"
+  | "watchlist"
   | "reports";
 
 interface Props {
@@ -82,6 +85,12 @@ const NAV: {
     group: "analytics",
   },
   {
+    id: "watchlist",
+    label: "Watchlist",
+    icon: <Eye className="h-4 w-4" />,
+    group: "analytics",
+  },
+  {
     id: "data-manager",
     label: "Data Manager",
     icon: <Database className="h-4 w-4" />,
@@ -117,6 +126,8 @@ function PageBody({ page }: { page: IFRS9Page }) {
       return <IFRS9PDTables />;
     case "ecl-results":
       return <IFRS9ECLResults />;
+    case "watchlist":
+      return <IFRS9Watchlist />;
     case "reports":
       return <IFRS9Reports />;
   }

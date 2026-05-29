@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   DataTable,
   type DataTableColumn,
@@ -6,6 +6,7 @@ import {
 import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
+import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
   BOOK_COMPUTED,
   BOOK_INSTRUMENTS,
@@ -13,6 +14,41 @@ import {
   fmtCompact,
   fmtDate,
 } from "../../portfolio/engine/book-compute";
+
+const VALUATION_DATE = "2026-05-28";
+const CALLABLE_TYPES = new Set([
+  "FGN Bond",
+  "Corporate Bond",
+  "Eurobond",
+  "State Bond",
+]);
+
+/** Approximate YTC using simplified approximation formula.
+ *  Call assumed 2 years before maturity (first call window).
+ *  Call price = par (1.0). Current price = dirtyValue / faceValue.
+ *  Returns null if instrument is not callable or tenor < 2.5 years. */
+function calcYTC(
+  couponRate: number,
+  maturityDateStr: string | null,
+  cleanFairValue: number,
+  faceValue: number,
+  instrumentType: string,
+): number | null {
+  if (!CALLABLE_TYPES.has(instrumentType)) return null;
+  if (!maturityDateStr || couponRate <= 0) return null;
+  const val = new Date(VALUATION_DATE + "T00:00:00Z").getTime();
+  const mat = new Date(maturityDateStr + "T00:00:00Z").getTime();
+  const yearsToMaturity = (mat - val) / (365.25 * 86400 * 1000);
+  if (yearsToMaturity < 2.5) return null; // no meaningful call window
+  const yearsToCall = yearsToMaturity - 2;
+  const currentPrice = cleanFairValue / faceValue; // decimal
+  const callPrice = 1.0; // par
+  const annualCoupon = couponRate * callPrice;
+  const ytc =
+    (annualCoupon + (callPrice - currentPrice) / yearsToCall) /
+    ((callPrice + currentPrice) / 2);
+  return ytc > 0 ? ytc : null;
+}
 
 interface YTMRow {
   id: string;
@@ -23,6 +59,7 @@ interface YTMRow {
   eir: number;
   marketYield: number;
   yieldSpread: number;
+  ytc: number | null;
   macaulay: number;
   modified: number;
   dv01: number;
@@ -32,6 +69,7 @@ interface YTMRow {
 type Row = YTMRow & Record<string, unknown>;
 
 export function YTMAnalysis() {
+  const [selected, setSelected] = useState<Row | null>(null);
   const rows = useMemo<Row[]>(() => {
     return BOOK_COMPUTED.valuations.map((v) => ({
       id: v.instrument.id,
@@ -42,12 +80,26 @@ export function YTMAnalysis() {
       eir: v.eir,
       marketYield: v.marketYieldUsed,
       yieldSpread: v.eir > 0 ? v.eir - v.marketYieldUsed : 0,
+      ytc: calcYTC(
+        v.instrument.couponRate,
+        v.instrument.maturityDate,
+        v.cleanFairValue,
+        v.instrument.faceValue,
+        v.instrument.instrumentType,
+      ),
       macaulay: v.risk.macaulayDuration,
       modified: v.risk.modifiedDuration,
       dv01: v.risk.dv01,
       maturityDate: v.instrument.maturityDate,
     })) as Row[];
   }, []);
+
+  const callableRows = rows.filter((r) => r.ytc !== null);
+  const avgYTC =
+    callableRows.length > 0
+      ? callableRows.reduce((s, r) => s + (r.ytc as number), 0) /
+        callableRows.length
+      : null;
 
   const avgYield = rows.reduce((s, r) => s + r.marketYield, 0) / rows.length;
   const avgEIR =
@@ -139,6 +191,19 @@ export function YTMAnalysis() {
       },
     },
     {
+      key: "ytc",
+      header: "YTC",
+      align: "right",
+      render: (r) =>
+        r.ytc !== null ? (
+          <span className="font-medium text-emerald-700">
+            {fmtPct(r.ytc as number)}
+          </span>
+        ) : (
+          <span className="text-dark-gray/30">N/A</span>
+        ),
+    },
+    {
       key: "macaulay",
       header: "Macaulay",
       align: "right",
@@ -189,6 +254,12 @@ export function YTMAnalysis() {
           variant="default"
         />
         <StatCard
+          title="Avg Yield to Call"
+          value={avgYTC !== null ? fmtPct(avgYTC) : "—"}
+          subtitle={`${callableRows.length} callable instruments`}
+          variant="default"
+        />
+        <StatCard
           title="Avg Mod. Duration"
           value={avgDuration.toFixed(2) + " yrs"}
           subtitle="Price sensitivity to yield"
@@ -208,8 +279,127 @@ export function YTMAnalysis() {
           data={rows}
           keyExtractor={(r) => r.id}
           emptyMessage="No instruments"
+          pageSize={20}
+          onRowClick={setSelected}
         />
       </SectionCard>
+
+      <RowDetailModal
+        isOpen={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? "YTM Detail"}
+        subtitle={selected?.id}
+        fields={
+          selected
+            ? [
+                { label: "ID", value: selected.id },
+                {
+                  label: "Type",
+                  value: (
+                    <Badge variant="neutral" size="sm">
+                      {selected.type}
+                    </Badge>
+                  ),
+                },
+                {
+                  label: "Classification",
+                  value: (
+                    <Badge
+                      variant={
+                        selected.classification === "AC"
+                          ? "info"
+                          : selected.classification === "FVOCI"
+                            ? "success"
+                            : "warning"
+                      }
+                      size="sm"
+                    >
+                      {selected.classification}
+                    </Badge>
+                  ),
+                },
+                {
+                  label: "Coupon Rate",
+                  value:
+                    selected.couponRate > 0
+                      ? fmtPct(selected.couponRate)
+                      : "Discount",
+                },
+                {
+                  label: "EIR",
+                  value:
+                    selected.eir > 0 ? (
+                      <span className="font-medium text-primary">
+                        {fmtPct(selected.eir)}
+                      </span>
+                    ) : (
+                      "—"
+                    ),
+                },
+                {
+                  label: "Market Yield",
+                  value:
+                    selected.marketYield > 0
+                      ? fmtPct(selected.marketYield)
+                      : "—",
+                },
+                {
+                  label: "EIR–Market Spread",
+                  value:
+                    selected.eir > 0 && selected.marketYield > 0 ? (
+                      <span
+                        className={
+                          selected.yieldSpread >= 0
+                            ? "text-emerald-600 font-medium"
+                            : "text-primary font-medium"
+                        }
+                      >
+                        {(selected.yieldSpread >= 0 ? "+" : "") +
+                          fmtPct(selected.yieldSpread)}
+                      </span>
+                    ) : (
+                      "—"
+                    ),
+                },
+                {
+                  label: "Yield to Call",
+                  value:
+                    selected.ytc !== null ? (
+                      <span className="font-medium text-emerald-700">
+                        {fmtPct(selected.ytc as number)}
+                      </span>
+                    ) : (
+                      <span className="text-dark-gray/40">
+                        Not callable / N/A
+                      </span>
+                    ),
+                },
+                {
+                  label: "Macaulay Duration",
+                  value:
+                    selected.macaulay > 0
+                      ? `${selected.macaulay.toFixed(2)}y`
+                      : "—",
+                },
+                {
+                  label: "Modified Duration",
+                  value:
+                    selected.modified > 0
+                      ? `${selected.modified.toFixed(2)}y`
+                      : "—",
+                },
+                {
+                  label: "DV01 (NGN)",
+                  value: selected.dv01 > 0 ? fmtCompact(selected.dv01) : "—",
+                },
+                {
+                  label: "Maturity Date",
+                  value: fmtDate(selected.maturityDate),
+                },
+              ]
+            : []
+        }
+      />
     </div>
   );
 }

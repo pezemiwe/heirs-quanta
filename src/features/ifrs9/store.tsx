@@ -20,6 +20,7 @@ interface IFRS9ContextValue {
   parseErrors: { row: number; message: string }[];
   setSecurities: (s: Security[]) => void;
   updateSecurity: (sn: number, patch: Partial<Security>) => void;
+  removeSecurity: (sn: number) => void;
   setAssumptions: (a: Assumptions) => void;
   loadSample: () => void;
   loadFromCSV: (
@@ -84,6 +85,8 @@ export function IFRS9Provider({ children }: { children: ReactNode }) {
       setLastUploadedFile(null);
       setParseErrors([]);
     },
+    removeSecurity: (sn) =>
+      setSecurities((prev) => prev.filter((s) => s.sn !== sn)),
   };
 
   return (

@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, type ReactNode } from "react";
 import {
   DataTable,
   type DataTableColumn,
@@ -6,6 +6,7 @@ import {
 import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
+import { AcronymTip } from "../../../components/shared/acronym-tip";
 import {
   BOOK_COMPUTED,
   fmtCompact,
@@ -43,7 +44,7 @@ export function FVAdjustments() {
           movement: v.ociReserve,
           movementPct:
             v.acCarryingValue > 0 ? v.ociReserve / v.acCarryingValue : 0,
-          account: "OCI — Unrealised Gain/(Loss) on FVOCI Assets",
+          account: "OCI Unrealised Gain/(Loss) on FVOCI Assets",
         });
       } else if (v.instrument.classification === "FVTPL") {
         fvtpl.push({
@@ -56,7 +57,7 @@ export function FVAdjustments() {
           movement: v.unrealisedGL,
           movementPct:
             v.acCarryingValue > 0 ? v.unrealisedGL / v.acCarryingValue : 0,
-          account: "P&L — Unrealised Gain/(Loss) on FVTPL Assets",
+          account: "P&L Unrealised Gain/(Loss) on FVTPL Assets",
         });
       }
     }
@@ -73,7 +74,10 @@ export function FVAdjustments() {
     };
   }, []);
 
-  const cols = (acLabel: string, mvLabel: string): DataTableColumn<Row>[] => [
+  const cols = (
+    acLabel: ReactNode,
+    mvLabel: ReactNode,
+  ): DataTableColumn<Row>[] => [
     { key: "id", header: "ID", width: "90px" },
     { key: "name", header: "Instrument" },
     {
@@ -138,16 +142,17 @@ export function FVAdjustments() {
           Fair Value Adjustments
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          OCI reserve movements (FVOCI) and unrealised G/L (FVTPL) · Valuation
-          date 28 May 2026
+          <AcronymTip term="OCI" /> reserve movements (
+          <AcronymTip term="FVOCI" />) and unrealised gain/(loss) (
+          <AcronymTip term="FVTPL" />) · Valuation date 28 May 2026
         </p>
       </div>
 
       <StatCardGrid>
         <StatCard
-          title="FVOCI Adjustments"
+          title="Fair Value (OCI) Adjustments"
           value={String(ociRows.length)}
-          subtitle="Instruments with OCI movement"
+          subtitle="Instruments with OCI reserve movement"
           variant="default"
         />
         <StatCard
@@ -157,13 +162,13 @@ export function FVAdjustments() {
           variant={totalOCI >= 0 ? "default" : "warning"}
         />
         <StatCard
-          title="FVTPL Adjustments"
+          title="Fair Value (P&L) Adjustments"
           value={String(fvtplRows.length)}
-          subtitle="Instruments with P&L movement"
+          subtitle="Instruments with unrealised gain/(loss)"
           variant="default"
         />
         <StatCard
-          title="Net FVTPL G/(L)"
+          title="Net Unrealised Gain/(Loss)"
           value={fmtCompact(Math.abs(totalFVTPL))}
           subtitle={
             totalFVTPL >= 0 ? "Net unrealised gain" : "Net unrealised loss"
@@ -173,11 +178,18 @@ export function FVAdjustments() {
       </StatCardGrid>
 
       <SectionCard
-        title="FVOCI — OCI Reserve"
-        description="DR/CR Investment (FVOCI) · OCI Equity Reserve"
+        title="Fair Value through OCI — Reserve Movements"
+        description="Dr / Cr: FVOCI Investment Account / OCI Equity Reserve (recycled to P&L on disposal)"
       >
         <DataTable<Row>
-          columns={cols("AC Carrying", "OCI Reserve")}
+          columns={cols(
+            <>
+              <AcronymTip term="AC" /> Carrying Value
+            </>,
+            <>
+              <AcronymTip term="OCI" /> Reserve
+            </>,
+          )}
           data={ociRows}
           keyExtractor={(r) => r.id}
           emptyMessage="No FVOCI adjustments"
@@ -185,11 +197,11 @@ export function FVAdjustments() {
       </SectionCard>
 
       <SectionCard
-        title="FVTPL — Unrealised Gains / Losses"
-        description="DR/CR Investment (FVTPL) · Unrealised G/L — P&L"
+        title="Fair Value through P&L — Unrealised Gains / Losses"
+        description="Dr / Cr: FVTPL Investment Account / Unrealised Gain or Loss (recognised in Profit & Loss)"
       >
         <DataTable<Row>
-          columns={cols("Cost Basis", "Unrealised G/(L)")}
+          columns={cols("Cost Basis", "Unrealised Gain/(Loss)")}
           data={fvtplRows}
           keyExtractor={(r) => r.id}
           emptyMessage="No FVTPL adjustments"

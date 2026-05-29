@@ -4,6 +4,7 @@ import { SectionCard } from "../../../components/shared/section-card";
 import { StatCard } from "../../../components/shared/stat-card";
 import { fmtMoneyCompact, fmtNumber, CLASSIFICATION_BADGE } from "../utils";
 import { EmptyPortfolio } from "../components/empty-portfolio";
+import { AcronymTip } from "../../../components/shared/acronym-tip";
 
 export function ValuationOverview() {
   const v = useValuation();
@@ -38,14 +39,14 @@ export function ValuationOverview() {
         <StatCard
           title="ECL Provision"
           value={fmtMoneyCompact(totals.totalECLNGN, "NGN")}
-          subtitle="AC + FVOCI stages"
+          subtitle="Amortised Cost + Fair Value (OCI) stages"
           icon={<ShieldAlert className="h-4 w-4" />}
           variant="warning"
         />
         <StatCard
           title="OCI Reserve"
           value={fmtMoneyCompact(totals.totalOCIReserveNGN, "NGN")}
-          subtitle="FVOCI unrealised FV"
+          subtitle="Fair Value (OCI) — unrealised movement"
           icon={<Activity className="h-4 w-4" />}
           variant={totals.totalOCIReserveNGN >= 0 ? "default" : "danger"}
         />
@@ -53,7 +54,7 @@ export function ValuationOverview() {
 
       <SectionCard
         title="Breakdown by Classification"
-        description="AC = Amortised Cost · FVOCI = Fair Value through OCI · FVTPL = Fair Value through P&L"
+        description="AC = Amortised Cost · FVOCI = Fair Value through Other Comprehensive Income · FVTPL = Fair Value through Profit & Loss"
         noPadding
       >
         <div className="overflow-x-auto">
@@ -74,11 +75,13 @@ export function ValuationOverview() {
                   className="border-b border-border/60"
                 >
                   <td className="px-5 py-3">
-                    <span
-                      className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASSIFICATION_BADGE[r.classification]}`}
-                    >
-                      {r.classification}
-                    </span>
+                    <AcronymTip term={r.classification}>
+                      <span
+                        className={`rounded-full px-2.5 py-0.5 text-xs font-semibold ${CLASSIFICATION_BADGE[r.classification]}`}
+                      >
+                        {r.classification}
+                      </span>
+                    </AcronymTip>
                   </td>
                   <td className="px-5 py-3 text-right font-mono">{r.count}</td>
                   <td className="px-5 py-3 text-right font-mono">

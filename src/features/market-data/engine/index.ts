@@ -51,9 +51,9 @@ export const USD_BASE_CURVE: Record<number, number> = {
 };
 
 export const FX_BASE: Record<string, number> = {
-  USDNGN: 1580.0,
-  EURNGN: 1720.0,
-  GBPNGN: 2010.0,
+  "USD-NGN": 1580.0,
+  "EUR-NGN": 1720.0,
+  "GBP-NGN": 2010.0,
 };
 
 export const BOND_UNIVERSE: {
@@ -224,20 +224,20 @@ function simFxHistory(asOf: string): FXHistoryPoint[] {
   const rand = mulberry32(123);
   const dates = daysBack(asOf, HISTORY_DAYS);
   const cur: Record<string, number> = {
-    USDNGN: FX_BASE.USDNGN - 35,
-    EURNGN: FX_BASE.EURNGN - 40,
-    GBPNGN: FX_BASE.GBPNGN - 45,
+    "USD-NGN": FX_BASE["USD-NGN"] - 35,
+    "EUR-NGN": FX_BASE["EUR-NGN"] - 40,
+    "GBP-NGN": FX_BASE["GBP-NGN"] - 45,
   };
   return dates.map((date) => {
-    cur.USDNGN += gauss(rand) * 4 + 0.4;
-    cur.EURNGN += gauss(rand) * 4.5 + 0.45;
-    cur.GBPNGN += gauss(rand) * 5 + 0.5;
+    cur["USD-NGN"] += gauss(rand) * 4 + 0.4;
+    cur["EUR-NGN"] += gauss(rand) * 4.5 + 0.45;
+    cur["GBP-NGN"] += gauss(rand) * 5 + 0.5;
     return {
       date,
       rates: {
-        USDNGN: Math.round(cur.USDNGN * 100) / 100,
-        EURNGN: Math.round(cur.EURNGN * 100) / 100,
-        GBPNGN: Math.round(cur.GBPNGN * 100) / 100,
+        "USD-NGN": Math.round(cur["USD-NGN"] * 100) / 100,
+        "EUR-NGN": Math.round(cur["EUR-NGN"] * 100) / 100,
+        "GBP-NGN": Math.round(cur["GBP-NGN"] * 100) / 100,
       },
     };
   });

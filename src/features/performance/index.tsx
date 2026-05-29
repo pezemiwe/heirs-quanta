@@ -120,7 +120,6 @@ export function PerformanceModule() {
   return (
     <ModuleShell
       moduleLabel="Return & Performance Analytics"
-      badge="Beta"
       basePath="/performance"
       activePage={page}
       nav={NAV}

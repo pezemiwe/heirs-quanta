@@ -77,7 +77,7 @@ const sectorIncome = BOOK_COMPUTED.bySector
   .map((s) => {
     const sVals = vals.filter((v) => v.instrument.sector === s.sector);
     return {
-      sector: s.sector.length > 12 ? s.sector.slice(0, 12) + "â€¦" : s.sector,
+      sector: s.sector.length > 12 ? s.sector.slice(0, 12) + "…" : s.sector,
       income: sVals.reduce((a, v) => a + v.annualEIRIncome, 0),
     };
   })
@@ -97,7 +97,7 @@ const METRICS = [
     positive: true,
   },
   {
-    label: "EIRâ€“Yield Spread",
+    label: "EIR—Yield Spread",
     value: `${((wEIR - wYield) * 100).toFixed(0)} bps`,
     note: "Carry vs current market",
     positive: wEIR > wYield,
@@ -275,7 +275,7 @@ export function PortfolioPerformance() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-dark-gray">
-            FVOCI â€” OCI Reserve
+            FVOCI OCI Reserve
           </h2>
           <p className="text-2xl font-bold text-dark-gray">
             {fmtCompact(totalOCI)}
@@ -307,7 +307,7 @@ export function PortfolioPerformance() {
         </div>
         <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-dark-gray">
-            FVTPL â€” Unrealised P&L
+            FVTPL Unrealised P&L
           </h2>
           <p
             className={`text-2xl font-bold ${totalFVTPL >= 0 ? "text-emerald-600" : "text-primary"}`}

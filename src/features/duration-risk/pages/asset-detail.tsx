@@ -174,7 +174,7 @@ export function DurationRiskAssetDetail() {
             <span className="font-mono font-semibold">
               {fmtNumber(0.5 * row.convexity * 0.02 * 0.02 * baseLocal * fx, 0)}
             </span>{" "}
-            NGN — second-order gain regardless of direction.
+            NGN second-order gain regardless of direction.
           </li>
           <li>
             Interest-rate risk level:{" "}

@@ -1,3 +1,4 @@
+import { useState } from "react";
 import {
   DataTable,
   type DataTableColumn,
@@ -5,6 +6,7 @@ import {
 import { SectionCard } from "../../../components/shared/section-card";
 import { StageBadge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
+import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import { Layers, AlertTriangle, ShieldAlert } from "lucide-react";
 import { useIFRS9 } from "../store";
 import type { SecurityComputed, Stage } from "../engine/types";
@@ -38,6 +40,7 @@ const toRow = (r: SecurityComputed): StagingRow => ({
 export function IFRS9Staging() {
   const { result, updateSecurity } = useIFRS9();
   const rows = result.rows.map(toRow);
+  const [selected, setSelected] = useState<StagingRow | null>(null);
 
   const counts: Record<Stage, number> = { 1: 0, 2: 0, 3: 0 };
   for (const r of rows) counts[r.finalStage] += 1;
@@ -150,8 +153,61 @@ export function IFRS9Staging() {
           data={rows}
           keyExtractor={(r) => r.sn}
           emptyMessage="No staging output"
+          pageSize={20}
+          onRowClick={setSelected}
         />
       </SectionCard>
+
+      <RowDetailModal
+        isOpen={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.counterparty ?? "Staging Detail"}
+        subtitle={`SN ${selected?.sn}`}
+        fields={
+          selected
+            ? [
+                { label: "SN", value: String(selected.sn) },
+                { label: "Counterparty", value: selected.counterparty },
+                { label: "Days Past Due", value: String(selected.dpd) },
+                {
+                  label: "DPD Stage",
+                  value: <StageBadge stage={selected.dpdStage} />,
+                },
+                {
+                  label: "Performance Status",
+                  value: selected.performanceStatus,
+                },
+                {
+                  label: "Performance Stage",
+                  value: <StageBadge stage={selected.performanceStage} />,
+                },
+                {
+                  label: "Expiry Stage",
+                  value: selected.expiryStage ? (
+                    <StageBadge stage={selected.expiryStage} />
+                  ) : (
+                    "—"
+                  ),
+                },
+                {
+                  label: "Model Stage",
+                  value: <StageBadge stage={selected.modelStage} />,
+                },
+                {
+                  label: "Override",
+                  value:
+                    selected.override > 0
+                      ? `Stage ${selected.override}`
+                      : "None",
+                },
+                {
+                  label: "Final Stage",
+                  value: <StageBadge stage={selected.finalStage} />,
+                },
+              ]
+            : []
+        }
+      />
     </div>
   );
 }

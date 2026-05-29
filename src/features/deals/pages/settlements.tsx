@@ -1,5 +1,5 @@
-import { useMemo } from "react";
-import { ArrowLeftRight } from "lucide-react";
+import { useMemo, useState } from "react";
+import { ArrowLeftRight, CheckCircle } from "lucide-react";
 import {
   DataTable,
   type DataTableColumn,
@@ -7,6 +7,7 @@ import {
 import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
+import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
   BOOK_INSTRUMENTS,
   BOOK_COMPUTED,
@@ -33,6 +34,12 @@ interface SettlementRow {
 type Row = SettlementRow & Record<string, unknown>;
 
 export function Settlements() {
+  const [selected, setSelected] = useState<Row | null>(null);
+  const [settled, setSettled] = useState<Set<string>>(new Set());
+
+  const markSettled = (id: string) =>
+    setSettled((prev) => new Set([...prev, id]));
+
   const { rows, totalFace, totalBS } = useMemo(() => {
     const valMap = new Map(
       BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
@@ -137,6 +144,30 @@ export function Settlements() {
         </Badge>
       ),
     },
+    {
+      key: "_actions" as never,
+      header: "",
+      width: "130px",
+      render: (r) => {
+        if (settled.has(String(r.id)))
+          return (
+            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
+              <CheckCircle className="h-3.5 w-3.5" />
+              Settled
+            </span>
+          );
+        return (
+          <div onClick={(e) => e.stopPropagation()}>
+            <button
+              onClick={() => markSettled(String(r.id))}
+              className="rounded px-2 py-1 text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100"
+            >
+              Mark Settled
+            </button>
+          </div>
+        );
+      },
+    },
   ];
 
   return (
@@ -185,11 +216,67 @@ export function Settlements() {
       >
         <DataTable<Row>
           columns={cols}
-          data={rows}
+          data={rows.filter((r) => !settled.has(String(r.id)))}
           keyExtractor={(r) => r.id}
           emptyMessage="No instruments maturing in this window"
+          pageSize={20}
+          onRowClick={setSelected}
         />
       </SectionCard>
+
+      <RowDetailModal
+        isOpen={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? "Settlement Detail"}
+        subtitle={selected?.id}
+        fields={
+          selected
+            ? [
+                { label: "ID", value: selected.id },
+                {
+                  label: "Type",
+                  value: (
+                    <Badge variant="neutral" size="sm">
+                      {selected.type}
+                    </Badge>
+                  ),
+                },
+                { label: "Issuer", value: selected.issuer },
+                { label: "Currency", value: selected.currency },
+                {
+                  label: "Classification",
+                  value: (
+                    <Badge
+                      variant={
+                        selected.classification === "AC"
+                          ? "info"
+                          : selected.classification === "FVOCI"
+                            ? "success"
+                            : "warning"
+                      }
+                      size="sm"
+                    >
+                      {selected.classification}
+                    </Badge>
+                  ),
+                },
+                { label: "Face Value", value: fmtCompact(selected.faceValue) },
+                {
+                  label: "Book Value (NGN)",
+                  value: fmtCompact(selected.bsValue),
+                },
+                {
+                  label: "Maturity Date",
+                  value: fmtDate(selected.maturityDate),
+                },
+                {
+                  label: "Days to Maturity",
+                  value: String(selected.daysToMaturity),
+                },
+              ]
+            : []
+        }
+      />
     </div>
   );
 }

@@ -42,12 +42,6 @@ const NAV: {
   group: string;
 }[] = [
   {
-    id: "data-manager",
-    label: "Data Manager",
-    icon: <Database className="h-4 w-4" />,
-    group: "data",
-  },
-  {
     id: "overview",
     label: "Overview",
     icon: <LayoutDashboard className="h-4 w-4" />,
@@ -84,6 +78,12 @@ const NAV: {
     group: "settings",
   },
   {
+    id: "data-manager",
+    label: "Data Manager",
+    icon: <Database className="h-4 w-4" />,
+    group: "settings",
+  },
+  {
     id: "reports",
     label: "Reports",
     icon: <FileText className="h-4 w-4" />,
@@ -92,7 +92,6 @@ const NAV: {
 ];
 
 const GROUPS: Record<string, string> = {
-  data: "Data",
   portfolio: "Portfolio",
   analytics: "Analytics",
   settings: "Operations",
@@ -170,7 +169,9 @@ export function ValuationModule() {
                     {groupLabel}
                   </p>
                   {items.map((item) => {
-                    const active = page === item.id;
+                    const active =
+                      page === item.id ||
+                      (page === "asset-detail" && item.id === "inventory");
                     return (
                       <button
                         key={item.id}

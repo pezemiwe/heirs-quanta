@@ -16,9 +16,9 @@ import { COLORS } from "../engine";
 import { fmtFx, fmtShortDate } from "../utils";
 
 const PAIRS = [
-  { code: "USDNGN", label: "US Dollar", color: COLORS.ngn },
-  { code: "EURNGN", label: "Euro", color: COLORS.usd },
-  { code: "GBPNGN", label: "Pound Sterling", color: COLORS.purple },
+  { code: "USD-NGN", label: "US Dollar", color: COLORS.ngn },
+  { code: "EUR-NGN", label: "Euro", color: COLORS.usd },
+  { code: "GBP-NGN", label: "Pound Sterling", color: COLORS.purple },
 ];
 
 export function MarketDataFx() {
@@ -26,9 +26,9 @@ export function MarketDataFx() {
   const { snapshot, history } = state;
   const data = history.fx.map((d) => ({
     date: fmtShortDate(d.date),
-    USDNGN: d.rates.USDNGN,
-    EURNGN: d.rates.EURNGN,
-    GBPNGN: d.rates.GBPNGN,
+    "USD-NGN": d.rates["USD-NGN"],
+    "EUR-NGN": d.rates["EUR-NGN"],
+    "GBP-NGN": d.rates["GBP-NGN"],
   }));
 
   return (

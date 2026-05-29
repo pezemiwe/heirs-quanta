@@ -11,6 +11,7 @@ import {
   KanbanSquare,
   ClipboardList,
   Bell,
+  BookOpen,
 } from "lucide-react";
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
@@ -25,6 +26,7 @@ import { PortfolioTransactions } from "./pages/transactions";
 import { PortfolioReports } from "./pages/reports";
 import { PortfolioPipeline } from "./pages/pipeline";
 import { PortfolioTasks } from "./pages/tasks";
+import { PortfolioBooks } from "./pages/portfolio-books";
 
 export type PortfolioPage =
   | "dashboard"
@@ -35,7 +37,8 @@ export type PortfolioPage =
   | "risk"
   | "transactions"
   | "tasks"
-  | "reports";
+  | "reports"
+  | "portfolios";
 
 interface Props {
   persona: { name: string; role: string; avatar: string };
@@ -64,6 +67,14 @@ const NAV: {
     tooltip:
       "Full position-level breakdown with search, filter, and detail panel.",
     icon: <Briefcase className="h-4 w-4" />,
+    group: "main",
+  },
+  {
+    id: "portfolios",
+    label: "Portfolio Books",
+    tooltip:
+      "Register, configure and manage named portfolio books used across modules.",
+    icon: <BookOpen className="h-4 w-4" />,
     group: "main",
   },
   {
@@ -175,6 +186,8 @@ function PageBody({
       return <PortfolioTasks />;
     case "reports":
       return <PortfolioReports />;
+    case "portfolios":
+      return <PortfolioBooks />;
   }
 }
 

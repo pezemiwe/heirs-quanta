@@ -121,7 +121,6 @@ export function ReportingModule() {
   return (
     <ModuleShell
       moduleLabel="Reporting & Dashboard"
-      badge="Beta"
       basePath="/reporting"
       activePage={page}
       nav={NAV}

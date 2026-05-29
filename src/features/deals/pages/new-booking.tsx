@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Save, RotateCcw, Info } from "lucide-react";
+import { Save, RotateCcw, Info, Loader2, Paperclip, X } from "lucide-react";
+import { usePortfolioRegistry } from "../../portfolio/portfolio-registry";
 
 type FormState = {
   instrumentType: string;
@@ -15,6 +16,7 @@ type FormState = {
   purchaseYield: string;
   couponRate: string;
   couponFrequency: string;
+  discountRate: string;
   purchaseDate: string;
   maturityDate: string;
   settlementDate: string;
@@ -39,6 +41,7 @@ const EMPTY: FormState = {
   purchaseYield: "",
   couponRate: "",
   couponFrequency: "Semi-Annual",
+  discountRate: "",
   purchaseDate: "2026-05-28",
   maturityDate: "",
   settlementDate: "2026-05-30",
@@ -64,7 +67,6 @@ const CLASSIFICATIONS = ["AC", "FVOCI", "FVTPL"];
 const IFRS13_LEVELS = ["Level 1", "Level 2", "Level 3"];
 const FREQ_OPTIONS = ["Monthly", "Quarterly", "Semi-Annual", "Annual", "Zero"];
 const DAY_COUNTS = ["Actual/365", "Actual/360", "30/360", "Actual/Actual"];
-const PORTFOLIOS = ["Trading Book", "Banking Book", "Held-to-Maturity"];
 const SECTORS = [
   "Federal Government",
   "Banking",
@@ -140,6 +142,10 @@ function SelectInput({
 export function NewBooking() {
   const [form, setForm] = useState<FormState>(EMPTY);
   const [submitted, setSubmitted] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [attachments, setAttachments] = useState<File[]>([]);
+  const { getPortfolioNames } = usePortfolioRegistry();
+  const PORTFOLIOS = getPortfolioNames();
 
   const set = (field: keyof FormState) => (v: string) =>
     setForm((f) => ({ ...f, [field]: v }));
@@ -153,7 +159,11 @@ export function NewBooking() {
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    setSubmitted(true);
+    setSubmitting(true);
+    setTimeout(() => {
+      setSubmitting(false);
+      setSubmitted(true);
+    }, 1200);
   };
 
   if (submitted) {
@@ -356,6 +366,16 @@ export function NewBooking() {
                 options={DAY_COUNTS}
               />
             </div>
+            <div>
+              <FieldLabel tip="Discount rate used for DCF valuation (e.g. 0.185 for 18.5%). Defaults to purchase yield if blank.">
+                Discount Rate (%)
+              </FieldLabel>
+              <TextInput
+                value={form.discountRate}
+                onChange={set("discountRate")}
+                placeholder="e.g. 0.185 for 18.5%"
+              />
+            </div>
           </div>
           {eirApprox !== null && (
             <div className="mt-4 rounded-lg bg-pale-red/40 border border-primary/20 px-4 py-3">
@@ -424,6 +444,59 @@ export function NewBooking() {
           </div>
         </div>
 
+        {/* Section: Documents */}
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <h2 className="mb-4 text-sm font-semibold text-dark-gray">
+            Document Attachments
+          </h2>
+          <div className="space-y-3">
+            <label className="flex cursor-pointer items-center gap-3 rounded-lg border-2 border-dashed border-border bg-gray-50 px-4 py-3 hover:border-primary hover:bg-pale-red/20 transition-colors">
+              <Paperclip className="h-4 w-4 text-gray-400" />
+              <span className="text-sm text-gray-400">
+                Attach term sheet, IC memo, or supporting documents…
+              </span>
+              <input
+                type="file"
+                multiple
+                className="hidden"
+                accept=".pdf,.doc,.docx,.xlsx,.csv"
+                onChange={(e) => {
+                  const files = Array.from(e.target.files ?? []);
+                  setAttachments((prev) => [...prev, ...files]);
+                  e.target.value = "";
+                }}
+              />
+            </label>
+            {attachments.length > 0 && (
+              <ul className="space-y-1.5">
+                {attachments.map((f, i) => (
+                  <li
+                    key={i}
+                    className="flex items-center justify-between rounded-lg border border-border bg-white px-3 py-2 text-sm"
+                  >
+                    <div className="flex items-center gap-2 text-dark-gray">
+                      <Paperclip className="h-3.5 w-3.5 text-gray-400" />
+                      <span className="font-medium">{f.name}</span>
+                      <span className="text-xs text-gray-400">
+                        ({(f.size / 1024).toFixed(1)} KB)
+                      </span>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setAttachments((prev) => prev.filter((_, j) => j !== i))
+                      }
+                      className="text-gray-400 hover:text-danger"
+                    >
+                      <X className="h-4 w-4" />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            )}
+          </div>
+        </div>
+
         {/* Section: Notes */}
         <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
           <h2 className="mb-4 text-sm font-semibold text-dark-gray">
@@ -449,9 +522,18 @@ export function NewBooking() {
           </button>
           <button
             type="submit"
-            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90"
+            disabled={submitting}
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 disabled:opacity-70"
           >
-            <Save className="h-4 w-4" /> Book Deal
+            {submitting ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" /> Booking…
+              </>
+            ) : (
+              <>
+                <Save className="h-4 w-4" /> Book Deal
+              </>
+            )}
           </button>
         </div>
       </form>

@@ -110,11 +110,11 @@ export function AssetAllocation() {
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">Asset Allocation</h1>
         <p className="mt-1 text-sm text-dark-gray/50">
-          Strategic and tactical allocation breakdown across all dimensions Â·{" "}
+          Strategic and tactical allocation breakdown across all dimensions{" "}
           <span className="font-medium text-dark-gray">
             {totals.instruments} instruments
           </span>{" "}
-          Â· Total book value{" "}
+          Total book value{" "}
           <span className="font-medium text-dark-gray">
             {fmtCompact(totals.totalBSValueNGN)}
           </span>
@@ -129,7 +129,7 @@ export function AssetAllocation() {
             className="rounded-xl border border-border bg-surface p-4 shadow-sm"
           >
             <p className="text-xs text-dark-gray/50 font-medium">
-              {c.classification} â€” {c.count} instruments
+              {c.classification} {c.count} instruments
             </p>
             <p className="mt-1 text-xl font-bold text-dark-gray">
               {fmtCompact(c.bsValueNGN)}

@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { CheckCircle2, Database, RefreshCw, Upload, Zap } from "lucide-react";
+import { CheckCircle2, Database, RefreshCw, Zap } from "lucide-react";
 import { useMarketData } from "../store";
 import { SectionCard } from "../../../components/shared/section-card";
 import { NGN_TENORS } from "../engine";
@@ -13,12 +13,11 @@ export function MarketDataSources() {
     setFx,
     connectBloomberg,
     bloombergConnected,
-    loadFmdq,
   } = useMarketData();
 
   const [tenor, setTenor] = useState<number>(5);
   const [newYield, setNewYield] = useState<string>("");
-  const [fxPair, setFxPair] = useState<string>("USDNGN");
+  const [fxPair, setFxPair] = useState<string>(" USD-NGN");
   const [fxRate, setFxRate] = useState<string>("");
 
   return (
@@ -58,19 +57,6 @@ export function MarketDataSources() {
                   </p>
                 </div>
               </div>
-              <button
-                onClick={() =>
-                  loadFmdq(
-                    NGN_TENORS.map((t) => ({
-                      tenor: t,
-                      yield: 0.18 + Math.sin(t) * 0.005,
-                    })),
-                  )
-                }
-                className="inline-flex items-center gap-1.5 rounded-md bg-primary px-3 py-1.5 text-xs font-medium text-white hover:bg-mid-red"
-              >
-                <Upload className="h-3.5 w-3.5" /> Load sample
-              </button>
             </li>
             <li className="flex items-center justify-between py-3">
               <div className="flex items-center gap-3">

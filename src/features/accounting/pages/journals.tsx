@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
@@ -6,6 +6,7 @@ import {
   DataTable,
   type DataTableColumn,
 } from "../../../components/shared/data-table";
+import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
   BOOK_COMPUTED,
   fmtCompact,
@@ -29,6 +30,7 @@ interface JournalEntry {
 type Row = JournalEntry & Record<string, unknown>;
 
 export function Journals() {
+  const [selected, setSelected] = useState<Row | null>(null);
   const rows = useMemo<Row[]>(() => {
     return BOOK_COMPUTED.valuations
       .filter((v) => v.annualEIRIncome > 0)
@@ -195,8 +197,74 @@ export function Journals() {
           data={rows}
           keyExtractor={(r) => r.ref}
           emptyMessage="No EIR journal entries"
+          pageSize={20}
+          onRowClick={setSelected}
         />
       </SectionCard>
+
+      <RowDetailModal
+        isOpen={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.instrument ?? "Journal Entry"}
+        subtitle={selected?.ref}
+        fields={
+          selected
+            ? [
+                { label: "Reference", value: selected.ref },
+                {
+                  label: "Classification",
+                  value: (
+                    <Badge
+                      variant={
+                        selected.classification === "AC"
+                          ? "info"
+                          : selected.classification === "FVOCI"
+                            ? "success"
+                            : "warning"
+                      }
+                      size="sm"
+                    >
+                      {selected.classification}
+                    </Badge>
+                  ),
+                },
+                {
+                  label: "EIR",
+                  value: (
+                    <span className="text-primary font-medium">
+                      {fmtPct(selected.eir)}
+                    </span>
+                  ),
+                },
+                {
+                  label: "Opening Carrying Value",
+                  value: fmtCompact(selected.openingCarry),
+                },
+                {
+                  label: "EIR Income (DR)",
+                  value: (
+                    <span className="font-semibold">
+                      {fmtCompact(selected.eirIncome)}
+                    </span>
+                  ),
+                },
+                {
+                  label: "Coupon Cash (CR)",
+                  value:
+                    selected.couponCash > 0
+                      ? fmtCompact(selected.couponCash)
+                      : "—",
+                },
+                {
+                  label: "Closing Carrying Value",
+                  value: fmtCompact(selected.closing),
+                },
+                { label: "DR Account", value: selected.dr, wide: true },
+                { label: "CR Account", value: selected.cr, wide: true },
+              ]
+            : []
+        }
+      />
     </div>
   );
 }

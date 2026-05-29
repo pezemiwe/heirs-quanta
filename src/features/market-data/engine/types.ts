@@ -18,7 +18,7 @@ export interface NelsonSiegelParams {
 }
 
 export interface FXRate {
-  pair: string; // USDNGN
+  pair: string; //  USD-NGN
   rate: number;
 }
 

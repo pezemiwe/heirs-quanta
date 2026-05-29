@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   DataTable,
   type DataTableColumn,
@@ -6,6 +6,7 @@ import {
 import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
+import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
   BOOK_COMPUTED,
   fmtCompact,
@@ -26,6 +27,7 @@ interface AccrualRow {
 type Row = AccrualRow & Record<string, unknown>;
 
 export function Accruals() {
+  const [selected, setSelected] = useState<Row | null>(null);
   const rows = useMemo<Row[]>(() => {
     return BOOK_COMPUTED.valuations
       .filter((v) => v.accruedInterest > 0)
@@ -153,8 +155,63 @@ export function Accruals() {
           data={rows}
           keyExtractor={(r) => r.id}
           emptyMessage="No accruals"
+          pageSize={20}
+          onRowClick={setSelected}
         />
       </SectionCard>
+
+      <RowDetailModal
+        isOpen={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? "Accrual Detail"}
+        subtitle={selected?.id}
+        fields={
+          selected
+            ? [
+                { label: "ID", value: selected.id },
+                {
+                  label: "Type",
+                  value: (
+                    <Badge variant="neutral" size="sm">
+                      {selected.type}
+                    </Badge>
+                  ),
+                },
+                {
+                  label: "Classification",
+                  value: (
+                    <Badge
+                      variant={
+                        selected.classification === "AC"
+                          ? "info"
+                          : selected.classification === "FVOCI"
+                            ? "success"
+                            : "warning"
+                      }
+                      size="sm"
+                    >
+                      {selected.classification}
+                    </Badge>
+                  ),
+                },
+                { label: "Face Value", value: fmtCompact(selected.faceValue) },
+                { label: "Coupon Rate", value: fmtPct(selected.couponRate) },
+                {
+                  label: "Monthly Accrual",
+                  value: fmtCompact(selected.monthlyAccrual),
+                },
+                {
+                  label: "Accrued to Date",
+                  value: (
+                    <span className="font-semibold text-primary">
+                      {fmtCompact(selected.accruedInterest)}
+                    </span>
+                  ),
+                },
+              ]
+            : []
+        }
+      />
     </div>
   );
 }

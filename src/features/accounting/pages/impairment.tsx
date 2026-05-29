@@ -1,4 +1,4 @@
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import {
   DataTable,
   type DataTableColumn,
@@ -6,6 +6,7 @@ import {
 import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
+import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
   BOOK_COMPUTED,
   BOOK_INSTRUMENTS,
@@ -27,6 +28,7 @@ interface ImpairmentRow {
 type Row = ImpairmentRow & Record<string, unknown>;
 
 export function Impairment() {
+  const [selected, setSelected] = useState<Row | null>(null);
   const { stage1, stage2, stage3, totalECL, totalExposure } = useMemo(() => {
     const valMap = new Map(
       BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
@@ -160,9 +162,45 @@ export function Impairment() {
             data={items}
             keyExtractor={(r) => r.id}
             emptyMessage={`No ${label} instruments`}
+            pageSize={20}
+            onRowClick={setSelected}
           />
         </SectionCard>
       ))}
+
+      <RowDetailModal
+        isOpen={selected !== null}
+        onClose={() => setSelected(null)}
+        title={selected?.name ?? "Impairment Detail"}
+        subtitle={selected?.id}
+        fields={
+          selected
+            ? [
+                { label: "ID", value: selected.id },
+                {
+                  label: "Type",
+                  value: (
+                    <Badge variant="neutral" size="sm">
+                      {selected.type}
+                    </Badge>
+                  ),
+                },
+                { label: "Stage", value: selected.stage },
+                { label: "Face Value", value: fmtCompact(selected.faceValue) },
+                { label: "Book Value", value: fmtCompact(selected.bsValue) },
+                {
+                  label: "ECL Provision",
+                  value: (
+                    <span className="font-semibold text-primary">
+                      {fmtCompact(selected.ecl)}
+                    </span>
+                  ),
+                },
+                { label: "ECL Rate", value: fmtPct(selected.eclRate) },
+              ]
+            : []
+        }
+      />
     </div>
   );
 }

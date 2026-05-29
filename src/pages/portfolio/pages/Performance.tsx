@@ -77,7 +77,7 @@ const sectorIncome = BOOK_COMPUTED.bySector
   .map((s) => {
     const sVals = vals.filter((v) => v.instrument.sector === s.sector);
     return {
-      sector: s.sector.length > 12 ? s.sector.slice(0, 12) + "â€¦" : s.sector,
+      sector: s.sector.length > 12 ? s.sector.slice(0, 12) + "…" : s.sector,
       income: sVals.reduce((a, v) => a + v.annualEIRIncome, 0),
     };
   })
@@ -97,7 +97,7 @@ const METRICS = [
     positive: true,
   },
   {
-    label: "EIRâ€“Yield Spread",
+    label: "Effective Yield \u2014 Market Spread",
     value: `${((wEIR - wYield) * 100).toFixed(0)} bps`,
     note: "Carry vs current market",
     positive: wEIR > wYield,
@@ -111,7 +111,7 @@ const METRICS = [
   {
     label: "DV01 (Interest Rate Sens.)",
     value: fmtCompact(Math.abs(totalDV01)),
-    note: "+1bp â†’ P&L change",
+    note: "+1bp \u2192 Profit/Loss change",
     positive: false,
   },
   {
@@ -121,15 +121,15 @@ const METRICS = [
     positive: true,
   },
   {
-    label: "OCI Reserve (FVOCI)",
+    label: "OCI Reserve — Fair Value through OCI",
     value: fmtCompact(totalOCI),
     note: "Unrealised in equity",
     positive: totalOCI >= 0,
   },
   {
-    label: "FVTPL Unrealised P&L",
+    label: "Unrealised Gain/(Loss) — Fair Value (P&L)",
     value: fmtCompact(totalFVTPL),
-    note: "Through P&L",
+    note: "Through profit & loss",
     positive: totalFVTPL >= 0,
   },
 ];
@@ -178,7 +178,11 @@ export function PerformanceAnalytics() {
             value: fmtCompact(totalAnnualIncome),
             sub: "EIR income run rate",
           },
-          { label: "Wt. Avg EIR", value: fmtPct(wEIR), sub: "Effective yield" },
+          {
+            label: "Avg. Effective Yield",
+            value: fmtPct(wEIR),
+            sub: "Effective Interest Rate (EIR)",
+          },
           {
             label: "Portfolio Duration",
             value: `${wDur.toFixed(2)}y`,
@@ -187,7 +191,7 @@ export function PerformanceAnalytics() {
           {
             label: "DV01",
             value: fmtCompact(Math.abs(totalDV01)),
-            sub: "Per 1bp rate move",
+            sub: "Dollar Value of 1 Basis Point",
           },
         ].map((t) => (
           <div
@@ -275,7 +279,7 @@ export function PerformanceAnalytics() {
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-dark-gray">
-            FVOCI â€” OCI Reserve
+            Fair Value (OCI) — OCI Reserve
           </h2>
           <p className="text-2xl font-bold text-dark-gray">
             {fmtCompact(totalOCI)}
@@ -307,7 +311,7 @@ export function PerformanceAnalytics() {
         </div>
         <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
           <h2 className="mb-3 text-sm font-semibold text-dark-gray">
-            FVTPL â€” Unrealised P&L
+            Fair Value (P&L) — Unrealised Gain/(Loss)
           </h2>
           <p
             className={`text-2xl font-bold ${totalFVTPL >= 0 ? "text-emerald-600" : "text-primary"}`}

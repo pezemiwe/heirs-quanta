@@ -630,7 +630,7 @@ function IncomeTab({
       {cls === "AC" && (
         <SectionCard title="P&L Summary — Amortised Cost">
           <p className="mb-3 rounded-lg bg-gray-50 px-3 py-2 text-xs text-gray-500">
-            Amortised Cost — only EIR interest recognised in P&L. No fair value
+            Amortised Cost only EIR interest recognised in P&L. No fair value
             movements recognised.
           </p>
           <Row

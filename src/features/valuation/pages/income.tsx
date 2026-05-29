@@ -12,10 +12,10 @@ export function ValuationIncome() {
     <div className="p-6 xl:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">
-          Income & P&L Summary
+          Income &amp; Profit/Loss Summary
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Aggregated income and P&L impact at the portfolio level.
+          Aggregated income and profit/loss impact at the portfolio level.
         </p>
       </div>
 
@@ -37,13 +37,13 @@ export function ValuationIncome() {
           />
         </SectionCard>
 
-        <SectionCard title="FVOCI Portfolio">
+        <SectionCard title="Fair Value (OCI) Portfolio">
           <Row
             label="Instruments"
             value={fmtNumber(income.fvoci.instruments)}
           />
           <Row
-            label="Total AC Carrying"
+            label="Total Amortised Cost Carrying"
             value={fmtNumber(income.fvoci.totalACCarryingValueNGN, 0)}
           />
           <Row
@@ -62,7 +62,7 @@ export function ValuationIncome() {
           />
         </SectionCard>
 
-        <SectionCard title="FVTPL Portfolio">
+        <SectionCard title="Fair Value (P&L) Portfolio">
           <Row
             label="Instruments"
             value={fmtNumber(income.fvtpl.instruments)}
@@ -73,7 +73,7 @@ export function ValuationIncome() {
             emphasis
           />
           <Row
-            label="Total Unrealised G/L (P&L)"
+            label="Total Unrealised Gain/(Loss) — P&L"
             value={fmtNumber(income.fvtpl.totalUnrealisedGLNGN, 0)}
             emphasis
           />

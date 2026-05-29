@@ -55,7 +55,7 @@ export function InvestmentCommittee() {
             Investment Committee Pack
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Quarter 2 2026 â€” Portfolio Summary as at 28 May 2026
+            Quarter 2 2026 Portfolio Summary as at 28 May 2026
           </p>
         </div>
         <button className="rounded-lg border border-border px-4 py-2 text-sm text-gray-500 hover:bg-pale-red hover:text-primary">
@@ -73,7 +73,7 @@ export function InvestmentCommittee() {
             {
               label: "Total AuM",
               value: fmtCompact(totals.totalBSValueNGN),
-              sub: "â‚¦ balance sheet value",
+              sub: "₦ balance sheet value",
             },
             {
               label: "No. of Instruments",
@@ -88,7 +88,7 @@ export function InvestmentCommittee() {
             {
               label: "Annual Income (est.)",
               value: fmtCompact(totalAnnualIncome),
-              sub: "â‚¦ p.a.",
+              sub: "₦ p.a.",
             },
           ].map((k) => (
             <div
@@ -145,7 +145,7 @@ export function InvestmentCommittee() {
                   Instrument
                 </th>
                 <th className="px-5 py-3 text-right text-xs font-semibold text-gray-400">
-                  BS Value (â‚¦)
+                  BS Value (₦)
                 </th>
                 <th className="px-5 py-3 text-right text-xs font-semibold text-gray-400">
                   % of Book
@@ -199,7 +199,7 @@ export function InvestmentCommittee() {
                 dataKey="faceValueNGN"
                 fill="#CC0000"
                 radius={[4, 4, 0, 0]}
-                name="Face Value (â‚¦)"
+                name="Face Value (₦)"
               />
             </BarChart>
           </ResponsiveContainer>
@@ -216,7 +216,7 @@ export function InvestmentCommittee() {
             {
               label: "Total ECL Provision",
               value: fmtCompact(totals.totalECLNGN),
-              sub: "â‚¦",
+              sub: "₦",
             },
             {
               label: "ECL as % of Book",
