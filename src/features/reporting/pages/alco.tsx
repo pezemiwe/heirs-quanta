@@ -44,7 +44,7 @@ const earShock = Math.abs(totalDV01) * 100; // ₦ impact
 
 export function ALCO() {
   return (
-    <div className="p-6 xl:p-8 space-y-8">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-8">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">

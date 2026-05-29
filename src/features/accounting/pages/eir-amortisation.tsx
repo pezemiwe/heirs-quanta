@@ -1,4 +1,4 @@
-﻿import {
+import {
   BOOK_INSTRUMENTS,
   BOOK_VALUATIONS,
   fmtCompact,
@@ -50,6 +50,10 @@ const CLASS_STYLE: Record<string, string> = {
   AC: "bg-blue-100 text-blue-700",
   FVOCI: "bg-purple-100 text-purple-700",
 };
+const CLASS_LABEL: Record<string, string> = {
+  AC: "Amortised Cost",
+  FVOCI: "Fair Value (OCI)",
+};
 
 const COLUMNS: DataTableColumn<EIRRow>[] = [
   {
@@ -66,7 +70,7 @@ const COLUMNS: DataTableColumn<EIRRow>[] = [
       <span
         className={`rounded-full px-2 py-0.5 text-xs font-medium ${CLASS_STYLE[r.classification]}`}
       >
-        {r.classification}
+        {CLASS_LABEL[r.classification] ?? r.classification}
       </span>
     ),
   },
@@ -132,7 +136,7 @@ const avgEIR =
 
 export function EIRAmortisation() {
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>
         <p className="text-xs font-semibold uppercase tracking-wider text-primary">
           General Ledger
@@ -141,8 +145,8 @@ export function EIRAmortisation() {
           EIR Amortisation Schedule
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Effective interest rate schedules for {ROWS.length} AC and FVOCI
-          instruments as at 28 May 2026
+          Effective interest rate schedules for {ROWS.length} Amortised Cost and
+          Fair Value (OCI) instruments as at 28 May 2026
         </p>
       </div>
 
@@ -151,7 +155,7 @@ export function EIRAmortisation() {
           {
             label: "Instruments",
             value: String(ROWS.length),
-            sub: "AC + FVOCI",
+            sub: "Amortised Cost + Fair Value (OCI)",
           },
           {
             label: "Total Carrying Value",
@@ -161,7 +165,7 @@ export function EIRAmortisation() {
           {
             label: "Annual EIR Income",
             value: fmtCompact(totalIncome),
-            sub: "₦ p.a.",
+            sub: "? p.a.",
           },
           {
             label: "Weighted Avg EIR",

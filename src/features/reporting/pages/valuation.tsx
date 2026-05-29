@@ -140,7 +140,7 @@ export function ValuationReport() {
   const allRows: HierarchyRow[] = [...l1, ...l2, ...l3];
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
           Fair Value Hierarchy Report

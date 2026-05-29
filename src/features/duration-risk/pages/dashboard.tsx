@@ -1,4 +1,4 @@
-﻿import { Activity, Clock, Gauge, TrendingDown, Zap } from "lucide-react";
+import { Activity, Clock, Gauge, TrendingDown, Zap } from "lucide-react";
 import {
   Bar,
   BarChart,
@@ -19,7 +19,7 @@ import { fmtNumber, fmtPct } from "../../valuation/utils";
 import { fmtCompactNGN, fmtYears, colorForSector } from "../utils";
 import { PARALLEL_SHOCKS_BPS } from "../engine";
 
-/* â”€â”€â”€ small helpers â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ */
+/* ─── small helpers ─────────────────────────────────────── */
 function histColor(bucket: string): string {
   if (["0-6M", "6M-1Y"].includes(bucket)) return "#2ecc71";
   if (["1-2Y", "2-3Y"].includes(bucket)) return "#3498db";
@@ -35,7 +35,7 @@ function shockBarColor(bps: number): string {
 
 const fmtNGNBillions = (v: number) => {
   const b = v / 1e9;
-  return `₦${Math.abs(b).toFixed(1)}B`;
+  return `?${Math.abs(b).toFixed(1)}B`;
 };
 
 export function DurationRiskDashboard() {
@@ -59,7 +59,7 @@ export function DurationRiskDashboard() {
   const totalBase = stressRows.reduce((s, r) => s + r.baseValueNGN, 0);
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">
           Duration &amp; Risk Dashboard
@@ -132,7 +132,7 @@ export function DurationRiskDashboard() {
               axisLine={false}
               tickLine={false}
               label={{
-                value: "Portfolio P&L Impact (₦ Billions)",
+                value: "Portfolio P&L Impact (? Billions)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -8,
@@ -220,7 +220,7 @@ export function DurationRiskDashboard() {
       {/* Chart 3   Cash Flow Projection */}
       <SectionCard
         title="Chart 3   Cash Flow Projection by Maturity Bucket"
-        description="Future coupon (blue) and principal (orange) inflows in ₦."
+        description="Future coupon (blue) and principal (orange) inflows in ?."
       >
         <ResponsiveContainer width="100%" height={280}>
           <BarChart
@@ -235,12 +235,12 @@ export function DurationRiskDashboard() {
               tickLine={false}
             />
             <YAxis
-              tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(0)}B`}
+              tickFormatter={(v: number) => `?${(v / 1e9).toFixed(0)}B`}
               tick={{ fontSize: 11, fill: "#6b7280" }}
               axisLine={false}
               tickLine={false}
               label={{
-                value: "Cash Flow (₦ Billions)",
+                value: "Cash Flow (? Billions)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -8,

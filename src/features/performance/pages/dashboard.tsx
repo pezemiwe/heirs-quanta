@@ -1,4 +1,4 @@
-﻿import { useMemo } from "react";
+import { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -34,9 +34,9 @@ const COLORS = [
 ];
 
 function fmtAxis(v: number) {
-  if (v >= 1e9) return `₦${(v / 1e9).toFixed(1)}B`;
-  if (v >= 1e6) return `₦${(v / 1e6).toFixed(0)}M`;
-  return `₦${v.toFixed(0)}`;
+  if (v >= 1e9) return `?${(v / 1e9).toFixed(1)}B`;
+  if (v >= 1e6) return `?${(v / 1e6).toFixed(0)}M`;
+  return `?${v.toFixed(0)}`;
 }
 
 export function PerformanceDashboard() {
@@ -85,7 +85,7 @@ export function PerformanceDashboard() {
     .slice(0, 10);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
           Performance Dashboard

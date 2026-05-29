@@ -21,7 +21,7 @@ export function MarketDataSources() {
   const [fxRate, setFxRate] = useState<string>("");
 
   return (
-    <div className="space-y-6 p-6 xl:p-8">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6 xl:p-8">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">
           Data Sources & Overrides

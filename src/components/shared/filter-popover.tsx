@@ -71,7 +71,7 @@ export const FilterPopover = ({
         />
       </button>
       {open && (
-        <div className="absolute right-0 top-[calc(100%+6px)] z-30 min-w-[240px] rounded-xl border border-border bg-surface shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
+        <div className="absolute right-0 top-[calc(100%+6px)] z-30 w-[min(320px,calc(100vw-2rem))] min-w-[240px] rounded-xl border border-border bg-surface shadow-[0_8px_30px_rgba(0,0,0,0.12)]">
           <div className="p-4">{children}</div>
           <div className="flex items-center justify-end gap-2 border-t border-border px-4 py-3">
             <button

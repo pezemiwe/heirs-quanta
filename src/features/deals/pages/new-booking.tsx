@@ -75,7 +75,14 @@ const INST_TYPES = [
   "Money Market",
 ];
 const CURRENCIES = ["NGN", "USD", "GBP", "EUR"];
-const CLASSIFICATIONS = ["AC", "FVOCI", "FVTPL"];
+const CLASSIFICATIONS = [
+  { value: "AC", label: "Amortised Cost (AC)" },
+  {
+    value: "FVOCI",
+    label: "Fair Value through Other Comprehensive Income (FVOCI)",
+  },
+  { value: "FVTPL", label: "Fair Value through Profit or Loss (FVTPL)" },
+];
 const IFRS13_LEVELS = ["Level 1", "Level 2", "Level 3"];
 const FREQ_OPTIONS = ["Monthly", "Quarterly", "Semi-Annual", "Annual", "Zero"];
 const DAY_COUNTS = ["Actual/365", "Actual/360", "30/360", "Actual/Actual"];
@@ -126,6 +133,8 @@ function TextInput({
   );
 }
 
+type SelectOption = string | { value: string; label: string };
+
 function SelectInput({
   value,
   onChange,
@@ -133,7 +142,7 @@ function SelectInput({
 }: {
   value: string;
   onChange: (v: string) => void;
-  options: string[];
+  options: SelectOption[];
 }) {
   return (
     <select
@@ -142,11 +151,15 @@ function SelectInput({
       className="mt-1 block w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray outline-none focus:border-primary focus:ring-1 focus:ring-primary"
     >
       <option value="">— Select —</option>
-      {options.map((o) => (
-        <option key={o} value={o}>
-          {o}
-        </option>
-      ))}
+      {options.map((o) => {
+        const val = typeof o === "string" ? o : o.value;
+        const lbl = typeof o === "string" ? o : o.label;
+        return (
+          <option key={val} value={val}>
+            {lbl}
+          </option>
+        );
+      })}
     </select>
   );
 }
@@ -211,7 +224,7 @@ export function NewBooking() {
 
   if (submitted) {
     return (
-      <div className="p-6 xl:p-8">
+      <div className="p-3 sm:p-4 md:p-6 xl:p-8">
         <div className="rounded-xl border border-border bg-surface p-10 flex flex-col items-center gap-4 shadow-sm">
           <div className="flex h-14 w-14 items-center justify-center rounded-full bg-green-100">
             <Save className="h-7 w-7 text-success" />
@@ -243,7 +256,7 @@ export function NewBooking() {
   }
 
   return (
-    <div className="p-6 xl:p-8">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8">
       <GovernanceBar
         requiredPermission="deal.create"
         context="maker"

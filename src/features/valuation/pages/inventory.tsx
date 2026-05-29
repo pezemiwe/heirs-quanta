@@ -60,7 +60,7 @@ export function ValuationInventory() {
   });
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div className="flex items-start justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-dark-gray">Asset Inventory</h1>
@@ -406,7 +406,7 @@ function AddInstrumentDrawer({ onClose }: { onClose: () => void }) {
               />
             </Field>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3">
             <Field label="Currency">
               <select
                 value={draft.currency}
@@ -679,7 +679,7 @@ function EditInstrumentDrawer({
               />
             </Field>
           </div>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-1 xs:grid-cols-2 sm:grid-cols-3 gap-3">
             <Field label="Currency">
               <select
                 value={draft.currency}

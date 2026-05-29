@@ -12,7 +12,7 @@ export function TablesSection({ filterClose, setFilterClose }: Props) {
     <S label="Tables">
       <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
         <PageHeader
-          title="Loan Book"
+          title="Investment Book"
           description="December 2024 snapshot — 5 records"
           className="pb-0"
         />
@@ -53,7 +53,7 @@ export function TablesSection({ filterClose, setFilterClose }: Props) {
           data={[]}
           keyExtractor={(r) => r.id}
           emptyMessage="No loans found"
-          emptyDescription="Adjust your filters or upload a loan book to get started."
+          emptyDescription="Adjust your filters or upload an investment book to get started."
         />
       </div>
     </S>

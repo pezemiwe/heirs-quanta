@@ -197,7 +197,7 @@ export function IFRS9Watchlist() {
   ];
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">

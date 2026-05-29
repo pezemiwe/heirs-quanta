@@ -1,4 +1,4 @@
-﻿import { AlertTriangle, ShieldCheck, Info } from "lucide-react";
+import { AlertTriangle, ShieldCheck, Info } from "lucide-react";
 import {
   BOOK_INSTRUMENTS,
   BOOK_COMPUTED,
@@ -7,7 +7,7 @@ import {
   fmtPct,
 } from "../../../features/portfolio/engine/book-compute";
 
-// ── real computed risk metrics ────────────────────────────────────────────────
+// -- real computed risk metrics ------------------------------------------------
 const vals = BOOK_VALUATIONS;
 const totals = BOOK_COMPUTED.totals;
 const bySector = BOOK_COMPUTED.bySector;
@@ -158,13 +158,13 @@ const STRESS = [
     severity: "medium",
   },
   {
-    scenario: "Oil Price Crash (−50%)",
+    scenario: "Oil Price Crash (-50%)",
     impact: fmtCompact(-totalBSV * 0.027),
     pct: "-2.7%",
     severity: "medium",
   },
   {
-    scenario: "NGN Devaluation (−30%)",
+    scenario: "NGN Devaluation (-30%)",
     impact: fmtCompact(-totalBSV * 0.022),
     pct: "-2.2%",
     severity: "low",
@@ -214,7 +214,7 @@ function SeverityBadge({ s }: { s: string }) {
 
 export function PortfolioRisk() {
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">Risk Analytics</h1>
         <p className="mt-1 text-sm text-gray-500">
@@ -351,7 +351,7 @@ export function PortfolioRisk() {
           <thead>
             <tr className="border-b border-border text-xs text-gray-400">
               <th className="pb-2 text-left font-medium">Scenario</th>
-              <th className="pb-2 text-right font-medium">P&L Impact (₦)</th>
+              <th className="pb-2 text-right font-medium">P&L Impact (?)</th>
               <th className="pb-2 text-right font-medium">% of AuM</th>
               <th className="pb-2 text-right font-medium">Severity</th>
             </tr>
@@ -381,7 +381,7 @@ export function PortfolioRisk() {
         <h2 className="mb-4 text-sm font-semibold text-dark-gray">
           ECL Stage Distribution
         </h2>
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
           {[
             {
               stage: "Stage 1",

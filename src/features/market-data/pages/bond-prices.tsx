@@ -1,4 +1,4 @@
-﻿import {
+import {
   CartesianGrid,
   Legend,
   Line,
@@ -32,13 +32,13 @@ export function MarketDataBondPrices() {
   });
 
   return (
-    <div className="space-y-6 p-6 xl:p-8">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6 xl:p-8">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">
           Bond Prices & Quotes
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          FGN bonds & corporate selection · clean prices per ₦100 face · 90-day
+          FGN bonds & corporate selection � clean prices per ?100 face � 90-day
           history
         </p>
       </div>
@@ -51,7 +51,7 @@ export function MarketDataBondPrices() {
                 <th className="px-3 py-2">Bond</th>
                 <th className="px-3 py-2 text-right">Yield</th>
                 <th className="px-3 py-2 text-right">Clean Price</th>
-                <th className="px-3 py-2 text-right">Δ 1d</th>
+                <th className="px-3 py-2 text-right">? 1d</th>
               </tr>
             </thead>
             <tbody>
@@ -85,7 +85,7 @@ export function MarketDataBondPrices() {
 
       <SectionCard
         title="Price history"
-        description="Clean price (₦) per 100 face — 90-day series"
+        description="Clean price (?) per 100 face � 90-day series"
       >
         <div className="h-96">
           <ResponsiveContainer>

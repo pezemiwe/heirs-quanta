@@ -1,3 +1,4 @@
+import * as XLSX from "xlsx";
 import { useState, useMemo } from "react";
 import { Search, Filter, Download, Pencil, Trash2, X } from "lucide-react";
 import {
@@ -171,8 +172,52 @@ export function DealBlotter() {
     },
   ];
 
+  const exportXlsx = () => {
+    const headers = [
+      "ID",
+      "Instrument",
+      "Issuer",
+      "Type",
+      "Sector",
+      "Classification",
+      "Currency",
+      "Face Value",
+      "Purchase Price",
+      "Purchase Date",
+      "Maturity Date",
+      "Coupon Rate %",
+      "Coupon Frequency",
+      "Status",
+      "Stage",
+    ];
+    const data = rows.map((r) => [
+      r.id,
+      r.name,
+      r.issuer,
+      r.instrumentType,
+      r.sector,
+      r.classification,
+      r.currency,
+      r.faceValue,
+      r.purchasePrice,
+      r.purchaseDate,
+      r.maturityDate,
+      r.couponRate > 0 ? +(r.couponRate * 100).toFixed(4) : 0,
+      r.couponFrequency,
+      r.status,
+      r.impairmentStage ?? "",
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Trade Blotter");
+    XLSX.writeFile(
+      wb,
+      `trade-blotter-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
+  };
+
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
@@ -183,7 +228,10 @@ export function DealBlotter() {
             Management book · 28 May 2026
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray/70 hover:border-primary hover:text-primary">
+        <button
+          onClick={exportXlsx}
+          className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray/70 hover:border-primary hover:text-primary"
+        >
           <Download className="h-4 w-4" /> Export CSV
         </button>
       </div>

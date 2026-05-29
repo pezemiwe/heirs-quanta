@@ -1,4 +1,4 @@
-﻿import { TrendingUp, TrendingDown } from "lucide-react";
+import { TrendingUp, TrendingDown } from "lucide-react";
 import { useState } from "react";
 import {
   BarChart,
@@ -77,7 +77,7 @@ const sectorIncome = BOOK_COMPUTED.bySector
   .map((s) => {
     const sVals = vals.filter((v) => v.instrument.sector === s.sector);
     return {
-      sector: s.sector.length > 12 ? s.sector.slice(0, 12) + "…" : s.sector,
+      sector: s.sector.length > 12 ? s.sector.slice(0, 12) + "�" : s.sector,
       income: sVals.reduce((a, v) => a + v.annualEIRIncome, 0),
     };
   })
@@ -97,7 +97,7 @@ const METRICS = [
     positive: true,
   },
   {
-    label: "EIR—Yield Spread",
+    label: "EIR�Yield Spread",
     value: `${((wEIR - wYield) * 100).toFixed(0)} bps`,
     note: "Carry vs current market",
     positive: wEIR > wYield,
@@ -111,7 +111,7 @@ const METRICS = [
   {
     label: "DV01 (Interest Rate Sens.)",
     value: fmtCompact(Math.abs(totalDV01)),
-    note: "+1bp â†’ P&L change",
+    note: "+1bp → P&L change",
     positive: false,
   },
   {
@@ -140,7 +140,7 @@ export function PortfolioPerformance() {
   const [period, setPeriod] = useState("YTD");
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">
           Performance Analytics
@@ -212,7 +212,7 @@ export function PortfolioPerformance() {
             <XAxis dataKey="sector" tick={{ fontSize: 10 }} />
             <YAxis
               tick={{ fontSize: 10 }}
-              tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(0)}B`}
+              tickFormatter={(v: number) => `?${(v / 1e9).toFixed(0)}B`}
             />
             <Tooltip
               formatter={

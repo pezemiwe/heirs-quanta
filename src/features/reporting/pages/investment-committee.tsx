@@ -1,4 +1,4 @@
-﻿import {
+import {
   BOOK_COMPUTED,
   BOOK_INSTRUMENTS,
   BOOK_VALUATIONS,
@@ -45,7 +45,7 @@ const topHoldings = [...BOOK_VALUATIONS]
 
 export function InvestmentCommittee() {
   return (
-    <div className="p-6 xl:p-8 space-y-8">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-8">
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
@@ -73,7 +73,7 @@ export function InvestmentCommittee() {
             {
               label: "Total AuM",
               value: fmtCompact(totals.totalBSValueNGN),
-              sub: "₦ balance sheet value",
+              sub: "? balance sheet value",
             },
             {
               label: "No. of Instruments",
@@ -88,7 +88,7 @@ export function InvestmentCommittee() {
             {
               label: "Annual Income (est.)",
               value: fmtCompact(totalAnnualIncome),
-              sub: "₦ p.a.",
+              sub: "? p.a.",
             },
           ].map((k) => (
             <div
@@ -216,7 +216,7 @@ export function InvestmentCommittee() {
             {
               label: "Total ECL Provision",
               value: fmtCompact(totals.totalECLNGN),
-              sub: "₦",
+              sub: "?",
             },
             {
               label: "ECL as % of Book",

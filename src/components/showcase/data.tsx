@@ -3,7 +3,7 @@ import type { TabItem, Step, DataTableColumn } from "..";
 
 export const PORTFOLIO_TABS: TabItem[] = [
   { value: "overview", label: "Overview", count: 3 },
-  { value: "loans", label: "Loan Book", count: 1240 },
+  { value: "investments", label: "Investment Book", count: 1240 },
   { value: "ecl", label: "ECL Results" },
   { value: "ead", label: "EAD Projection", disabled: true },
 ];

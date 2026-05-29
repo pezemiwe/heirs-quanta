@@ -106,7 +106,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                 key={String(col.key)}
                 style={col.width ? { width: col.width } : undefined}
                 className={cn(
-                  "border-b border-border bg-deep-red px-4 py-3 text-xs font-semibold uppercase tracking-wide text-white first:rounded-tl-xl last:rounded-tr-xl whitespace-nowrap",
+                  "border-b border-border bg-deep-red px-2 py-2.5 sm:px-4 sm:py-3 text-xs font-semibold uppercase tracking-wide text-white first:rounded-tl-xl last:rounded-tr-xl whitespace-nowrap",
                   alignCls[col.align ?? "left"],
                 )}
               >
@@ -151,7 +151,7 @@ export const DataTable = <T extends Record<string, unknown>>({
                   <td
                     key={String(col.key)}
                     className={cn(
-                      "px-4 py-3 text-dark-gray/80 whitespace-nowrap",
+                      "px-2 py-2.5 sm:px-4 sm:py-3 text-dark-gray/80 whitespace-nowrap",
                       alignCls[col.align ?? "left"],
                     )}
                   >
@@ -168,15 +168,15 @@ export const DataTable = <T extends Record<string, unknown>>({
 
       {/* Pagination footer */}
       {pageSize && data.length > 0 && (
-        <div className="flex items-center justify-between border-t border-border bg-[#FAFAFA] px-4 py-2.5">
+        <div className="flex flex-wrap items-center justify-between gap-2 border-t border-border bg-[#FAFAFA] px-3 py-2 sm:px-4 sm:py-2.5">
           <span className="text-xs text-dark-gray/50">
-            Showing{" "}
+            <span className="hidden sm:inline">Showing </span>
             <span className="font-medium text-dark-gray/70">
               {from}–{to}
             </span>{" "}
             of{" "}
-            <span className="font-medium text-dark-gray/70">{data.length}</span>{" "}
-            records
+            <span className="font-medium text-dark-gray/70">{data.length}</span>
+            <span className="hidden sm:inline"> records</span>
           </span>
           <div className="flex items-center gap-1">
             <button

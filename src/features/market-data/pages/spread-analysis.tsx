@@ -1,4 +1,4 @@
-﻿import {
+import {
   Bar,
   CartesianGrid,
   ComposedChart,
@@ -26,13 +26,13 @@ export function MarketDataSpreadAnalysis() {
   }));
 
   return (
-    <div className="space-y-6 p-6 xl:p-8">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6 xl:p-8">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">
           NGN vs USD Spread Analysis
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Sovereign yield differential by tenor — indicator of country risk
+          Sovereign yield differential by tenor � indicator of country risk
           premium
         </p>
       </div>

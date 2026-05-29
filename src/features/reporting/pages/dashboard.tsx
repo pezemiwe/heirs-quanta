@@ -1,4 +1,4 @@
-﻿import {
+import {
   BarChart,
   Bar,
   XAxis,
@@ -51,7 +51,7 @@ export function ReportingDashboard() {
   const bySector = BOOK_COMPUTED.bySector.slice(0, 8);
 
   return (
-    <div className="space-y-6 p-6">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
           Executive Summary
@@ -185,7 +185,7 @@ export function ReportingDashboard() {
             <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
             <YAxis
               tick={{ fontSize: 10 }}
-              tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(1)}B`}
+              tickFormatter={(v: number) => `?${(v / 1e9).toFixed(1)}B`}
             />
             <Tooltip
               formatter={

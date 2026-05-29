@@ -29,7 +29,7 @@ export function DurationRiskLiabilities() {
       : 0;
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div className="flex items-end justify-between">
         <div>
           <h1 className="text-2xl font-bold text-dark-gray">

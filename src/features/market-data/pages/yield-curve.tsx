@@ -1,4 +1,4 @@
-﻿import { useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   CartesianGrid,
   Legend,
@@ -58,12 +58,12 @@ export function MarketDataYieldCurve() {
     Math.round(((today.yields[t] ?? 0) - (t90.yields[t] ?? 0)) * 10000);
 
   return (
-    <div className="space-y-6 p-6 xl:p-8">
+    <div className="space-y-6 p-3 sm:p-4 md:p-6 xl:p-8">
       <div className="flex flex-wrap items-end justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-dark-gray">Yield Curve</h1>
           <p className="mt-1 text-sm text-gray-500">
-            Nelson-Siegel calibrated · {tab} sovereign curve · as at {snap.asOf}
+            Nelson-Siegel calibrated � {tab} sovereign curve � as at {snap.asOf}
           </p>
         </div>
         <div className="inline-flex rounded-lg border border-border bg-surface p-1">
@@ -86,7 +86,7 @@ export function MarketDataYieldCurve() {
       <div className="grid gap-4 sm:grid-cols-4">
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-xs uppercase tracking-wider text-gray-400">
-            β₀ (level)
+            �0 (level)
           </p>
           <p className="mt-1 text-lg font-semibold text-dark-gray">
             {fmtPct(params.beta0, 2)}
@@ -94,7 +94,7 @@ export function MarketDataYieldCurve() {
         </div>
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-xs uppercase tracking-wider text-gray-400">
-            β₁ (slope)
+            �1 (slope)
           </p>
           <p className="mt-1 text-lg font-semibold text-dark-gray">
             {params.beta1.toFixed(4)}
@@ -102,7 +102,7 @@ export function MarketDataYieldCurve() {
         </div>
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-xs uppercase tracking-wider text-gray-400">
-            β₂ (curvature)
+            �2 (curvature)
           </p>
           <p className="mt-1 text-lg font-semibold text-dark-gray">
             {params.beta2.toFixed(4)}
@@ -110,7 +110,7 @@ export function MarketDataYieldCurve() {
         </div>
         <div className="rounded-xl border border-border bg-surface p-4">
           <p className="text-xs uppercase tracking-wider text-gray-400">
-            τ (decay)
+            t (decay)
           </p>
           <p className="mt-1 text-lg font-semibold text-dark-gray">
             {params.tau.toFixed(2)}
@@ -120,7 +120,7 @@ export function MarketDataYieldCurve() {
 
       <SectionCard
         title="Fitted curve vs observed quotes"
-        description="Continuous line = Nelson-Siegel · dots = observed FMDQ / DMO quotes"
+        description="Continuous line = Nelson-Siegel � dots = observed FMDQ / DMO quotes"
       >
         <div className="h-80">
           <ResponsiveContainer>
@@ -225,7 +225,7 @@ export function MarketDataYieldCurve() {
                 <th className="px-3 py-2 text-right">Today</th>
                 <th className="px-3 py-2 text-right">30d ago</th>
                 <th className="px-3 py-2 text-right">90d ago</th>
-                <th className="px-3 py-2 text-right">Δ 90d</th>
+                <th className="px-3 py-2 text-right">? 90d</th>
               </tr>
             </thead>
             <tbody>

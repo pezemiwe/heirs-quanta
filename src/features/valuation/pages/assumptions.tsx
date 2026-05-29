@@ -10,7 +10,7 @@ export function ValuationAssumptions() {
     v.setAssumptions({ ...a, ...patch });
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>
         <h1 className="text-2xl font-bold text-dark-gray">
           Valuation Assumptions

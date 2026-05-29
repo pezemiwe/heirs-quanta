@@ -8,7 +8,7 @@ import type {
 /* ─────────────────────────────────────────────────────────
    Heirs Holdings Group — Portfolio Reference Data
    All monetary values in NGN millions.
-   Market values sourced from Aegis Valuation Engine (26 May 2026).
+   Market values sourced from Heirs Quanta Valuation Engine (26 May 2026).
    ───────────────────────────────────────────────────────── */
 export const HOLDINGS: Holding[] = [
   /* ── SUBSIDIARIES / PRIVATE EQUITY ────────────────────── */

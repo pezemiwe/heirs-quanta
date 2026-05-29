@@ -256,17 +256,17 @@ export function App() {
               <Route
                 path="/governance"
                 element={
-                  <RequireAuth>
+                  <ProtectedModule moduleId="governance">
                     <GovernanceModule />
-                  </RequireAuth>
+                  </ProtectedModule>
                 }
               />
               <Route
                 path="/governance/:page"
                 element={
-                  <RequireAuth>
+                  <ProtectedModule moduleId="governance">
                     <GovernanceModule />
-                  </RequireAuth>
+                  </ProtectedModule>
                 }
               />
 

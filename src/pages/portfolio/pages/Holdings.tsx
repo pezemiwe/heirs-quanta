@@ -1,4 +1,11 @@
-import { Search, Download, SlidersHorizontal, Plus, Loader2 } from "lucide-react";
+import * as XLSX from "xlsx";
+import {
+  Search,
+  Download,
+  SlidersHorizontal,
+  Plus,
+  Loader2,
+} from "lucide-react";
 import { useState, useMemo, useEffect } from "react";
 import {
   DataTable,
@@ -19,9 +26,17 @@ import type { Instrument } from "../../../features/valuation/engine/types";
 const CUSTOM_KEY = "portfolio_custom_instruments";
 
 const INSTRUMENT_TYPES = [
-  "FGN Bond", "Corporate Bond", "State Bond", "Eurobond",
-  "T-Bill", "Commercial Paper", "Promissory Note",
-  "Bank Placement", "Fixed Deposit", "Mutual Fund", "Equity",
+  "FGN Bond",
+  "Corporate Bond",
+  "State Bond",
+  "Eurobond",
+  "T-Bill",
+  "Commercial Paper",
+  "Promissory Note",
+  "Bank Placement",
+  "Fixed Deposit",
+  "Mutual Fund",
+  "Equity",
 ] as const;
 
 const BLANK: Omit<Instrument, "id"> = {
@@ -95,10 +110,7 @@ function instrumentToRow(inst: Instrument): HoldingRow {
 
 const STATIC_ROWS: HoldingRow[] = BOOK_INSTRUMENTS.map(instrumentToRow);
 
-const ALL_TYPES = [
-  "All",
-  ...INSTRUMENT_TYPES,
-].sort();
+const ALL_TYPES = ["All", ...INSTRUMENT_TYPES].sort();
 const ALL_CLASSIFICATIONS = ["All", "AC", "FVOCI", "FVTPL"];
 
 const CLASS_STYLE: Record<string, { bg: string; text: string }> = {
@@ -131,8 +143,13 @@ const COLUMNS: DataTableColumn<HoldingRow>[] = [
   {
     key: "classification",
     header: "Classification",
-    render: (r) => (
-      <AcronymTip term={r.classification}>
+    render: (r) => {
+      const labels: Record<string, string> = {
+        AC: "Amortised Cost",
+        FVOCI: "Fair Value (OCI)",
+        FVTPL: "Fair Value (P&L)",
+      };
+      return (
         <span
           className="rounded-full px-2 py-0.5 text-xs font-semibold"
           style={{
@@ -140,10 +157,10 @@ const COLUMNS: DataTableColumn<HoldingRow>[] = [
             color: CLASS_STYLE[r.classification]?.text,
           }}
         >
-          {r.classification}
+          {labels[r.classification] ?? r.classification}
         </span>
-      </AcronymTip>
-    ),
+      );
+    },
   },
   {
     key: "instrumentType",
@@ -256,6 +273,46 @@ export function PortfolioHoldings() {
 
   const totalBookValue = filtered.reduce((s, r) => s + r.bookValueNGN, 0);
 
+  const exportXlsx = () => {
+    const headers = [
+      "ID",
+      "Instrument",
+      "Issuer",
+      "Type",
+      "Classification",
+      "Currency",
+      "Face Value",
+      "Book Value (NGN)",
+      "EIR %",
+      "Coupon Rate",
+      "Maturity Date",
+      "Stage",
+      "Status",
+    ];
+    const rows = filtered.map((r) => [
+      r.id,
+      r.name,
+      r.issuer,
+      r.instrumentType,
+      r.classification,
+      r.currency,
+      r.faceValue,
+      +r.bookValueNGN.toFixed(2),
+      +(r.eirPct * 100).toFixed(4),
+      +(r.couponRate * 100).toFixed(4),
+      r.maturityDate ?? "",
+      r.stage,
+      r.status,
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Holdings");
+    XLSX.writeFile(
+      wb,
+      `portfolio-holdings-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
+  };
+
   function handleSave() {
     setSaving(true);
     setTimeout(() => {
@@ -265,30 +322,44 @@ export function PortfolioHoldings() {
       };
       const next = [...customInstruments, newInst];
       setCustomInstruments(next);
-      try { localStorage.setItem(CUSTOM_KEY, JSON.stringify(next)); } catch { /* ignore */ }
+      try {
+        localStorage.setItem(CUSTOM_KEY, JSON.stringify(next));
+      } catch {
+        /* ignore */
+      }
       setSaving(false);
       setAddOpen(false);
       setForm(BLANK);
     }, 500);
   }
 
-  const formValid = form.name.trim() !== "" && form.issuer.trim() !== "" && form.faceValue > 0;
+  const formValid =
+    form.name.trim() !== "" && form.issuer.trim() !== "" && form.faceValue > 0;
 
   const Field = ({
-    label, hint, children,
-  }: { label: string; hint?: string; children: React.ReactNode }) => (
+    label,
+    hint,
+    children,
+  }: {
+    label: string;
+    hint?: string;
+    children: React.ReactNode;
+  }) => (
     <div>
-      <label className="mb-1 block text-xs font-medium text-dark-gray">{label}</label>
+      <label className="mb-1 block text-xs font-medium text-dark-gray">
+        {label}
+      </label>
       {hint && <p className="mb-1 text-xs text-dark-gray/50">{hint}</p>}
       {children}
     </div>
   );
 
-  const inp = "w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
+  const inp =
+    "w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray outline-none focus:border-primary focus:ring-2 focus:ring-primary/20";
   const sel = inp;
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       {/* header */}
       <div className="flex items-start justify-between">
         <div>
@@ -301,14 +372,13 @@ export function PortfolioHoldings() {
           </p>
         </div>
         <div className="flex items-center gap-2">
-          <Button
-            variant="primary"
-            size="sm"
-            onClick={() => setAddOpen(true)}
-          >
+          <Button variant="primary" size="sm" onClick={() => setAddOpen(true)}>
             <Plus className="h-3.5 w-3.5" /> Add Instrument
           </Button>
-          <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray/60 shadow-sm hover:border-primary hover:text-primary">
+          <button
+            onClick={exportXlsx}
+            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray/60 shadow-sm hover:border-primary hover:text-primary"
+          >
             <Download className="h-4 w-4" /> Export
           </button>
         </div>
@@ -399,13 +469,23 @@ export function PortfolioHoldings() {
       {/* ── Add Instrument Drawer ── */}
       <Drawer
         isOpen={addOpen}
-        onClose={() => { setAddOpen(false); setForm(BLANK); }}
+        onClose={() => {
+          setAddOpen(false);
+          setForm(BLANK);
+        }}
         title="Add Instrument"
         description="Enter the instrument details. It will be saved locally and appear in Holdings."
         size="lg"
         footer={
           <div className="flex justify-end gap-2">
-            <Button variant="ghost" size="sm" onClick={() => { setAddOpen(false); setForm(BLANK); }}>
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => {
+                setAddOpen(false);
+                setForm(BLANK);
+              }}
+            >
               Cancel
             </Button>
             <Button
@@ -414,7 +494,13 @@ export function PortfolioHoldings() {
               disabled={!formValid || saving}
               onClick={handleSave}
             >
-              {saving ? <><Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…</> : "Save Instrument"}
+              {saving ? (
+                <>
+                  <Loader2 className="h-3.5 w-3.5 animate-spin" /> Saving…
+                </>
+              ) : (
+                "Save Instrument"
+              )}
             </Button>
           </div>
         }
@@ -422,59 +508,133 @@ export function PortfolioHoldings() {
         <div className="space-y-5 pb-2">
           {/* Section: Identification */}
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">Identification</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">
+              Identification
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <div className="col-span-2">
                 <Field label="Instrument Name *">
-                  <input className={inp} placeholder="e.g. FGN Bond 14.55% 2030"
-                    value={form.name} onChange={(e) => setForm(f => ({ ...f, name: e.target.value }))} />
+                  <input
+                    className={inp}
+                    placeholder="e.g. FGN Bond 14.55% 2030"
+                    value={form.name}
+                    onChange={(e) =>
+                      setForm((f) => ({ ...f, name: e.target.value }))
+                    }
+                  />
                 </Field>
               </div>
               <Field label="Type *">
-                <select className={sel} value={form.instrumentType}
-                  onChange={(e) => setForm(f => ({ ...f, instrumentType: e.target.value as Instrument["instrumentType"] }))}>
-                  {INSTRUMENT_TYPES.map(t => <option key={t}>{t}</option>)}
+                <select
+                  className={sel}
+                  value={form.instrumentType}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      instrumentType: e.target
+                        .value as Instrument["instrumentType"],
+                    }))
+                  }
+                >
+                  {INSTRUMENT_TYPES.map((t) => (
+                    <option key={t}>{t}</option>
+                  ))}
                 </select>
               </Field>
               <Field label="Status">
-                <select className={sel} value={form.status}
-                  onChange={(e) => setForm(f => ({ ...f, status: e.target.value as Instrument["status"] }))}>
-                  <option>Active</option><option>Matured</option><option>Sold</option>
+                <select
+                  className={sel}
+                  value={form.status}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      status: e.target.value as Instrument["status"],
+                    }))
+                  }
+                >
+                  <option>Active</option>
+                  <option>Matured</option>
+                  <option>Sold</option>
                 </select>
               </Field>
               <Field label="Issuer *">
-                <input className={inp} placeholder="e.g. FGN, Access Bank"
-                  value={form.issuer} onChange={(e) => setForm(f => ({ ...f, issuer: e.target.value }))} />
+                <input
+                  className={inp}
+                  placeholder="e.g. FGN, Access Bank"
+                  value={form.issuer}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, issuer: e.target.value }))
+                  }
+                />
               </Field>
               <Field label="Sector">
-                <input className={inp} placeholder="e.g. Sovereign, Banking"
-                  value={form.sector} onChange={(e) => setForm(f => ({ ...f, sector: e.target.value }))} />
+                <input
+                  className={inp}
+                  placeholder="e.g. Sovereign, Banking"
+                  value={form.sector}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, sector: e.target.value }))
+                  }
+                />
               </Field>
             </div>
           </div>
 
           {/* Section: Classification */}
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">Classification &amp; Risk</p>
-            <div className="grid grid-cols-3 gap-3">
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">
+              Classification &amp; Risk
+            </p>
+            <div className="grid grid-cols-1 gap-3 sm:grid-cols-3">
               <Field label="IFRS 9 Classification *">
-                <select className={sel} value={form.classification}
-                  onChange={(e) => setForm(f => ({ ...f, classification: e.target.value as Instrument["classification"] }))}>
+                <select
+                  className={sel}
+                  value={form.classification}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      classification: e.target
+                        .value as Instrument["classification"],
+                    }))
+                  }
+                >
                   <option value="AC">AC — Amortised Cost</option>
                   <option value="FVOCI">FVOCI — Fair Value (OCI)</option>
                   <option value="FVTPL">FVTPL — Fair Value (P&L)</option>
                 </select>
               </Field>
               <Field label="IFRS 13 Level">
-                <select className={sel} value={form.ifrs13Level}
-                  onChange={(e) => setForm(f => ({ ...f, ifrs13Level: e.target.value as Instrument["ifrs13Level"] }))}>
-                  <option>L1</option><option>L2</option><option>L3</option>
+                <select
+                  className={sel}
+                  value={form.ifrs13Level}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      ifrs13Level: e.target.value as Instrument["ifrs13Level"],
+                    }))
+                  }
+                >
+                  <option>L1</option>
+                  <option>L2</option>
+                  <option>L3</option>
                 </select>
               </Field>
               <Field label="Impairment Stage">
-                <select className={sel} value={form.impairmentStage ?? "Stage 1"}
-                  onChange={(e) => setForm(f => ({ ...f, impairmentStage: e.target.value as Instrument["impairmentStage"] }))}>
-                  <option>Stage 1</option><option>Stage 2</option><option>Stage 3</option><option>N/A</option>
+                <select
+                  className={sel}
+                  value={form.impairmentStage ?? "Stage 1"}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      impairmentStage: e.target
+                        .value as Instrument["impairmentStage"],
+                    }))
+                  }
+                >
+                  <option>Stage 1</option>
+                  <option>Stage 2</option>
+                  <option>Stage 3</option>
+                  <option>N/A</option>
                 </select>
               </Field>
             </div>
@@ -482,32 +642,100 @@ export function PortfolioHoldings() {
 
           {/* Section: Economics */}
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">Economics</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">
+              Economics
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Currency">
-                <select className={sel} value={form.currency}
-                  onChange={(e) => setForm(f => ({ ...f, currency: e.target.value as Instrument["currency"] }))}>
-                  <option>NGN</option><option>USD</option><option>GBP</option><option>EUR</option>
+                <select
+                  className={sel}
+                  value={form.currency}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      currency: e.target.value as Instrument["currency"],
+                    }))
+                  }
+                >
+                  <option>NGN</option>
+                  <option>USD</option>
+                  <option>GBP</option>
+                  <option>EUR</option>
                 </select>
               </Field>
-              <Field label="Face Value *" hint="In instrument currency (absolute units)">
-                <input type="number" min={0} className={inp} placeholder="1000000000"
-                  value={form.faceValue || ""} onChange={(e) => setForm(f => ({ ...f, faceValue: Number(e.target.value) }))} />
+              <Field
+                label="Face Value *"
+                hint="In instrument currency (absolute units)"
+              >
+                <input
+                  type="number"
+                  min={0}
+                  className={inp}
+                  placeholder="1000000000"
+                  value={form.faceValue || ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      faceValue: Number(e.target.value),
+                    }))
+                  }
+                />
               </Field>
               <Field label="Purchase Price" hint="In instrument currency">
-                <input type="number" min={0} className={inp} placeholder="Same as face value if at par"
-                  value={form.purchasePrice || ""} onChange={(e) => setForm(f => ({ ...f, purchasePrice: Number(e.target.value) }))} />
+                <input
+                  type="number"
+                  min={0}
+                  className={inp}
+                  placeholder="Same as face value if at par"
+                  value={form.purchasePrice || ""}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      purchasePrice: Number(e.target.value),
+                    }))
+                  }
+                />
               </Field>
-              <Field label="Coupon Rate (%)" hint="Enter as percentage e.g. 14.55">
-                <input type="number" min={0} max={100} step={0.01} className={inp} placeholder="0 for zero-coupon"
-                  value={form.couponRate ? (form.couponRate * 100).toFixed(4) : ""}
-                  onChange={(e) => setForm(f => ({ ...f, couponRate: Number(e.target.value) / 100 }))} />
+              <Field
+                label="Coupon Rate (%)"
+                hint="Enter as percentage e.g. 14.55"
+              >
+                <input
+                  type="number"
+                  min={0}
+                  max={100}
+                  step={0.01}
+                  className={inp}
+                  placeholder="0 for zero-coupon"
+                  value={
+                    form.couponRate ? (form.couponRate * 100).toFixed(4) : ""
+                  }
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      couponRate: Number(e.target.value) / 100,
+                    }))
+                  }
+                />
               </Field>
               <Field label="Coupon Frequency">
-                <select className={sel} value={form.couponFrequency}
-                  onChange={(e) => setForm(f => ({ ...f, couponFrequency: e.target.value as Instrument["couponFrequency"] }))}>
-                  <option>Annual</option><option>Semi</option><option>Quarterly</option>
-                  <option>Monthly</option><option>Zero</option><option>N/A</option>
+                <select
+                  className={sel}
+                  value={form.couponFrequency}
+                  onChange={(e) =>
+                    setForm((f) => ({
+                      ...f,
+                      couponFrequency: e.target
+                        .value as Instrument["couponFrequency"],
+                    }))
+                  }
+                >
+                  <option>Annual</option>
+                  <option>Semi</option>
+                  <option>Quarterly</option>
+                  <option>Monthly</option>
+                  <option>Zero</option>
+                  <option>N/A</option>
                 </select>
               </Field>
             </div>
@@ -515,15 +743,29 @@ export function PortfolioHoldings() {
 
           {/* Section: Dates */}
           <div>
-            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">Dates</p>
+            <p className="mb-3 text-xs font-semibold uppercase tracking-wider text-dark-gray/40">
+              Dates
+            </p>
             <div className="grid grid-cols-2 gap-3">
               <Field label="Purchase Date *">
-                <input type="date" className={inp}
-                  value={form.purchaseDate} onChange={(e) => setForm(f => ({ ...f, purchaseDate: e.target.value }))} />
+                <input
+                  type="date"
+                  className={inp}
+                  value={form.purchaseDate}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, purchaseDate: e.target.value }))
+                  }
+                />
               </Field>
               <Field label="Maturity Date">
-                <input type="date" className={inp}
-                  value={form.maturityDate} onChange={(e) => setForm(f => ({ ...f, maturityDate: e.target.value }))} />
+                <input
+                  type="date"
+                  className={inp}
+                  value={form.maturityDate}
+                  onChange={(e) =>
+                    setForm((f) => ({ ...f, maturityDate: e.target.value }))
+                  }
+                />
               </Field>
             </div>
           </div>

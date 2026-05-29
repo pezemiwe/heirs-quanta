@@ -1,4 +1,5 @@
-﻿import { useState, useMemo } from "react";
+import { useState, useMemo } from "react";
+import * as XLSX from "xlsx";
 import { Search, Download } from "lucide-react";
 import {
   DataTable,
@@ -11,7 +12,7 @@ import {
   fmtDate,
 } from "../../../features/portfolio/engine/book-compute";
 
-// ── generate transaction log from 204 instruments ────────────────────────────
+// -- generate transaction log from 204 instruments ----------------------------
 type TxRow = {
   id: string;
   date: string;
@@ -200,12 +201,23 @@ export function Transactions() {
   }, [search, typeFilter]);
 
   const buys = ALL_TXN.filter((t) => t.type === "Buy").length;
+
+  const exportXlsx = () => {
+    const headers = ["ID", "Date", "Type", "Instrument", "Issuer", "Currency", "Amount", "Status"];
+    const rows = filtered.map((t) => [
+      t.id, t.date, t.type, t.instrument, t.issuer, t.currency, +t.amount.toFixed(2), t.status,
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...rows]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Transactions");
+    XLSX.writeFile(wb, `transactions-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  };
   const coupons = ALL_TXN.filter((t) => t.type === "Coupon").length;
   const maturities = ALL_TXN.filter((t) => t.type === "Maturity").length;
   const pending = ALL_TXN.filter((t) => t.status !== "Settled").length;
 
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div className="flex items-center justify-between gap-4">
         <div>
           <h1 className="text-2xl font-bold text-dark-gray">Transaction Log</h1>
@@ -214,7 +226,7 @@ export function Transactions() {
             {ALL_TXN.length} records
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-gray-500 hover:bg-pale-red hover:text-primary">
+        <button onClick={exportXlsx} className="flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-sm text-gray-500 hover:bg-pale-red hover:text-primary">
           <Download className="h-4 w-4" /> Export
         </button>
       </div>

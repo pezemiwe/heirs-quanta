@@ -1,4 +1,5 @@
-﻿import {
+import * as XLSX from "xlsx";
+import {
   Search,
   Download,
   SlidersHorizontal,
@@ -73,6 +74,11 @@ const CLASS_STYLE: Record<string, { bg: string; text: string }> = {
   FVOCI: { bg: "#DBEAFE", text: "#1E3A5F" },
   FVTPL: { bg: "#FEF3C7", text: "#92400E" },
 };
+const CLASS_LABEL: Record<string, string> = {
+  AC: "Amortised Cost",
+  FVOCI: "Fair Value (OCI)",
+  FVTPL: "Fair Value (P&L)",
+};
 const STAGE_STYLE: Record<string, string> = {
   "Stage 1": "bg-emerald-50 text-emerald-700",
   "Stage 2": "bg-amber-50 text-amber-700",
@@ -106,7 +112,7 @@ const COLUMNS: DataTableColumn<HoldingRow>[] = [
           color: CLASS_STYLE[r.classification]?.text,
         }}
       >
-        {r.classification}
+        {CLASS_LABEL[r.classification] ?? r.classification}
       </span>
     ),
   },
@@ -239,8 +245,50 @@ export function PortfolioHoldings() {
 
   const totalBookValue = filtered.reduce((s, r) => s + r.bookValueNGN, 0);
 
+  const exportXlsx = () => {
+    const headers = [
+      "ID",
+      "Instrument",
+      "Issuer",
+      "Type",
+      "Sector",
+      "Classification",
+      "Currency",
+      "Face Value",
+      "Book Value (NGN)",
+      "EIR %",
+      "Coupon Rate %",
+      "Maturity Date",
+      "Stage",
+      "Status",
+    ];
+    const data = filtered.map((r) => [
+      r.id,
+      r.name,
+      r.issuer,
+      r.instrumentType,
+      r.sector,
+      r.classification,
+      r.currency,
+      r.faceValue,
+      +r.bookValueNGN.toFixed(2),
+      +(r.eirPct * 100).toFixed(4),
+      +(r.couponRate * 100).toFixed(4),
+      r.maturityDate ?? "",
+      r.stage,
+      r.status,
+    ]);
+    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(wb, ws, "Holdings");
+    XLSX.writeFile(
+      wb,
+      `portfolio-holdings-${new Date().toISOString().slice(0, 10)}.xlsx`,
+    );
+  };
+
   return (
-    <div className="p-6 xl:p-8 space-y-6">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       {/* header */}
       <div className="flex items-start justify-between">
         <div>
@@ -252,7 +300,10 @@ export function PortfolioHoldings() {
             </span>
           </p>
         </div>
-        <button className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray/60 shadow-sm hover:border-primary hover:text-primary">
+        <button
+          onClick={exportXlsx}
+          className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray/60 shadow-sm hover:border-primary hover:text-primary"
+        >
           <Download className="h-4 w-4" /> Export
         </button>
       </div>
@@ -261,15 +312,15 @@ export function PortfolioHoldings() {
       <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
         {[
           {
-            label: "AC Instruments",
+            label: "Amortised Cost",
             value: rows.filter((r) => r.classification === "AC").length,
           },
           {
-            label: "FVOCI Instruments",
+            label: "Fair Value (OCI)",
             value: rows.filter((r) => r.classification === "FVOCI").length,
           },
           {
-            label: "FVTPL Instruments",
+            label: "Fair Value (P&L)",
             value: rows.filter((r) => r.classification === "FVTPL").length,
           },
           {
@@ -315,7 +366,9 @@ export function PortfolioHoldings() {
             className="rounded-lg border border-border bg-surface py-2 px-3 text-sm outline-none focus:border-primary"
           >
             {ALL_CLASSIFICATIONS.map((c) => (
-              <option key={c}>{c}</option>
+              <option key={c} value={c}>
+                {c === "All" ? "All Classifications" : (CLASS_LABEL[c] ?? c)}
+              </option>
             ))}
           </select>
         </div>
@@ -425,7 +478,7 @@ export function PortfolioHoldings() {
   );
 }
 
-/* ─── edit holding drawer ───────────────────────────────── */
+/* --- edit holding drawer --------------------------------- */
 const inputCls =
   "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
 
