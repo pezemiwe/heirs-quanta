@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -12,7 +13,8 @@ import type {
   PortfolioMetrics,
 } from "./engine/types";
 import { computePortfolioMetrics } from "./engine";
-import { HOLDINGS, TRANSACTIONS, TARGETS } from "./engine/reference-data";
+import { TARGETS as DEFAULT_TARGETS } from "./engine/reference-data";
+import { useInstrumentBook } from "../../context/instrument-book";
 
 interface PortfolioContextValue {
   holdings: Holding[];
@@ -32,12 +34,22 @@ interface PortfolioContextValue {
 const PortfolioContext = createContext<PortfolioContextValue | null>(null);
 
 export function PortfolioProvider({ children }: { children: ReactNode }) {
-  const [holdings, setHoldings] = useState<Holding[]>(HOLDINGS);
-  const [transactions, setTransactions] = useState<Transaction[]>(TRANSACTIONS);
-  const [targets, setTargets] = useState<AllocationTarget[]>(TARGETS);
+  const book = useInstrumentBook();
+  const [holdings, setHoldings] = useState<Holding[]>(
+    book.holdings.length > 0 ? book.holdings : [],
+  );
+  const [transactions, setTransactions] = useState<Transaction[]>([]);
+  const [targets, setTargets] = useState<AllocationTarget[]>(DEFAULT_TARGETS);
   const [selectedHoldingId, setSelectedHoldingId] = useState<string | null>(
     null,
   );
+
+  /* Sync from InstrumentBook whenever a new import or demo load happens */
+  useEffect(() => {
+    if (book.holdings.length > 0) {
+      setHoldings(book.holdings);
+    }
+  }, [book.holdings]);
 
   const metrics = useMemo(
     () => computePortfolioMetrics(holdings, targets),

@@ -2,6 +2,7 @@ import { lazy, Suspense } from "react";
 import { Navigate, Route, Routes } from "react-router-dom";
 import { PersonaProvider } from "./context/persona";
 import { GovernanceProvider } from "./context/governance";
+import { InstrumentBookProvider } from "./context/instrument-book";
 import { PortfolioRegistryProvider } from "./features/portfolio/portfolio-registry";
 import { RequireAuth, ProtectedModule } from "./components/shared/require-auth";
 import { LandingPage } from "./pages/landing";
@@ -57,6 +58,7 @@ export function App() {
   return (
     <PersonaProvider>
       <GovernanceProvider>
+        <InstrumentBookProvider>
         <PortfolioRegistryProvider>
           <Suspense fallback={<PageLoader label="Loading module…" />}>
             <Routes>
@@ -275,6 +277,7 @@ export function App() {
             </Routes>
           </Suspense>
         </PortfolioRegistryProvider>
+        </InstrumentBookProvider>
       </GovernanceProvider>
     </PersonaProvider>
   );

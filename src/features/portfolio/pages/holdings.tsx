@@ -6,20 +6,22 @@ import {
   Pencil,
   Trash2,
   X,
+  Layers,
 } from "lucide-react";
 import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   DataTable,
   type DataTableColumn,
 } from "../../../components/shared/data-table";
 import { RowDetailModal } from "../../../components/shared/row-detail-modal";
+import { EmptyState } from "../../../components/shared/empty-state";
 import {
-  BOOK_INSTRUMENTS,
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
   fmtDate,
 } from "../../../features/portfolio/engine/book-compute";
+import { useValuation } from "../../valuation/store";
 
 type HoldingRow = {
   id: string;
@@ -39,34 +41,6 @@ type HoldingRow = {
   [key: string]: unknown;
 };
 
-const valMap = new Map(
-  BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
-);
-
-const ALL_ROWS: HoldingRow[] = BOOK_INSTRUMENTS.map((inst) => {
-  const v = valMap.get(inst.id);
-  return {
-    id: inst.id,
-    name: inst.name,
-    instrumentType: inst.instrumentType as string,
-    issuer: inst.issuer,
-    sector: inst.sector,
-    classification: inst.classification as string,
-    currency: inst.currency as string,
-    faceValue: inst.faceValue,
-    bookValueNGN: v?.balanceSheetValueNGN ?? inst.faceValue,
-    eirPct: v?.eir ?? 0,
-    couponRate: inst.couponRate,
-    maturityDate: inst.maturityDate ?? null,
-    stage: inst.impairmentStage ?? "N/A",
-    status: inst.status as string,
-  } as HoldingRow;
-});
-
-const ALL_TYPES = [
-  "All",
-  ...Array.from(new Set(BOOK_INSTRUMENTS.map((i) => i.instrumentType))),
-].sort();
 const ALL_CLASSIFICATIONS = ["All", "AC", "FVOCI", "FVTPL"];
 
 const CLASS_STYLE: Record<string, { bg: string; text: string }> = {
@@ -85,119 +59,81 @@ const STAGE_STYLE: Record<string, string> = {
   "Stage 3": "bg-red-50 text-primary",
 };
 
-const COLUMNS: DataTableColumn<HoldingRow>[] = [
-  {
-    key: "id",
-    header: "ID",
-    width: "80px",
-    render: (r) => (
-      <span className="font-mono text-xs text-dark-gray/50">{r.id}</span>
-    ),
-  },
-  {
-    key: "name",
-    header: "Instrument",
-    render: (r) => (
-      <span className="font-medium text-dark-gray text-xs">{r.name}</span>
-    ),
-  },
-  {
-    key: "classification",
-    header: "Class",
-    render: (r) => (
-      <span
-        className="rounded-full px-2 py-0.5 text-xs font-semibold"
-        style={{
-          background: CLASS_STYLE[r.classification]?.bg,
-          color: CLASS_STYLE[r.classification]?.text,
-        }}
-      >
-        {CLASS_LABEL[r.classification] ?? r.classification}
-      </span>
-    ),
-  },
-  {
-    key: "instrumentType",
-    header: "Type",
-    render: (r) => (
-      <span className="text-xs text-dark-gray/70">{r.instrumentType}</span>
-    ),
-  },
-  {
-    key: "issuer",
-    header: "Issuer",
-    render: (r) => (
-      <span className="text-xs text-dark-gray/70">{r.issuer}</span>
-    ),
-  },
-  {
-    key: "currency",
-    header: "CCY",
-    align: "center",
-    render: (r) => (
-      <span className="text-xs text-dark-gray/60">{r.currency}</span>
-    ),
-  },
-  {
-    key: "bookValueNGN",
-    header: "Book Value (₦)",
-    align: "right",
-    render: (r) => (
-      <span className="text-xs font-semibold text-dark-gray">
-        {fmtCompact(r.bookValueNGN)}
-      </span>
-    ),
-  },
-  {
-    key: "eirPct",
-    header: "EIR",
-    align: "right",
-    render: (r) => (
-      <span className="text-xs text-dark-gray/70">
-        {r.eirPct > 0 ? fmtPct(r.eirPct) : "—"}
-      </span>
-    ),
-  },
-  {
-    key: "couponRate",
-    header: "Coupon",
-    align: "right",
-    render: (r) => (
-      <span className="text-xs text-dark-gray/70">
-        {r.couponRate > 0 ? fmtPct(r.couponRate) : "—"}
-      </span>
-    ),
-  },
-  {
-    key: "maturityDate",
-    header: "Maturity",
-    render: (r) => (
-      <span className="text-xs text-dark-gray/60">
-        {fmtDate(r.maturityDate)}
-      </span>
-    ),
-  },
-  {
-    key: "stage",
-    header: "Stage",
-    render: (r) => (
-      <span
-        className={`rounded-full px-2 py-0.5 text-xs font-medium ${STAGE_STYLE[r.stage] ?? "bg-gray-100 text-dark-gray/60"}`}
-      >
-        {r.stage}
-      </span>
-    ),
-  },
-];
-
 export function PortfolioHoldings() {
-  const [rows, setRows] = useState<HoldingRow[]>(ALL_ROWS);
+  const v = useValuation();
+  const navigate = useNavigate();
+
+  const allRows = useMemo<HoldingRow[]>(() => {
+    if (!v.hasData) return [];
+    const valMap = new Map(v.result.valuations.map((val) => [val.instrument.id, val]));
+    return v.instruments.map((inst) => {
+      const val = valMap.get(inst.id);
+      return {
+        id: inst.id,
+        name: inst.name,
+        instrumentType: inst.instrumentType as string,
+        issuer: inst.issuer,
+        sector: inst.sector,
+        classification: inst.classification as string,
+        currency: inst.currency as string,
+        faceValue: inst.faceValue,
+        bookValueNGN: val?.balanceSheetValueNGN ?? inst.faceValue,
+        eirPct: val?.eir ?? 0,
+        couponRate: inst.couponRate,
+        maturityDate: inst.maturityDate ?? null,
+        stage: inst.impairmentStage ?? "N/A",
+        status: inst.status as string,
+      } as HoldingRow;
+    });
+  }, [v.hasData, v.instruments, v.result]);
+
+  const allTypes = useMemo(
+    () => ["All", ...Array.from(new Set(allRows.map((r) => r.instrumentType))).sort()],
+    [allRows],
+  );
+
+  const [rows, setRows] = useState<HoldingRow[]>([]);
+  // Sync rows when allRows changes (new import)
+  useMemo(() => { setRows(allRows); }, [allRows]);
+
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
   const [classFilter, setClassFilter] = useState("All");
   const [selected, setSelected] = useState<HoldingRow | null>(null);
   const [editing, setEditing] = useState<HoldingRow | null>(null);
   const [deleting, setDeleting] = useState<HoldingRow | null>(null);
+
+  if (!v.hasData) {
+    return (
+      <div className="p-3 sm:p-4 md:p-6 xl:p-8">
+        <h1 className="text-2xl font-bold text-dark-gray mb-6">Holdings</h1>
+        <EmptyState
+          preset="no-data"
+          title="No holdings data"
+          description="Import the portfolio workbook via Deal Capture to view instrument holdings."
+          action={
+            <button onClick={() => navigate("/deal-capture")} className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red">
+              <Layers className="h-4 w-4" /> Go to Deal Capture
+            </button>
+          }
+        />
+      </div>
+    );
+  }
+
+  const COLUMNS: DataTableColumn<HoldingRow>[] = [
+    { key: "id", header: "ID", width: "80px", render: (r) => <span className="font-mono text-xs text-dark-gray/50">{r.id}</span> },
+    { key: "name", header: "Instrument", render: (r) => <span className="font-medium text-dark-gray text-xs">{r.name}</span> },
+    { key: "classification", header: "Class", render: (r) => <span className="rounded-full px-2 py-0.5 text-xs font-semibold" style={{ background: CLASS_STYLE[r.classification]?.bg, color: CLASS_STYLE[r.classification]?.text }}>{CLASS_LABEL[r.classification] ?? r.classification}</span> },
+    { key: "instrumentType", header: "Type", render: (r) => <span className="text-xs text-dark-gray/70">{r.instrumentType}</span> },
+    { key: "issuer", header: "Issuer", render: (r) => <span className="text-xs text-dark-gray/70">{r.issuer}</span> },
+    { key: "currency", header: "CCY", align: "center", render: (r) => <span className="text-xs text-dark-gray/60">{r.currency}</span> },
+    { key: "bookValueNGN", header: "Book Value (₦)", align: "right", render: (r) => <span className="text-xs font-semibold text-dark-gray">{fmtCompact(r.bookValueNGN)}</span> },
+    { key: "eirPct", header: "EIR", align: "right", render: (r) => <span className="text-xs text-dark-gray/70">{r.eirPct > 0 ? fmtPct(r.eirPct) : "—"}</span> },
+    { key: "couponRate", header: "Coupon", align: "right", render: (r) => <span className="text-xs text-dark-gray/70">{r.couponRate > 0 ? fmtPct(r.couponRate) : "—"}</span> },
+    { key: "maturityDate", header: "Maturity", render: (r) => <span className="text-xs text-dark-gray/60">{fmtDate(r.maturityDate)}</span> },
+    { key: "stage", header: "Stage", render: (r) => <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STAGE_STYLE[r.stage] ?? "bg-gray-100 text-dark-gray/60"}`}>{r.stage}</span> },
+  ];
 
   const actionsColumn: DataTableColumn<HoldingRow> = {
     key: "_actions" as never,
@@ -294,7 +230,7 @@ export function PortfolioHoldings() {
         <div>
           <h1 className="text-2xl font-bold text-dark-gray">Holdings</h1>
           <p className="mt-1 text-sm text-dark-gray/50">
-            {filtered.length} of {ALL_ROWS.length} instruments · Book value{" "}
+            {filtered.length} of {allRows.length} instruments · Book value{" "}
             <span className="font-semibold text-dark-gray">
               {fmtCompact(totalBookValue)}
             </span>
@@ -356,7 +292,7 @@ export function PortfolioHoldings() {
             onChange={(e) => setTypeFilter(e.target.value)}
             className="rounded-lg border border-border bg-surface py-2 px-3 text-sm outline-none focus:border-primary"
           >
-            {ALL_TYPES.map((t) => (
+            {allTypes.map((t) => (
               <option key={t}>{t}</option>
             ))}
           </select>

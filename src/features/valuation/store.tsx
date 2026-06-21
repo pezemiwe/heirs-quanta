@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -9,7 +10,7 @@ import type { Assumptions, Instrument, PortfolioResult } from "./engine/types";
 import { runPortfolioEngine } from "./engine";
 import { parseInstrumentsCSV } from "./engine/parsing";
 import { DEFAULT_ASSUMPTIONS } from "./engine/reference-data";
-import { BOOK_INSTRUMENTS } from "../portfolio/engine/instrument-book";
+import { useInstrumentBook } from "../../context/instrument-book";
 
 interface ValuationContextValue {
   instruments: Instrument[];
@@ -38,16 +39,33 @@ interface ValuationContextValue {
 const ValuationContext = createContext<ValuationContextValue | null>(null);
 
 export function ValuationProvider({ children }: { children: ReactNode }) {
-  const [instruments, setInstruments] =
-    useState<Instrument[]>(BOOK_INSTRUMENTS);
+  const book = useInstrumentBook();
+  const [instruments, setInstruments] = useState<Instrument[]>(
+    book.instruments.length > 0
+      ? (book.instruments as Instrument[])
+      : [],
+  );
   const [assumptions, setAssumptions] =
     useState<Assumptions>(DEFAULT_ASSUMPTIONS);
   const [lastUploadedFile, setLastUploadedFile] = useState<string | null>(
-    `Portfolio Book (${BOOK_INSTRUMENTS.length} instruments)`,
+    book.instruments.length > 0
+      ? book.importState.fileName ?? "Portfolio Book"
+      : null,
   );
   const [parseErrors, setParseErrors] = useState<
     { row: number; message: string }[]
   >([]);
+
+  /* Sync from InstrumentBook whenever a new import or demo load happens */
+  useEffect(() => {
+    if (book.instruments.length > 0) {
+      setInstruments(book.instruments as Instrument[]);
+      setLastUploadedFile(
+        book.importState.fileName ?? `Imported (${book.instruments.length} instruments)`,
+      );
+      setParseErrors([]);
+    }
+  }, [book.instruments]);
 
   const result = useMemo(
     () => runPortfolioEngine(instruments, assumptions),
@@ -70,9 +88,9 @@ export function ValuationProvider({ children }: { children: ReactNode }) {
     removeInstrument: (id) =>
       setInstruments((p) => p.filter((x) => x.id !== id)),
     loadSample: () => {
-      setInstruments(BOOK_INSTRUMENTS);
+      setInstruments(book.instruments as Instrument[]);
       setLastUploadedFile(
-        `Portfolio Book (${BOOK_INSTRUMENTS.length} instruments)`,
+        book.importState.fileName ?? `Portfolio Book (${book.instruments.length} instruments)`,
       );
       setParseErrors([]);
     },
