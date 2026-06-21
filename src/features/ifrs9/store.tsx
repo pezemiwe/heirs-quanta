@@ -1,6 +1,7 @@
 import {
   createContext,
   useContext,
+  useEffect,
   useMemo,
   useState,
   type ReactNode,
@@ -9,7 +10,7 @@ import type { Assumptions, EngineResult, Security } from "./engine/types";
 import { runEngine } from "./engine";
 import { parseSecuritiesCSV } from "./engine/parsing";
 import { DEFAULT_ASSUMPTIONS } from "./engine/reference-data";
-import { BOOK_SECURITIES } from "../portfolio/engine/instrument-book";
+import { useInstrumentBook } from "../../context/instrument-book";
 
 interface IFRS9ContextValue {
   securities: Security[];
@@ -37,15 +38,31 @@ interface IFRS9ContextValue {
 const IFRS9Context = createContext<IFRS9ContextValue | null>(null);
 
 export function IFRS9Provider({ children }: { children: ReactNode }) {
-  const [securities, setSecurities] = useState<Security[]>(BOOK_SECURITIES);
+  const book = useInstrumentBook();
+  const [securities, setSecurities] = useState<Security[]>(
+    book.securities.length > 0 ? book.securities : [],
+  );
   const [assumptions, setAssumptions] =
     useState<Assumptions>(DEFAULT_ASSUMPTIONS);
   const [lastUploadedFile, setLastUploadedFile] = useState<string | null>(
-    `Portfolio Book (${BOOK_SECURITIES.length} instruments)`,
+    book.securities.length > 0
+      ? book.importState.fileName ?? `Portfolio Book`
+      : null,
   );
   const [parseErrors, setParseErrors] = useState<
     { row: number; message: string }[]
   >([]);
+
+  /* Sync from InstrumentBook whenever a new import or demo load happens */
+  useEffect(() => {
+    if (book.securities.length > 0) {
+      setSecurities(book.securities);
+      setLastUploadedFile(
+        book.importState.fileName ?? `Imported (${book.securities.length} instruments)`,
+      );
+      setParseErrors([]);
+    }
+  }, [book.securities]);
 
   const result = useMemo(
     () => runEngine(securities, assumptions),
@@ -67,9 +84,9 @@ export function IFRS9Provider({ children }: { children: ReactNode }) {
     },
     setAssumptions,
     loadSample: () => {
-      setSecurities(BOOK_SECURITIES);
+      setSecurities(book.securities);
       setLastUploadedFile(
-        `Portfolio Book (${BOOK_SECURITIES.length} instruments)`,
+        book.importState.fileName ?? `Portfolio Book (${book.securities.length} instruments)`,
       );
       setParseErrors([]);
     },
