@@ -30,15 +30,17 @@ export function colorForShock(bps: number): string {
   return bps < 0 ? "#2ecc71" : "#e74c3c";
 }
 
+const NAIRA_SYMBOL = "\u20A6";
+
 export function fmtCompactNGN(amount: number): string {
   if (amount == null || isNaN(amount)) return "—";
   const sign = amount < 0 ? "-" : "";
   const abs = Math.abs(amount);
-  if (abs >= 1e12) return `${sign}₦${(abs / 1e12).toFixed(2)}T`;
-  if (abs >= 1e9) return `${sign}₦${(abs / 1e9).toFixed(2)}B`;
-  if (abs >= 1e6) return `${sign}₦${(abs / 1e6).toFixed(2)}M`;
-  if (abs >= 1e3) return `${sign}₦${(abs / 1e3).toFixed(1)}K`;
-  return `${sign}₦${abs.toFixed(0)}`;
+  if (abs >= 1e12) return `${sign}${NAIRA_SYMBOL}${(abs / 1e12).toFixed(2)}T`;
+  if (abs >= 1e9) return `${sign}${NAIRA_SYMBOL}${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${sign}${NAIRA_SYMBOL}${(abs / 1e6).toFixed(2)}M`;
+  if (abs >= 1e3) return `${sign}${NAIRA_SYMBOL}${(abs / 1e3).toFixed(1)}K`;
+  return `${sign}${NAIRA_SYMBOL}${abs.toFixed(0)}`;
 }
 
 export function fmtBps(bps: number): string {

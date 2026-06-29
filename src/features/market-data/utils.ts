@@ -1,3 +1,5 @@
+const NAIRA_SYMBOL = "\u20A6";
+
 export function fmtPct(v: number, dp = 2): string {
   if (v == null || isNaN(v)) return "—";
   return `${(v * 100).toFixed(dp)}%`;
@@ -21,11 +23,11 @@ export function fmtCompactNGN(v: number): string {
   if (v == null || isNaN(v)) return "—";
   const sign = v < 0 ? "-" : "";
   const a = Math.abs(v);
-  if (a >= 1e12) return `${sign}₦${(a / 1e12).toFixed(2)}T`;
-  if (a >= 1e9) return `${sign}₦${(a / 1e9).toFixed(2)}B`;
-  if (a >= 1e6) return `${sign}₦${(a / 1e6).toFixed(2)}M`;
-  if (a >= 1e3) return `${sign}₦${(a / 1e3).toFixed(1)}K`;
-  return `${sign}₦${a.toFixed(0)}`;
+  if (a >= 1e12) return `${sign}${NAIRA_SYMBOL}${(a / 1e12).toFixed(2)}T`;
+  if (a >= 1e9) return `${sign}${NAIRA_SYMBOL}${(a / 1e9).toFixed(2)}B`;
+  if (a >= 1e6) return `${sign}${NAIRA_SYMBOL}${(a / 1e6).toFixed(2)}M`;
+  if (a >= 1e3) return `${sign}${NAIRA_SYMBOL}${(a / 1e3).toFixed(1)}K`;
+  return `${sign}${NAIRA_SYMBOL}${a.toFixed(0)}`;
 }
 
 export function fmtTenor(t: number): string {

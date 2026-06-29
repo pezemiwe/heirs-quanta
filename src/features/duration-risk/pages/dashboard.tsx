@@ -109,9 +109,9 @@ export function DurationRiskDashboard() {
         />
       </div>
 
-      {/* Chart 5   Parallel Shock P&L */}
+      {/* Parallel Shock P&L */}
       <SectionCard
-        title="Chart 5   Parallel Shock Stress Test: Portfolio P&L Impact"
+        title="Parallel Shock Stress Test: Portfolio P&L Impact"
         description="NGN P&L from instantaneous parallel yield curve shifts. Green = rate cut (gain), red = tightening (loss)."
       >
         <ResponsiveContainer width="100%" height={280}>
@@ -132,7 +132,7 @@ export function DurationRiskDashboard() {
               axisLine={false}
               tickLine={false}
               label={{
-                value: "Portfolio P&L Impact (? Billions)",
+                value: "Portfolio P&L Impact (Naira Billions)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -8,
@@ -163,9 +163,9 @@ export function DurationRiskDashboard() {
         </div>
       </SectionCard>
 
-      {/* Chart 4   Duration Distribution Histogram */}
+      {/* Duration Distribution Histogram */}
       <SectionCard
-        title="Chart 4   Duration Distribution Across Portfolio"
+        title="Duration Distribution Across Portfolio"
         description="Number of duration-eligible instruments by modified-duration bucket."
       >
         <ResponsiveContainer width="100%" height={240}>
@@ -217,10 +217,10 @@ export function DurationRiskDashboard() {
         </ResponsiveContainer>
       </SectionCard>
 
-      {/* Chart 3   Cash Flow Projection */}
+      {/* Cash Flow Projection */}
       <SectionCard
-        title="Chart 3   Cash Flow Projection by Maturity Bucket"
-        description="Future coupon (blue) and principal (orange) inflows in ?."
+        title="Cash Flow Projection by Maturity Bucket"
+        description="Future coupon (blue) and principal (orange) inflows in Naira."
       >
         <ResponsiveContainer width="100%" height={280}>
           <BarChart
@@ -235,12 +235,12 @@ export function DurationRiskDashboard() {
               tickLine={false}
             />
             <YAxis
-              tickFormatter={(v: number) => `?${(v / 1e9).toFixed(0)}B`}
+              tickFormatter={(v: number) => `\u20A6${(v / 1e9).toFixed(0)}B`}
               tick={{ fontSize: 11, fill: "#6b7280" }}
               axisLine={false}
               tickLine={false}
               label={{
-                value: "Cash Flow (? Billions)",
+                value: "Cash Flow (\u20A6 Billions)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -8,

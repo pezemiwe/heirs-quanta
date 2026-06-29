@@ -5,9 +5,11 @@ import type {
   ImpairmentStage,
 } from "./engine/types";
 
+const NAIRA_SYMBOL = "\u20A6";
+
 /* ─── currency formatting ───────────────────────────────── */
 const CCY_SYMBOL: Record<Currency, string> = {
-  NGN: "₦",
+  NGN: NAIRA_SYMBOL,
   USD: "$",
   GBP: "£",
   EUR: "€",

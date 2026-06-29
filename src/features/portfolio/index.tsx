@@ -1,3 +1,4 @@
+import type { ReactNode } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { usePersona } from "../../context/persona";
 import {
@@ -15,8 +16,8 @@ import {
 } from "lucide-react";
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
-
 import { PortfolioProvider, usePortfolio } from "./store";
+import { ValuationProvider } from "../valuation/store";
 import { PortfolioDashboard } from "./pages/dashboard";
 import { PortfolioHoldings } from "./pages/holdings";
 import { PortfolioAllocation } from "./pages/allocation";
@@ -50,7 +51,7 @@ const NAV: {
   id: PortfolioPage;
   label: string;
   tooltip: string;
-  icon: React.ReactNode;
+  icon: ReactNode;
   group: string;
 }[] = [
   {
@@ -138,11 +139,11 @@ const GROUPS: Record<string, string> = {
   operations: "Operations",
 };
 
-/* Watchlist badge — rendered inside PortfolioProvider */
 function WatchlistFooter({ onFilter }: { onFilter: () => void }) {
   const { holdings } = usePortfolio();
   const alertCount = holdings.filter((h) => h.ytdReturn < 0).length;
   if (alertCount === 0) return null;
+
   return (
     <div className="border-t border-border px-4 py-3">
       <button
@@ -203,80 +204,81 @@ export function PortfolioModule() {
   }));
 
   return (
-    <PortfolioProvider>
-      <div className="flex h-screen flex-col bg-surface-muted font-sans text-dark-gray overflow-hidden">
-        {/* top header */}
-        <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-5 z-10">
-          <div className="flex items-center gap-3">
-            <Logo collapsed />
-            <div className="h-4 w-px bg-border" />
-            <span className="text-xs font-semibold text-dark-gray">
-              Portfolio Management
-            </span>
-          </div>
-          <div className="flex items-center gap-3">
-            <UserMenu
-              persona={persona}
-              onSwitchModules={() => navigate("/modules")}
-              onLogout={() => {
-                setPersona({ name: "", role: "", avatar: "" });
-                navigate("/");
-              }}
-            />
-          </div>
-        </header>
-
-        {/* body */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* sidebar */}
-          <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-surface overflow-y-auto">
-            {/* cycle status */}
-            <div className="px-4 py-3 border-b border-border">
-              <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
-                <span className="h-1.5 w-1.5 rounded-full bg-success" />
-                May 2026 · Active
+    <ValuationProvider>
+      <PortfolioProvider>
+        <div className="flex h-screen flex-col bg-surface-muted font-sans text-dark-gray overflow-hidden">
+          <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-5 z-10">
+            <div className="flex items-center gap-3">
+              <Logo collapsed />
+              <div className="h-4 w-px bg-border" />
+              <span className="text-xs font-semibold text-dark-gray">
+                Portfolio Management
               </span>
             </div>
-            <nav className="flex-1 py-4">
-              {grouped.map(({ groupLabel, items }) => (
-                <div key={groupLabel} className="mb-5">
-                  <p className="mb-1 px-4 text-xs font-semibold uppercase tracking-widest text-gray-300">
-                    {groupLabel}
-                  </p>
-                  {items.map((item) => {
-                    const active = page === item.id;
-                    return (
-                      <button
-                        key={item.id}
-                        onClick={() => navigate(`/portfolio/${item.id}`)}
-                        title={item.tooltip}
-                        className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
-                          active
-                            ? "border-r-2 border-primary bg-pale-red font-medium text-primary"
-                            : "text-gray-500 hover:bg-gray-50 hover:text-dark-gray"
-                        }`}
-                      >
-                        <span
-                          className={`shrink-0 ${active ? "text-primary" : ""}`}
-                        >
-                          {item.icon}
-                        </span>
-                        <span>{item.label}</span>
-                      </button>
-                    );
-                  })}
-                </div>
-              ))}
-            </nav>
-            <WatchlistFooter onFilter={() => navigate("/portfolio/holdings")} />
-          </aside>
+            <div className="flex items-center gap-3">
+              <UserMenu
+                persona={persona}
+                onSwitchModules={() => navigate("/modules")}
+                onLogout={() => {
+                  setPersona({ name: "", role: "", avatar: "" });
+                  navigate("/");
+                }}
+              />
+            </div>
+          </header>
 
-          {/* main content */}
-          <main className="min-w-0 flex-1 overflow-y-auto">
-            <PageBody page={page} persona={persona} />
-          </main>
+          <div className="flex flex-1 overflow-hidden">
+            <aside className="flex w-56 shrink-0 flex-col border-r border-border bg-surface overflow-y-auto">
+              <div className="px-4 py-3 border-b border-border">
+                <span className="inline-flex items-center gap-1.5 rounded-full bg-gray-100 px-2.5 py-1 text-xs font-medium text-gray-600">
+                  <span className="h-1.5 w-1.5 rounded-full bg-success" />
+                  May 2026 · Active
+                </span>
+              </div>
+
+              <nav className="flex-1 py-4">
+                {grouped.map(({ groupLabel, items }) => (
+                  <div key={groupLabel} className="mb-5">
+                    <p className="mb-1 px-4 text-xs font-semibold uppercase tracking-widest text-gray-300">
+                      {groupLabel}
+                    </p>
+                    {items.map((item) => {
+                      const active = page === item.id;
+                      return (
+                        <button
+                          key={item.id}
+                          onClick={() => navigate(`/portfolio/${item.id}`)}
+                          title={item.tooltip}
+                          className={`flex w-full items-center gap-2.5 px-4 py-2.5 text-sm transition-colors ${
+                            active
+                              ? "border-r-2 border-primary bg-pale-red font-medium text-primary"
+                              : "text-gray-500 hover:bg-gray-50 hover:text-dark-gray"
+                          }`}
+                        >
+                          <span
+                            className={`shrink-0 ${active ? "text-primary" : ""}`}
+                          >
+                            {item.icon}
+                          </span>
+                          <span>{item.label}</span>
+                        </button>
+                      );
+                    })}
+                  </div>
+                ))}
+              </nav>
+
+              <WatchlistFooter
+                onFilter={() => navigate("/portfolio/holdings")}
+              />
+            </aside>
+
+            <main className="min-w-0 flex-1 overflow-y-auto">
+              <PageBody page={page} persona={persona} />
+            </main>
+          </div>
         </div>
-      </div>
-    </PortfolioProvider>
+      </PortfolioProvider>
+    </ValuationProvider>
   );
 }

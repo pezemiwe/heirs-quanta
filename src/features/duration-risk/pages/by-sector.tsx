@@ -42,17 +42,17 @@ export function DurationRiskBySector() {
 
   const maxSectorDV01 = Math.max(...bySector.map((r) => r.totalDV01), 1);
 
-  // Chart 1   duration by type (horizontal bars, sorted descending)
+  // Duration by type (horizontal bars, sorted descending)
   const durationByType = [...byType]
     .filter((r) => r.wtdModified > 0)
     .sort((a, b) => b.wtdModified - a.wtdModified);
 
-  // Chart 2   DV01 by type
+  // DV01 by type
   const dv01ByType = [...byType]
     .filter((r) => r.totalDV01 > 0)
     .sort((a, b) => a.totalDV01 - b.totalDV01); // ascending for horizontal bar
 
-  // Chart 8   stress P&L by sector for -200, -100, +100, +200 bps
+  // Stress P&L by sector for -200, -100, +100, +200 bps
   const sectorNames = bySector.map((r) => r.group);
   const stressBySector = sectorNames.map((sector) => {
     const rows = stressRows.filter((r) => r.sector === sector);
@@ -77,9 +77,9 @@ export function DurationRiskBySector() {
         </p>
       </div>
 
-      {/* Chart 1   Duration Profile by Instrument Type */}
+      {/* Duration Profile by Instrument Type */}
       <SectionCard
-        title="Chart 1   Duration Profile by Instrument Type"
+        title="Duration Profile by Instrument Type"
         description="Weighted average modified duration per instrument type with portfolio average reference line."
       >
         <ResponsiveContainer
@@ -149,13 +149,13 @@ export function DurationRiskBySector() {
         </ResponsiveContainer>
       </SectionCard>
 
-      {/* Chart 2   DV01 Contribution */}
-      <SectionCard title="Chart 2   DV01 Contribution Analysis">
+      {/* DV01 Contribution */}
+      <SectionCard title="DV01 Contribution Analysis">
         <div className="grid gap-6 lg:grid-cols-2">
-          {/* 2a   Pie */}
+          {/* DV01 Share Pie */}
           <div>
             <p className="mb-2 text-center text-xs font-semibold text-gray-600">
-              Chart 2a DV01 Share by Type
+              DV01 Share by Type
             </p>
             <ResponsiveContainer width="100%" height={260}>
               <PieChart>
@@ -185,10 +185,10 @@ export function DurationRiskBySector() {
             </ResponsiveContainer>
           </div>
 
-          {/* 2b   Horizontal bar */}
+          {/* DV01 Horizontal Bar */}
           <div>
             <p className="mb-2 text-center text-xs font-semibold text-gray-600">
-              Chart 2b DV01 by Instrument Type (?)
+              DV01 by Instrument Type
             </p>
             <ResponsiveContainer width="100%" height={260}>
               <BarChart
@@ -247,10 +247,10 @@ export function DurationRiskBySector() {
         </div>
       </SectionCard>
 
-      {/* Chart 8   Stress by Sector */}
+      {/* Stress by Sector */}
       <SectionCard
-        title="Chart 8   Stress Test Impact by Sector"
-        description="P&L impact (? billions) for selected easing/tightening scenarios by sector."
+        title="Stress Test Impact by Sector"
+        description="P&L impact (Naira billions) for selected easing and tightening scenarios by sector."
       >
         <ResponsiveContainer width="100%" height={340}>
           <BarChart
@@ -265,12 +265,12 @@ export function DurationRiskBySector() {
               tickLine={false}
             />
             <YAxis
-              tickFormatter={(v: number) => `?${(v / 1e9).toFixed(1)}B`}
+              tickFormatter={(v: number) => `\u20A6${(v / 1e9).toFixed(1)}B`}
               tick={{ fontSize: 11, fill: "#6b7280" }}
               axisLine={false}
               tickLine={false}
               label={{
-                value: "P&L Impact (? Billions)",
+                value: "P&L Impact (\u20A6 Billions)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -8,

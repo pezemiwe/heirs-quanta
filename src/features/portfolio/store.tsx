@@ -44,10 +44,11 @@ export function PortfolioProvider({ children }: { children: ReactNode }) {
     null,
   );
 
-  /* Sync from InstrumentBook whenever a new import or demo load happens */
+  /* Sync from InstrumentBook whenever the shared book changes */
   useEffect(() => {
-    if (book.holdings.length > 0) {
-      setHoldings(book.holdings);
+    setHoldings(book.holdings);
+    if (book.holdings.length === 0) {
+      setSelectedHoldingId(null);
     }
   }, [book.holdings]);
 

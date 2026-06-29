@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   FolderOpen,
   Plus,
@@ -14,6 +14,8 @@ import {
   type PortfolioType,
   type PortfolioStatus,
 } from "../portfolio-registry";
+import { useInstrumentBook } from "../../../context/instrument-book";
+import type { Instrument } from "../../valuation/engine/types";
 
 /* -------------------------------------------------------
    Portfolio Books page
@@ -249,10 +251,12 @@ function PortfolioModal({
 ------------------------------------------------------- */
 function DetailPanel({
   portfolio,
+  instruments,
   onClose,
   onEdit,
 }: {
   portfolio: Portfolio;
+  instruments: Instrument[];
   onClose: () => void;
   onEdit: () => void;
 }) {
@@ -358,16 +362,51 @@ function DetailPanel({
         </div>
       </div>
 
-      {/* footer actions */}
-      <div className="p-4 border-t border-border">
-        <button
-          onClick={onEdit}
-          className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
-        >
-          <Pencil className="h-3.5 w-3.5" />
-          Edit Portfolio
-        </button>
+      <div className="border-t border-border p-4">
+        <p className="mb-3 text-xs font-semibold uppercase tracking-wide text-dark-gray/40">
+          Instruments in Book
+        </p>
+        {instruments.length === 0 ? (
+          <div className="rounded-lg border border-dashed border-border bg-surface-muted px-3 py-4 text-xs text-dark-gray/50">
+            No instruments are currently mapped to this portfolio book.
+          </div>
+        ) : (
+          <div className="space-y-2">
+            {instruments.map((instrument) => (
+              <div
+                key={`${portfolio.id}-${instrument.id}`}
+                className="rounded-lg border border-border bg-surface-muted px-3 py-2"
+              >
+                <div className="flex items-start justify-between gap-3">
+                  <div className="min-w-0">
+                    <p className="truncate text-sm font-medium text-dark-gray">
+                      {instrument.name}
+                    </p>
+                    <p className="mt-0.5 text-xs text-dark-gray/50">
+                      {instrument.id} · {instrument.instrumentType}
+                    </p>
+                  </div>
+                  <span className="shrink-0 rounded-full bg-white px-2 py-0.5 text-[11px] font-medium text-dark-gray/60">
+                    {instrument.currency}
+                  </span>
+                </div>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
+
+      {portfolio.origin !== "imported" && (
+        <div className="p-4 border-t border-border">
+          <button
+            onClick={onEdit}
+            className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white hover:bg-primary/90"
+          >
+            <Pencil className="h-3.5 w-3.5" />
+            Edit Portfolio
+          </button>
+        </div>
+      )}
     </div>
   );
 }
@@ -378,11 +417,22 @@ function DetailPanel({
 export function PortfolioBooks() {
   const { portfolios, addPortfolio, updatePortfolio, removePortfolio } =
     usePortfolioRegistry();
+  const book = useInstrumentBook();
 
   const [showCreate, setShowCreate] = useState(false);
   const [editing, setEditing] = useState<Portfolio | null>(null);
   const [selected, setSelected] = useState<Portfolio | null>(null);
   const [confirmDelete, setConfirmDelete] = useState<Portfolio | null>(null);
+
+  const selectedInstruments = useMemo(
+    () =>
+      selected
+        ? book.instruments.filter(
+            (instrument) => instrument.portfolioBook === selected.name,
+          )
+        : [],
+    [book.instruments, selected],
+  );
 
   function handleCreate(v: FormValues) {
     const newP = addPortfolio(v);
@@ -500,20 +550,24 @@ export function PortfolioBooks() {
                       className="flex items-center gap-1 shrink-0"
                       onClick={(e) => e.stopPropagation()}
                     >
-                      <button
-                        onClick={() => setEditing(p)}
-                        className="rounded p-1.5 text-gray-400 hover:text-dark-gray hover:bg-gray-100"
-                        aria-label="Edit portfolio"
-                      >
-                        <Pencil className="h-3.5 w-3.5" />
-                      </button>
-                      <button
-                        onClick={() => setConfirmDelete(p)}
-                        className="rounded p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50"
-                        aria-label="Delete portfolio"
-                      >
-                        <Trash2 className="h-3.5 w-3.5" />
-                      </button>
+                      {p.origin !== "imported" && (
+                        <>
+                          <button
+                            onClick={() => setEditing(p)}
+                            className="rounded p-1.5 text-gray-400 hover:text-dark-gray hover:bg-gray-100"
+                            aria-label="Edit portfolio"
+                          >
+                            <Pencil className="h-3.5 w-3.5" />
+                          </button>
+                          <button
+                            onClick={() => setConfirmDelete(p)}
+                            className="rounded p-1.5 text-gray-400 hover:text-red-500 hover:bg-red-50"
+                            aria-label="Delete portfolio"
+                          >
+                            <Trash2 className="h-3.5 w-3.5" />
+                          </button>
+                        </>
+                      )}
                     </div>
                   </div>
                 );
@@ -527,6 +581,7 @@ export function PortfolioBooks() {
       {selected && (
         <DetailPanel
           portfolio={selected}
+          instruments={selectedInstruments}
           onClose={() => setSelected(null)}
           onEdit={() => setEditing(selected)}
         />

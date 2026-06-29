@@ -197,6 +197,7 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
     const marketYield = parseRate(r[31]);
     const marketPrice = parseNum(r[32]);
     const bookedBy = str(r[2]);
+    const portfolioBook = str(r[3]) || "FGN Bond Book";
 
     if (!purchaseDate) warnings.push(`Row ${i + 1}: missing value date for ${id}`);
     if (!maturityDate) warnings.push(`Row ${i + 1}: missing maturity date for ${id}`);
@@ -208,6 +209,7 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
       instrumentType: "FGN Bond",
       issuer: "Federal Government of Nigeria",
       sector: "Sovereign",
+      portfolioBook,
       classification: "AC",
       ifrs13Level: "L1",
       currency: "NGN",
@@ -255,6 +257,7 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
     const faceValue = parseNum(r[11]);
     const purchasePrice = parseNum(r[15]) || parseNum(r[14]);
     const bookedBy = str(r[2]);
+    const portfolioBook = str(r[3]) || "State Bond Book";
 
     if (!purchaseDate) warnings.push(`Row ${i + 1}: missing value date for ${id}`);
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
@@ -265,6 +268,7 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
       instrumentType: "State Bond",
       issuer: extractStateIssuer(name),
       sector: "Sub-Sovereign",
+      portfolioBook,
       classification: "AC",
       ifrs13Level: "L2",
       currency: "NGN",
@@ -321,6 +325,7 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
     const faceValue = parseNum(r[11]);
     const purchasePrice = parseNum(r[15]) || parseNum(r[14]);
     const bookedBy = str(r[2]);
+    const portfolioBook = str(r[3]) || "Corporate Bond Book";
 
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
@@ -330,6 +335,7 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
       instrumentType: "Corporate Bond",
       issuer: extractCorporateIssuer(name, bookedBy),
       sector: extractCorporateSector(name),
+      portfolioBook,
       classification: "FVOCI",
       ifrs13Level: "L2",
       currency: "NGN",
@@ -395,6 +401,7 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
     const couponRate = parseRate(r[8]); // discount rate
     const faceValue = parseNum(r[9]);
     const bookedBy = str(r[1]);
+    const portfolioBook = str(r[3]) || "Treasury Bill Book";
 
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
@@ -404,6 +411,7 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
       instrumentType: "T-Bill",
       issuer: "Federal Government of Nigeria",
       sector: "Sovereign",
+      portfolioBook,
       classification: "AC",
       ifrs13Level: "L1",
       currency: "NGN",
@@ -448,6 +456,7 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
     const couponRate = parseRate(r[9]);
     const purchaseDate = parseDate(r[10]);
     const maturityDate = parseDate(r[11]);
+    const portfolioBook = str(r[3]) || "USD Placement Book";
 
     instruments.push({
       id,
@@ -455,6 +464,7 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
       instrumentType: "Fixed Deposit",
       issuer: dealer || "Counterparty Bank",
       sector: "Banking",
+      portfolioBook,
       classification: "AC",
       ifrs13Level: "L2",
       currency: "USD",
@@ -498,6 +508,7 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
     const couponRate = parseRate(r[4]);
     const purchaseDate = parseDate(r[5]);
     const maturityDate = parseDate(r[6]);
+    const portfolioBook = "Placements <90 Days";
 
     instruments.push({
       id,
@@ -505,6 +516,7 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
       instrumentType: "Bank Placement",
       issuer: institution || "Commercial Bank",
       sector: "Banking",
+      portfolioBook,
       classification: "AC",
       ifrs13Level: "L2",
       currency: "NGN",
@@ -554,6 +566,7 @@ function parseQuotedEquity(
     const totalCost = parseNum(r[7]);
     const marketPriceUnit = parseNum(r[8]);
     const marketValueTotal = parseNum(r[9]);
+    const portfolioBook = str(r[2]) || "Quoted Equity Book";
 
     const costBasisM = totalCost / 1_000_000;
     const mktValueM =
@@ -569,6 +582,7 @@ function parseQuotedEquity(
       instrumentType: "Equity",
       issuer: company,
       sector: guessSector(company),
+      portfolioBook,
       classification: "FVTPL",
       ifrs13Level: "L1",
       currency: "NGN",
@@ -828,6 +842,11 @@ export function parseWorkbook(buffer: ArrayBuffer): ParsedWorkbook {
         // Unrecognised sheet — skip silently
         continue;
     }
+
+    parsed = parsed.map((instrument) => ({
+      ...instrument,
+      sourceSheet: sheetName,
+    }));
 
     const typeLabels: Record<string, string> = {
       fgn: "FGN Bonds",

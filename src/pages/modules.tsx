@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+import { useInstrumentBook } from "../context/instrument-book";
 import { usePersona } from "../context/persona";
 import { getModuleAccess, type ModuleId } from "../context/permissions";
 import {
@@ -25,24 +26,6 @@ import {
 /* ── Module definitions ─────────────────────────────────────── */
 const MODULES = [
   {
-    id: "portfolio",
-    live: true,
-    icon: BarChart2,
-    title: "Portfolio Management",
-    subtitle: "Real-time investment portfolio analytics & monitoring",
-    description:
-      "Complete visibility into the Heirs Holdings investment portfolio. Monitor security performance, track allocations, analyse concentration risk, and generate board-level reports in real time.",
-    features: [
-      { icon: Database, label: "Securities ingestion & classification" },
-      { icon: PieChart, label: "Concentration & sector analysis" },
-      { icon: Activity, label: "Allocation targets & limit monitoring" },
-      { icon: TrendingUp, label: "Portfolio trend reporting" },
-      { icon: AlertTriangle, label: "Early warning & watch list" },
-    ],
-    accent: "#CC0000",
-    lightBg: "#FFF5F5",
-  },
-  {
     id: "deal-capture",
     live: true,
     icon: ArrowLeftRight,
@@ -61,22 +44,22 @@ const MODULES = [
     lightBg: "#FDF0F0",
   },
   {
-    id: "market-data",
+    id: "portfolio",
     live: true,
-    icon: Activity,
-    title: "Market Data & Trend Analytics",
-    subtitle: "Live prices, yields, indices & macro signals",
+    icon: BarChart2,
+    title: "Portfolio Management",
+    subtitle: "Real-time investment portfolio analytics & monitoring",
     description:
-      "Aggregate and normalise market data across asset classes government bonds, equities, FX, and money market rates and overlay macro-economic trend signals to inform investment decisions.",
+      "Complete visibility into the Heirs Holdings investment portfolio. Monitor security performance, track allocations, analyse concentration risk, and generate board-level reports in real time.",
     features: [
-      { icon: TrendingUp, label: "Government bond yield curve construction" },
-      { icon: Activity, label: "Equity price & index feeds" },
-      { icon: Database, label: "FX rates & money market benchmarks" },
-      { icon: AlertTriangle, label: "Macro-economic signal overlays" },
-      { icon: PieChart, label: "Historical trend analytics" },
+      { icon: Database, label: "Securities ingestion & classification" },
+      { icon: PieChart, label: "Concentration & sector analysis" },
+      { icon: Activity, label: "Allocation targets & limit monitoring" },
+      { icon: TrendingUp, label: "Portfolio trend reporting" },
+      { icon: AlertTriangle, label: "Early warning & watch list" },
     ],
-    accent: "#1A6B8A",
-    lightBg: "#EFF7FA",
+    accent: "#CC0000",
+    lightBg: "#FFF5F5",
   },
   {
     id: "valuation",
@@ -97,42 +80,6 @@ const MODULES = [
     lightBg: "#F0EDED",
   },
   {
-    id: "ifrs9",
-    live: true,
-    icon: Calculator,
-    title: "IFRS 9 — Expected Credit Loss",
-    subtitle: "Automated ECL computation aligned to CBN guidelines",
-    description:
-      "Automate the full IFRS 9 impairment lifecycle from SICR detection and stage allocation through PD/LGD/EAD parameterisation to ECL charge computation aligned with CBN prudential guidelines.",
-    features: [
-      { icon: AlertTriangle, label: "Automated SICR detection & staging" },
-      { icon: Calculator, label: "PD · LGD · EAD parameters" },
-      { icon: FileText, label: "12-month & lifetime ECL" },
-      { icon: TrendingUp, label: "Macro-economic overlays" },
-      { icon: Shield, label: "CBN regulatory reporting" },
-    ],
-    accent: "#800000",
-    lightBg: "#F5F0F0",
-  },
-  {
-    id: "performance",
-    live: true,
-    icon: TrendingUp,
-    title: "Return & Performance Analytics",
-    subtitle: "Attribution, benchmarking & return decomposition",
-    description:
-      "Measure and decompose investment returns at fund, asset class, and security level. Run attribution analysis against benchmarks and generate GIPS-aligned performance reports for the investment committee.",
-    features: [
-      { icon: Activity, label: "Time-weighted & money-weighted returns" },
-      { icon: PieChart, label: "Attribution analysis by asset class" },
-      { icon: TrendingUp, label: "Benchmark comparison & tracking error" },
-      { icon: FileText, label: "GIPS-aligned performance reporting" },
-      { icon: Database, label: "Historical performance trend charts" },
-    ],
-    accent: "#1A7A4A",
-    lightBg: "#EFF8F3",
-  },
-  {
     id: "duration-risk",
     live: true,
     icon: ShieldCheck,
@@ -151,6 +98,42 @@ const MODULES = [
     lightBg: "#F0F0F8",
   },
   {
+    id: "ifrs9",
+    live: true,
+    icon: Calculator,
+    title: "IFRS 9 — Expected Credit Loss",
+    subtitle: "Automated ECL computation aligned to CBN guidelines",
+    description:
+      "Automate the full IFRS 9 impairment lifecycle from SICR detection and stage allocation through PD/LGD/EAD parameterisation to ECL charge computation aligned with CBN prudential guidelines.",
+    features: [
+      { icon: AlertTriangle, label: "Automated SICR detection & staging" },
+      { icon: Calculator, label: "PD · LGD · EAD parameters" },
+      { icon: FileText, label: "12-month & lifetime ECL" },
+      { icon: TrendingUp, label: "Macro-economic overlays" },
+      { icon: Shield, label: "CBN regulatory reporting" },
+    ],
+    accent: "#800000",
+    lightBg: "#F5F0F0",
+  },
+  {
+    id: "market-data",
+    live: true,
+    icon: Activity,
+    title: "Market Data & Trend Analytics",
+    subtitle: "Live prices, yields, indices & macro signals",
+    description:
+      "Aggregate and normalise market data across asset classes government bonds, equities, FX, and money market rates and overlay macro-economic trend signals to inform investment decisions.",
+    features: [
+      { icon: TrendingUp, label: "Government bond yield curve construction" },
+      { icon: Activity, label: "Equity price & index feeds" },
+      { icon: Database, label: "FX rates & money market benchmarks" },
+      { icon: AlertTriangle, label: "Macro-economic signal overlays" },
+      { icon: PieChart, label: "Historical trend analytics" },
+    ],
+    accent: "#1A6B8A",
+    lightBg: "#EFF7FA",
+  },
+  {
     id: "accounting",
     live: true,
     icon: FileText,
@@ -167,6 +150,24 @@ const MODULES = [
     ],
     accent: "#7A5A1A",
     lightBg: "#FAF5EF",
+  },
+  {
+    id: "performance",
+    live: true,
+    icon: TrendingUp,
+    title: "Return & Performance Analytics",
+    subtitle: "Attribution, benchmarking & return decomposition",
+    description:
+      "Measure and decompose investment returns at fund, asset class, and security level. Run attribution analysis against benchmarks and generate GIPS-aligned performance reports for the investment committee.",
+    features: [
+      { icon: Activity, label: "Time-weighted & money-weighted returns" },
+      { icon: PieChart, label: "Attribution analysis by asset class" },
+      { icon: TrendingUp, label: "Benchmark comparison & tracking error" },
+      { icon: FileText, label: "GIPS-aligned performance reporting" },
+      { icon: Database, label: "Historical performance trend charts" },
+    ],
+    accent: "#1A7A4A",
+    lightBg: "#EFF8F3",
   },
   {
     id: "reporting",
@@ -217,18 +218,25 @@ const greeting = () => {
 /* ── Modules Page ───────────────────────────────────────────── */
 export function ModulesPage() {
   const { persona, setPersona } = usePersona();
+  const book = useInstrumentBook();
   const navigate = useNavigate();
   const [hovered, setHovered] = useState<string | null>(null);
+  const visibleModules = MODULES.filter((module) => {
+    if (getModuleAccess(persona.role, module.id as ModuleId) === "none") {
+      return false;
+    }
+
+    if (!book.hasData) {
+      return module.id === "deal-capture";
+    }
+
+    return true;
+  });
 
   const handleLogout = () => {
     setPersona({ name: "", role: "", avatar: "" });
     navigate("/");
   };
-
-  // Count how many modules this persona can access
-  const accessibleCount = MODULES.filter(
-    (m) => getModuleAccess(persona.role, m.id as ModuleId) !== "none",
-  ).length;
 
   return (
     <div
@@ -293,8 +301,9 @@ export function ModulesPage() {
             <span className="text-primary">{persona.name.split(" ")[0]}</span>.
           </h1>
           <p className="text-sm text-dark-gray/50">
-            Select a module below to begin your session.{" "}
-            <span className="font-medium text-dark-gray/70">{accessibleCount} of {MODULES.length} modules available for your role.</span>
+            {book.hasData
+              ? "Select a module below to begin your session."
+              : "Start in Deal Capture. Other modules will unlock after you book a deal or upload a portfolio file."}
           </p>
         </div>
       </div>
@@ -303,18 +312,17 @@ export function ModulesPage() {
       <main className="flex-1 py-8 lg:py-10">
         <div className="mx-auto max-w-[1440px] px-4 lg:px-6">
           <div className="grid gap-3 sm:gap-4 grid-cols-1 xs:grid-cols-2 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5">
-            {MODULES.map((m) => {
+            {visibleModules.map((m) => {
               const Icon = m.icon;
               const isHovered = hovered === m.id;
               const access = getModuleAccess(persona.role, m.id as ModuleId);
-              const isLocked = access === "none";
               const isReadOnly = access === "read-only";
               return (
                 <div
                   key={m.id}
-                  onMouseEnter={() => !isLocked && setHovered(m.id)}
+                  onMouseEnter={() => setHovered(m.id)}
                   onMouseLeave={() => setHovered(null)}
-                  className={`group flex flex-col overflow-hidden rounded-xl border border-border bg-white transition-all duration-200 ${isLocked ? "opacity-50 grayscale" : ""}`}
+                  className="group flex flex-col overflow-hidden rounded-xl border border-border bg-white transition-all duration-200"
                   style={{
                     boxShadow: isHovered
                       ? `0 12px 32px rgba(0,0,0,0.09), 0 0 0 1.5px ${m.accent}33`
@@ -323,22 +331,18 @@ export function ModulesPage() {
                   }}
                 >
                   {/* Accent top stripe */}
-                  <div style={{ height: 3, background: isLocked ? "#9ca3af" : m.accent, flexShrink: 0 }} />
+                  <div style={{ height: 3, background: m.accent, flexShrink: 0 }} />
 
                   <div className="flex flex-1 flex-col p-4">
                     {/* Icon + status badge */}
                     <div className="mb-3 flex items-start justify-between">
                       <div
                         className="flex h-9 w-9 items-center justify-center rounded-lg text-white"
-                        style={{ background: isLocked ? "#9ca3af" : m.accent }}
+                        style={{ background: m.accent }}
                       >
                         <Icon className="h-4 w-4" />
                       </div>
-                      {isLocked ? (
-                        <span className="inline-flex items-center gap-0.5 rounded-full bg-gray-100 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-gray-400">
-                          <Lock className="h-2.5 w-2.5" /> Locked
-                        </span>
-                      ) : isReadOnly ? (
+                      {isReadOnly ? (
                         <span className="inline-flex items-center gap-0.5 rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold uppercase tracking-wide text-amber-600">
                           <Eye className="h-2.5 w-2.5" /> View
                         </span>
@@ -367,7 +371,7 @@ export function ModulesPage() {
                         <div key={label} className="flex items-start gap-1.5">
                           <div
                             className="mt-[3px] h-1 w-1 shrink-0 rounded-full"
-                            style={{ background: isLocked ? "#9ca3af" : `${m.accent}99` }}
+                            style={{ background: `${m.accent}99` }}
                           />
                           <span className="text-[10px] leading-snug text-dark-gray/50">
                             {label}
@@ -377,14 +381,7 @@ export function ModulesPage() {
                     </div>
 
                     {/* CTA */}
-                    {isLocked ? (
-                      <button
-                        disabled
-                        className="flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-semibold cursor-not-allowed bg-gray-100 text-gray-400"
-                      >
-                        <Lock className="h-3 w-3" /> Access Restricted
-                      </button>
-                    ) : isReadOnly ? (
+                    {isReadOnly ? (
                       <button
                         onClick={() => navigate(`/${m.id}`)}
                         className="flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-bold border border-amber-200 bg-amber-50 text-amber-800 transition-all hover:bg-amber-100"
@@ -403,15 +400,7 @@ export function ModulesPage() {
                       >
                         Open Module <ChevronRight className="h-3 w-3" />
                       </button>
-                    ) : (
-                      <button
-                        disabled
-                        className="flex w-full items-center justify-center gap-1.5 rounded-lg py-2 text-[11px] font-semibold cursor-not-allowed text-dark-gray/30"
-                        style={{ background: "#F4F4F6" }}
-                      >
-                        <Lock className="h-3 w-3" /> Coming Soon
-                      </button>
-                    )}
+                    ) : null}
                   </div>
                 </div>
               );

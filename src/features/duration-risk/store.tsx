@@ -99,16 +99,16 @@ export function DurationRiskProvider({ children }: { children: ReactNode }) {
     { row: number; message: string }[]
   >([]);
 
-  /* Sync from InstrumentBook whenever a new import or demo load happens */
+  /* Sync from InstrumentBook whenever the shared book changes */
   useEffect(() => {
-    if (book.instruments.length > 0) {
-      setInstruments(book.instruments as Instrument[]);
-      setLastUploadedFile(
-        book.importState.fileName ?? `Imported (${book.instruments.length} instruments)`,
-      );
-      setParseErrors([]);
-    }
-  }, [book.instruments]);
+    setInstruments(book.instruments as Instrument[]);
+    setLastUploadedFile(
+      book.instruments.length > 0
+        ? (book.importState.fileName ?? `Imported (${book.instruments.length} instruments)`)
+        : null,
+    );
+    setParseErrors([]);
+  }, [book.importState.fileName, book.instruments]);
 
   const result = useMemo<RiskResult>(() => {
     const durationRows = buildDurationTable(instruments, assumptions);

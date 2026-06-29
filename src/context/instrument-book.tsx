@@ -10,7 +10,7 @@
  *   2. parseWorkbook() runs and produces instruments / securities / holdings
  *   3. Results are broadcast here and persisted to localStorage
  *   4. Each module provider re-initialises from this context on mount and on change
- *   5. "Load Demo" restores the original hardcoded reference data at any time
+ *   5. clear() removes all uploaded batches and returns the platform to empty state
  */
 
 import {
@@ -31,11 +31,6 @@ import {
   instrumentToHolding,
   type SheetSummary,
 } from "../features/deals/engine/workbook-parser";
-
-// Demo data — kept intact for instant reversion
-import { SAMPLE_SECURITIES as DEMO_SECURITIES } from "../features/ifrs9/engine/reference-data";
-import { SAMPLE_INSTRUMENTS as DEMO_INSTRUMENTS } from "../features/valuation/engine/reference-data";
-import { HOLDINGS as DEMO_HOLDINGS } from "../features/portfolio/engine/reference-data";
 
 /* ─────────────────────────────────────────────────────────────
    Types
@@ -59,7 +54,19 @@ export interface ImportState {
   error: string | null;
 }
 
-export type BookSource = "demo" | "uploaded" | "empty";
+export type BookSource = "uploaded" | "captured" | "empty";
+export type ImportMode = "append";
+
+export interface ImportBatch {
+  id: string;
+  label: string;
+  fileName: string;
+  importedAt: string;
+  mode: ImportMode;
+  instrumentsAdded: number;
+  totalInstrumentsAfter: number;
+  summary: SheetSummary[];
+}
 
 interface InstrumentBookValue {
   /* Canonical datasets */
@@ -70,12 +77,15 @@ interface InstrumentBookValue {
   /* Metadata */
   source: BookSource;
   importState: ImportState;
+  batches: ImportBatch[];
   hasData: boolean;
 
   /* Actions */
   importWorkbook: (file: File) => Promise<void>;
-  loadDemo: () => void;
+  addManualInstrument: (instrument: Instrument) => void;
   clear: () => void;
+  removeBatch: (batchId: string) => void;
+  removeInstrument: (instrumentId: string, batchId?: string) => void;
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -88,6 +98,7 @@ interface PersistedBook {
   instruments: Instrument[];
   fileName: string;
   importedAt: string;
+  batches: ImportBatch[];
 }
 
 function loadFromStorage(): PersistedBook | null {
@@ -139,7 +150,14 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
     getInitialInstruments,
   );
   const [source, setSource] = useState<BookSource>(
-    persisted.current ? "uploaded" : "empty",
+    persisted.current
+      ? persisted.current.batches.length > 0
+        ? "uploaded"
+        : "captured"
+      : "empty",
+  );
+  const [batches, setBatches] = useState<ImportBatch[]>(
+    persisted.current?.batches ?? [],
   );
   const [importState, setImportState] = useState<ImportState>(() => {
     if (persisted.current) {
@@ -163,6 +181,7 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
 
   /* ── Import workbook ──────────────────────────────────────── */
   const importWorkbook = useCallback(async (file: File) => {
+    const mode: ImportMode = "append";
     const tick = (phase: ImportPhase, progress: number, step: string) =>
       setImportState((s) => ({ ...s, phase, progress, currentStep: step }));
 
@@ -215,13 +234,37 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
 
       // ── Phase 4: Commit ───────────────────────────────────
       const importedAt = new Date().toISOString();
-      setInstruments(result.instruments);
+      const batchId = `batch-${Date.now()}`;
+      const batchLabel = `Batch ${new Date(importedAt).toLocaleString()}`;
+      const taggedInstruments = result.instruments.map((instrument) => ({
+        ...instrument,
+        sourceFileName: file.name,
+        importBatchId: batchId,
+        importBatchLabel: batchLabel,
+      }));
+      const nextInstruments = [...instruments, ...taggedInstruments];
+      const nextBatch: ImportBatch = {
+        id: batchId,
+        label: batchLabel,
+        fileName: file.name,
+        importedAt,
+        mode,
+        instrumentsAdded: taggedInstruments.length,
+        totalInstrumentsAfter: nextInstruments.length,
+        summary: result.sheets,
+      };
+
+      const nextBatches = [...batches, nextBatch];
+
+      setInstruments(nextInstruments);
+      setBatches(nextBatches);
       setSource("uploaded");
 
       saveToStorage({
-        instruments: result.instruments,
+        instruments: nextInstruments,
         fileName: file.name,
         importedAt,
+        batches: nextBatches,
       });
 
       setImportState({
@@ -241,49 +284,130 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
         error: `Import failed: ${(err as Error).message}`,
       }));
     }
-  }, []);
-
-  /* ── Load demo data ───────────────────────────────────────── */
-  const loadDemo = useCallback(() => {
-    // Merge the three hardcoded sources into a unified Instrument[] so all modules see the same data.
-    // For demo mode we push instruments directly from both DEMO_INSTRUMENTS and we synthesise
-    // Instrument stubs from DEMO_SECURITIES (IFRS9) so the book is complete.
-    setInstruments(DEMO_INSTRUMENTS);
-    setSource("demo");
-    clearStorage();
-    setImportState({
-      phase: "done",
-      progress: 100,
-      currentStep: "Demo data loaded",
-      fileName: "Demo Dataset",
-      importedAt: new Date().toISOString(),
-      summary: [
-        {
-          sheetName: "Demo",
-          detectedType: "Portfolio Book",
-          rowsParsed: DEMO_INSTRUMENTS.length,
-          rowsSkipped: 0,
-          warnings: [],
-        },
-      ],
-      error: null,
-    });
-  }, []);
+  }, [batches, instruments]);
 
   /* ── Clear ────────────────────────────────────────────────── */
+  const addManualInstrument = useCallback(
+    (instrument: Instrument) => {
+      const bookedAt = new Date().toISOString();
+      const nextInstruments = [instrument, ...instruments];
+
+      setInstruments(nextInstruments);
+      setSource(batches.length > 0 ? "uploaded" : "captured");
+
+      saveToStorage({
+        instruments: nextInstruments,
+        fileName: importState.fileName ?? "Manual Booking",
+        importedAt: importState.importedAt ?? bookedAt,
+        batches,
+      });
+
+      setImportState((state) => ({
+        ...state,
+        phase: "done",
+        fileName: state.fileName ?? "Manual Booking",
+        importedAt: state.importedAt ?? bookedAt,
+      }));
+    },
+    [batches, importState.fileName, importState.importedAt, instruments],
+  );
+
   const clear = useCallback(() => {
     setInstruments([]);
+    setBatches([]);
     setSource("empty");
     clearStorage();
     setImportState(IDLE_STATE);
   }, []);
 
-  // Expose the raw DEMO arrays so module stores can use them when source === "demo"
-  useEffect(() => {
-    if (source === "demo") {
-      // no-op — instruments already set from DEMO_INSTRUMENTS above
-    }
-  }, [source]);
+  const removeBatch = useCallback(
+    (batchId: string) => {
+      const nextInstruments = instruments.filter(
+        (instrument) => instrument.importBatchId !== batchId,
+      );
+      const nextBatches = batches.filter((batch) => batch.id !== batchId);
+      const latestBatch = nextBatches[nextBatches.length - 1];
+
+      setInstruments(nextInstruments);
+      setBatches(nextBatches);
+
+      if (nextInstruments.length === 0) {
+        setSource("empty");
+        clearStorage();
+        setImportState(IDLE_STATE);
+        return;
+      }
+
+      setSource("uploaded");
+      saveToStorage({
+        instruments: nextInstruments,
+        fileName:
+          latestBatch?.fileName ?? importState.fileName ?? "Uploaded batch",
+        importedAt:
+          latestBatch?.importedAt ??
+          importState.importedAt ??
+          new Date().toISOString(),
+        batches: nextBatches,
+      });
+
+      setImportState((state) => ({
+        ...state,
+        fileName: latestBatch?.fileName ?? state.fileName,
+        importedAt: latestBatch?.importedAt ?? state.importedAt,
+      }));
+    },
+    [batches, importState.fileName, importState.importedAt, instruments],
+  );
+
+  const removeInstrument = useCallback(
+    (instrumentId: string, batchId?: string) => {
+      const nextInstruments = instruments.filter((instrument) => {
+        if (batchId) {
+          return !(
+            instrument.id === instrumentId &&
+            instrument.importBatchId === batchId
+          );
+        }
+
+        return instrument.id !== instrumentId;
+      });
+
+      const nextBatches = batches
+        .map((batch) => ({
+          ...batch,
+          instrumentsAdded: nextInstruments.filter(
+            (instrument) => instrument.importBatchId === batch.id,
+          ).length,
+          totalInstrumentsAfter: nextInstruments.length,
+        }))
+        .filter((batch) => batch.instrumentsAdded > 0);
+
+      setInstruments(nextInstruments);
+      setBatches(nextBatches);
+
+      if (nextInstruments.length === 0) {
+        setSource("empty");
+        clearStorage();
+        setImportState(IDLE_STATE);
+        return;
+      }
+
+      setSource("uploaded");
+      saveToStorage({
+        instruments: nextInstruments,
+        fileName:
+          nextBatches[nextBatches.length - 1]?.fileName ??
+          importState.fileName ??
+          "Uploaded batch",
+        importedAt:
+          nextBatches[nextBatches.length - 1]?.importedAt ??
+          importState.importedAt ??
+          new Date().toISOString(),
+        batches: nextBatches,
+      });
+    },
+    [batches, importState.fileName, importState.importedAt, instruments],
+  );
 
   const value: InstrumentBookValue = {
     instruments,
@@ -291,10 +415,13 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
     holdings,
     source,
     importState,
+    batches,
     hasData: instruments.length > 0,
     importWorkbook,
-    loadDemo,
+    addManualInstrument,
     clear,
+    removeBatch,
+    removeInstrument,
   };
 
   return (
@@ -348,7 +475,3 @@ async function parseWithProgress(
   return parseWorkbook(buffer);
 }
 
-/* ─────────────────────────────────────────────────────────────
-   Re-exports for convenience
-   ───────────────────────────────────────────────────────────── */
-export { DEMO_SECURITIES, DEMO_INSTRUMENTS, DEMO_HOLDINGS };

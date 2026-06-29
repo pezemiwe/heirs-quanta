@@ -40,6 +40,8 @@ export type { Instrument, InstrumentValuation, PortfolioResult };
 /* ─────────────────────────────────────────────────────────
    Shared format helpers (used across all modules)
    ───────────────────────────────────────────────────────── */
+const NAIRA_SYMBOL = "\u20A6";
+
 export function fmtN(n: number, decimals = 0): string {
   if (!isFinite(n)) return "—";
   return n.toLocaleString("en-US", {
@@ -48,7 +50,7 @@ export function fmtN(n: number, decimals = 0): string {
   });
 }
 
-export function fmtCompact(n: number, ccy = "₦"): string {
+export function fmtCompact(n: number, ccy = NAIRA_SYMBOL): string {
   if (!isFinite(n)) return "—";
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
