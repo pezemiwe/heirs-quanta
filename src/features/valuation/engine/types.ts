@@ -35,6 +35,7 @@ export interface Instrument {
   instrumentType: InstrumentType;
   issuer: string;
   sector: string;
+  portfolioBook?: string;
 
   classification: Classification;
   ifrs13Level: IFRS13Level;
@@ -58,6 +59,12 @@ export interface Instrument {
   /* Impairment */
   impairmentStage?: ImpairmentStage;
   eclProvision?: number; // local currency
+
+  /* Import lineage */
+  sourceSheet?: string;
+  sourceFileName?: string;
+  importBatchId?: string;
+  importBatchLabel?: string;
 }
 
 /* ─── valuation engine assumptions ──────────────────────── */

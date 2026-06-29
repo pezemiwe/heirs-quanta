@@ -1,4 +1,11 @@
-import { createContext, useContext, useState, type ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  useMemo,
+  useState,
+  type ReactNode,
+} from "react";
+import { useInstrumentBook } from "../../context/instrument-book";
 
 /* -------------------------------------------------------
    Portfolio Registry
@@ -21,6 +28,7 @@ export interface Portfolio {
   status: PortfolioStatus;
   createdAt: string; // ISO date
   instrumentCount?: number;
+  origin?: "managed" | "imported";
 }
 
 const SEED: Portfolio[] = [
@@ -36,6 +44,7 @@ const SEED: Portfolio[] = [
     status: "Active",
     createdAt: "2024-01-01",
     instrumentCount: 68,
+    origin: "managed",
   },
   {
     id: "pb-banking",
@@ -49,6 +58,7 @@ const SEED: Portfolio[] = [
     status: "Active",
     createdAt: "2024-01-01",
     instrumentCount: 97,
+    origin: "managed",
   },
   {
     id: "pb-htm",
@@ -62,6 +72,7 @@ const SEED: Portfolio[] = [
     status: "Active",
     createdAt: "2024-01-01",
     instrumentCount: 39,
+    origin: "managed",
   },
 ];
 
@@ -82,26 +93,78 @@ export function PortfolioRegistryProvider({
 }: {
   children: ReactNode;
 }) {
-  const [portfolios, setPortfolios] = useState<Portfolio[]>(SEED);
+  const [managedPortfolios, setManagedPortfolios] = useState<Portfolio[]>(SEED);
+  const book = useInstrumentBook();
+
+  const portfolios = useMemo<Portfolio[]>(() => {
+    const observed = new Map<string, Portfolio>();
+
+    for (const instrument of book.instruments) {
+      const name = instrument.portfolioBook?.trim();
+      if (!name) continue;
+
+      const existing = observed.get(name);
+      if (existing) {
+        existing.instrumentCount = (existing.instrumentCount ?? 0) + 1;
+        continue;
+      }
+
+      observed.set(name, {
+        id: `pb-imported-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
+        name,
+        type: "Custom",
+        baseCurrency: instrument.currency,
+        description: `Imported from ${instrument.sourceFileName ?? "uploaded workbook"}`,
+        manager: "Imported via Deal Capture",
+        mandatedBy: instrument.importBatchLabel ?? "Uploaded book",
+        strategy: "Imported portfolio book",
+        status: "Active",
+        createdAt: instrument.purchaseDate || new Date().toISOString().slice(0, 10),
+        instrumentCount: 1,
+        origin: "imported",
+      });
+    }
+
+    const merged = managedPortfolios.map((portfolio) => {
+      const observedMatch = observed.get(portfolio.name);
+      if (!observedMatch) return portfolio;
+
+      return {
+        ...portfolio,
+        instrumentCount: observedMatch.instrumentCount,
+        baseCurrency: observedMatch.baseCurrency || portfolio.baseCurrency,
+      };
+    });
+
+    const managedNames = new Set(managedPortfolios.map((portfolio) => portfolio.name));
+    for (const observedPortfolio of observed.values()) {
+      if (!managedNames.has(observedPortfolio.name)) {
+        merged.push(observedPortfolio);
+      }
+    }
+
+    return merged;
+  }, [book.instruments, managedPortfolios]);
 
   function addPortfolio(p: Omit<Portfolio, "id" | "createdAt">): Portfolio {
     const newP: Portfolio = {
       ...p,
       id: `pb-custom-${_counter++}`,
       createdAt: new Date().toISOString().split("T")[0],
+      origin: "managed",
     };
-    setPortfolios((prev) => [...prev, newP]);
+    setManagedPortfolios((prev) => [...prev, newP]);
     return newP;
   }
 
   function updatePortfolio(id: string, patch: Partial<Portfolio>) {
-    setPortfolios((prev) =>
+    setManagedPortfolios((prev) =>
       prev.map((p) => (p.id === id ? { ...p, ...patch } : p)),
     );
   }
 
   function removePortfolio(id: string) {
-    setPortfolios((prev) => prev.filter((p) => p.id !== id));
+    setManagedPortfolios((prev) => prev.filter((p) => p.id !== id));
   }
 
   function getPortfolioNames(): string[] {

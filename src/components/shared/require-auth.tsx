@@ -1,6 +1,7 @@
 import type { ReactNode } from "react";
 import { Navigate } from "react-router-dom";
 import { Eye } from "lucide-react";
+import { useInstrumentBook } from "../../context/instrument-book";
 import { usePersona } from "../../context/persona";
 import { getModuleAccess, type ModuleId } from "../../context/permissions";
 
@@ -26,10 +27,14 @@ export function ProtectedModule({
   children: ReactNode;
 }) {
   const { persona } = usePersona();
+  const book = useInstrumentBook();
   if (!persona.name) return <Navigate to="/login" replace />;
 
   const access = getModuleAccess(persona.role, moduleId);
   if (access === "none") return <Navigate to="/modules" replace />;
+  if (!book.hasData && moduleId !== "deal-capture") {
+    return <Navigate to="/deal-capture/new-booking" replace />;
+  }
 
   return (
     <>

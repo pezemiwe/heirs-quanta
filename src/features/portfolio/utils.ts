@@ -2,13 +2,15 @@
    Portfolio — shared formatters + colour maps
    ───────────────────────────────────────────────────────── */
 
+const NAIRA_SYMBOL = "\u20A6";
+
 /** ₦ millions → human readable: ₦1.2T / ₦847.3B / ₦12.4M */
 export function fmtNGN(millions: number, dec = 1): string {
   const abs = Math.abs(millions);
   const sign = millions < 0 ? "-" : "";
-  if (abs >= 1_000_000) return `${sign}₦${(abs / 1_000_000).toFixed(dec)}T`;
-  if (abs >= 1_000) return `${sign}₦${(abs / 1_000).toFixed(dec)}B`;
-  return `${sign}₦${abs.toFixed(dec)}M`;
+  if (abs >= 1_000_000) return `${sign}${NAIRA_SYMBOL}${(abs / 1_000_000).toFixed(dec)}T`;
+  if (abs >= 1_000) return `${sign}${NAIRA_SYMBOL}${(abs / 1_000).toFixed(dec)}B`;
+  return `${sign}${NAIRA_SYMBOL}${abs.toFixed(dec)}M`;
 }
 
 /** decimal → "11.8%" */

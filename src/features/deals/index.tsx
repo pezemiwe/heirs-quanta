@@ -13,6 +13,7 @@ import {
   type ModuleNavItem,
 } from "../../components/shared/module-shell";
 import { PlaceholderPage } from "../../components/shared/placeholder-page";
+import { useInstrumentBook } from "../../context/instrument-book";
 import { DealBlotter } from "./pages/blotter";
 import { CouponSchedules } from "./pages/coupon-schedules";
 import { Settlements } from "./pages/settlements";
@@ -75,6 +76,23 @@ const GROUPS: Record<string, string> = {
 };
 
 function PageBody({ page }: { page: DealsPage }) {
+  const book = useInstrumentBook();
+
+  if (!book.hasData && page !== "blotter" && page !== "new-booking") {
+    return (
+      <PlaceholderPage
+        eyebrow="Deal Capture"
+        title="Load A Portfolio Book First"
+        description="These lifecycle and control pages remain empty until you book a deal manually or upload a workbook in New Booking."
+        bullets={[
+          "Book a single instrument with the New Booking form.",
+          "Upload an .xlsx or .csv batch from New Booking.",
+          "Return here after the shared portfolio book is populated.",
+        ]}
+      />
+    );
+  }
+
   switch (page) {
     case "blotter":
       return <DealBlotter />;

@@ -53,16 +53,16 @@ export function IFRS9Provider({ children }: { children: ReactNode }) {
     { row: number; message: string }[]
   >([]);
 
-  /* Sync from InstrumentBook whenever a new import or demo load happens */
+  /* Sync from InstrumentBook whenever the shared book changes */
   useEffect(() => {
-    if (book.securities.length > 0) {
-      setSecurities(book.securities);
-      setLastUploadedFile(
-        book.importState.fileName ?? `Imported (${book.securities.length} instruments)`,
-      );
-      setParseErrors([]);
-    }
-  }, [book.securities]);
+    setSecurities(book.securities);
+    setLastUploadedFile(
+      book.securities.length > 0
+        ? (book.importState.fileName ?? `Imported (${book.securities.length} instruments)`)
+        : null,
+    );
+    setParseErrors([]);
+  }, [book.importState.fileName, book.securities]);
 
   const result = useMemo(
     () => runEngine(securities, assumptions),

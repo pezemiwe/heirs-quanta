@@ -68,7 +68,7 @@ export function DurationRiskStressTest() {
       : `rgba(231, 76, 60, ${alpha})`;
   };
 
-  // chart data for Chart 5
+  // Chart data for the parallel shock view
   const barData = nonZeroBps.map((bps) => {
     const pnl = filtered.reduce((s, r) => s + (r.pnl[bps] ?? 0), 0);
     return { label: bps < 0 ? `${bps}bps` : `+${bps}bps`, bps, pnl };
@@ -108,9 +108,9 @@ export function DurationRiskStressTest() {
         </div>
       </div>
 
-      {/* Chart 5 — Recharts bar chart */}
+      {/* Parallel shock bar chart */}
       <SectionCard
-        title="Chart 5 — Parallel Shock Stress Test: Portfolio P&amp;L Impact"
+        title="Parallel Shock Stress Test: Portfolio P&amp;L Impact"
         description="Portfolio P&L from instantaneous parallel yield curve shifts. Green = easing (gain), red = tightening (loss)."
       >
         <ResponsiveContainer width="100%" height={280}>
@@ -132,12 +132,12 @@ export function DurationRiskStressTest() {
               }}
             />
             <YAxis
-              tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(1)}B`}
+              tickFormatter={(v: number) => `\u20A6${(v / 1e9).toFixed(1)}B`}
               tick={{ fontSize: 11, fill: "#6b7280" }}
               axisLine={false}
               tickLine={false}
               label={{
-                value: "Portfolio P&L Impact (₦ Billions)",
+                value: "Portfolio P&L Impact (\u20A6 Billions)",
                 angle: -90,
                 position: "insideLeft",
                 offset: -8,
@@ -241,7 +241,7 @@ export function DurationRiskStressTest() {
 
       {/* heatmap */}
       <SectionCard
-        title="Chart 7 — Stress Test Heatmap: Top 30 Instruments — Rate Scenarios"
+        title="Stress Test Heatmap: Top 30 Instruments — Rate Scenarios"
         description="P&L impact in NGN. Green = gain, red = loss. Colour intensity scales with absolute impact."
         noPadding
       >

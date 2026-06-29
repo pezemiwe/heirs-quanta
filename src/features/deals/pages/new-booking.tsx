@@ -7,12 +7,21 @@ import {
   Paperclip,
   X,
   AlertTriangle,
+  Upload,
+  Layers,
 } from "lucide-react";
 import { usePortfolioRegistry } from "../../portfolio/portfolio-registry";
 import { GovernanceBar } from "../../../components/shared/governance-bar";
 import { useGovernance } from "../../../context/governance";
 import { usePersona } from "../../../context/persona";
-import { BOOK_COMPUTED } from "../../portfolio/engine/book-compute";
+import { useInstrumentBook } from "../../../context/instrument-book";
+import { ImportBookModal } from "../components/import-book-modal";
+import type {
+  CouponFrequency,
+  IFRS13Level,
+  Instrument,
+  InstrumentType,
+} from "../../valuation/engine/types";
 
 type FormState = {
   instrumentType: string;
@@ -97,6 +106,67 @@ const SECTORS = [
   "Utilities",
 ];
 
+const INSTRUMENT_TYPE_MAP: Record<string, InstrumentType> = {
+  "FGN Bond": "FGN Bond",
+  "Treasury Bill": "T-Bill",
+  "Corporate Bond": "Corporate Bond",
+  Eurobond: "Eurobond",
+  "Commercial Paper": "Commercial Paper",
+  Equity: "Equity",
+  Sukuk: "FGN Bond",
+  "Money Market": "Bank Placement",
+};
+
+const COUPON_FREQUENCY_MAP: Record<string, CouponFrequency> = {
+  Monthly: "Monthly",
+  Quarterly: "Quarterly",
+  "Semi-Annual": "Semi",
+  Annual: "Annual",
+  Zero: "Zero",
+};
+
+const IFRS13_LEVEL_MAP: Record<string, IFRS13Level> = {
+  "Level 1": "L1",
+  "Level 2": "L2",
+  "Level 3": "L3",
+};
+
+function toNumber(value: string, fallback = 0) {
+  const parsed = Number.parseFloat(value);
+  return Number.isFinite(parsed) ? parsed : fallback;
+}
+
+function buildInstrumentFromForm(form: FormState, bookedBy: string): Instrument {
+  const purchaseDate = form.purchaseDate || new Date().toISOString().slice(0, 10);
+  const maturityDate = form.maturityDate || purchaseDate;
+  const couponRate = toNumber(form.couponRate) / 100;
+
+  return {
+    id: form.isin || `MAN-${Date.now().toString().slice(-8)}`,
+    name: form.instrumentName || form.instrumentType || "Manual Booking",
+    instrumentType: INSTRUMENT_TYPE_MAP[form.instrumentType] ?? "Corporate Bond",
+    issuer: form.issuer || "Unspecified Issuer",
+    sector: form.sector || "Unclassified",
+    portfolioBook: form.portfolio || "Trading Book",
+    classification: (form.classification as Instrument["classification"]) || "AC",
+    ifrs13Level: IFRS13_LEVEL_MAP[form.ifrs13Level] ?? "L2",
+    currency: (form.currency as Instrument["currency"]) || "NGN",
+    faceValue: toNumber(form.faceValue),
+    purchasePrice: toNumber(form.purchasePrice, 0),
+    purchaseDate,
+    maturityDate,
+    couponRate,
+    couponFrequency:
+      form.instrumentType === "Equity"
+        ? "N/A"
+        : (COUPON_FREQUENCY_MAP[form.couponFrequency] ?? "Semi"),
+    status: "Active",
+    bookedBy,
+    marketYield: form.purchaseYield ? toNumber(form.purchaseYield) / 100 : undefined,
+    impairmentStage: form.instrumentType === "Equity" ? "N/A" : "Stage 1",
+  };
+}
+
 function FieldLabel({
   children,
   tip,
@@ -169,9 +239,11 @@ export function NewBooking() {
   const [submitted, setSubmitted] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [attachments, setAttachments] = useState<File[]>([]);
+  const [importOpen, setImportOpen] = useState(false);
   const { getPortfolioNames } = usePortfolioRegistry();
   const { logAction, hasPermission } = useGovernance();
   const { persona } = usePersona();
+  const book = useInstrumentBook();
   const PORTFOLIOS = getPortfolioNames();
 
   const canCreate = hasPermission(persona.role, "deal.create");
@@ -191,8 +263,11 @@ export function NewBooking() {
     if (!form.issuer || !form.faceValue) return null;
     const fv = parseFloat(form.faceValue);
     if (isNaN(fv) || fv <= 0) return null;
-    const totalBSV = BOOK_COMPUTED.totals.totalBSValueNGN;
-    const proposedPct = (fv / (totalBSV + fv)) * 100;
+    const totalBookValue = book.instruments.reduce(
+      (sum, instrument) => sum + instrument.faceValue,
+      0,
+    );
+    const proposedPct = (fv / (totalBookValue + fv)) * 100;
     if (proposedPct > 10) {
       return `Single-issuer concentration would reach ${proposedPct.toFixed(1)}% (NAICOM limit: 10%)`;
     }
@@ -200,7 +275,7 @@ export function NewBooking() {
       return `Single-issuer concentration approaching limit: ${proposedPct.toFixed(1)}% (limit: 10%)`;
     }
     return null;
-  }, [form.issuer, form.faceValue]);
+  }, [book.instruments, form.faceValue, form.issuer]);
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -216,6 +291,7 @@ export function NewBooking() {
       status: limitWarning ? "warning" : "success",
       ip: "10.0.1.xx",
     });
+    book.addManualInstrument(buildInstrumentFromForm(form, persona.name));
     setTimeout(() => {
       setSubmitting(false);
       setSubmitted(true);
@@ -273,15 +349,54 @@ export function NewBooking() {
       )}
 
       <div className="mb-6">
-        <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-          Deal Capture
-        </p>
-        <h1 className="mt-1 text-2xl font-bold text-dark-gray">
-          New Investment Booking
-        </h1>
-        <p className="mt-1 text-sm text-gray-500">
-          Capture instrument economics, counterparty and settlement details
-        </p>
+        <div className="flex flex-wrap items-start justify-between gap-3">
+          <div>
+            <p className="text-xs font-semibold uppercase tracking-wider text-primary">
+              Deal Capture
+            </p>
+            <h1 className="mt-1 text-2xl font-bold text-dark-gray">
+              New Investment Booking
+            </h1>
+            <p className="mt-1 text-sm text-gray-500">
+              Capture a single instrument manually or upload a portfolio book batch from the same page.
+            </p>
+          </div>
+          <button
+            type="button"
+            onClick={() => setImportOpen(true)}
+            disabled={!canCreate}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <Upload className="h-4 w-4" /> Import Portfolio Book
+          </button>
+        </div>
+      </div>
+
+      <div className="mb-6 grid gap-4 lg:grid-cols-2">
+        <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
+          <div className="flex items-center gap-2 text-sm font-semibold text-dark-gray">
+            <Save className="h-4 w-4 text-primary" /> Manual booking flow
+          </div>
+          <p className="mt-2 text-sm text-dark-gray/60">
+            Use the form below to capture one instrument with full economics, dates, counterparty, and attachments.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => setImportOpen(true)}
+          disabled={!canCreate}
+          className="rounded-xl border border-border bg-surface p-5 text-left shadow-sm transition-colors hover:border-primary/40 disabled:cursor-not-allowed disabled:opacity-50"
+        >
+          <div className="flex items-center gap-2 text-sm font-semibold text-dark-gray">
+            <Layers className="h-4 w-4 text-primary" /> Portfolio book upload
+          </div>
+          <p className="mt-2 text-sm text-dark-gray/60">
+            Upload workbook batches here. Every upload is appended and tracked as its own batch.
+          </p>
+          <p className="mt-3 text-xs text-dark-gray/45">
+            {book.batches.length} batch{book.batches.length === 1 ? "" : "es"} recorded · {book.instruments.length} instruments currently in the shared book
+          </p>
+        </button>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-6">
@@ -613,6 +728,11 @@ export function NewBooking() {
           </button>
         </div>
       </form>
+
+      <ImportBookModal
+        isOpen={importOpen}
+        onClose={() => setImportOpen(false)}
+      />
     </div>
   );
 }

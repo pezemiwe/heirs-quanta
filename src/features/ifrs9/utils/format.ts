@@ -1,7 +1,9 @@
+const NAIRA_SYMBOL = "\u20A6";
+
 /* Shared formatting helpers for the IFRS 9 module */
 
 export const fmtLCY = (n: number, currency = "NGN"): string => {
-  const symbol = currency === "NGN" ? "₦" : currency === "USD" ? "$" : "";
+  const symbol = currency === "NGN" ? NAIRA_SYMBOL : currency === "USD" ? "$" : "";
   const value = new Intl.NumberFormat("en-NG", {
     maximumFractionDigits: 0,
   }).format(Math.round(n));
@@ -9,7 +11,7 @@ export const fmtLCY = (n: number, currency = "NGN"): string => {
 };
 
 export const fmtACY = (n: number, currency: string): string => {
-  const symbol = currency === "NGN" ? "₦" : currency === "USD" ? "$" : "";
+  const symbol = currency === "NGN" ? NAIRA_SYMBOL : currency === "USD" ? "$" : "";
   return `${symbol}${new Intl.NumberFormat("en-NG", {
     maximumFractionDigits: 2,
   }).format(n)}`;
@@ -26,7 +28,7 @@ export const fmtDate = (d: Date): string =>
   });
 
 export const fmtCompact = (n: number, currency = "NGN"): string => {
-  const symbol = currency === "NGN" ? "₦" : currency === "USD" ? "$" : "";
+  const symbol = currency === "NGN" ? NAIRA_SYMBOL : currency === "USD" ? "$" : "";
   const v = Math.abs(n);
   if (v >= 1e12) return `${symbol}${(n / 1e12).toFixed(2)}T`;
   if (v >= 1e9) return `${symbol}${(n / 1e9).toFixed(2)}B`;
