@@ -65,13 +65,17 @@ export function ImportBookModal({
     0,
   );
   const latestBatches = [...batches].reverse().slice(0, 5);
+  const unrecognizedSheets = importState.unrecognizedSheets;
+  const sheetsWithWarnings = importState.summary.filter(
+    (sheet) => sheet.warnings.length > 0,
+  );
 
   return (
     <Modal
       isOpen={isOpen}
       onClose={isProcessing ? () => {} : onClose}
       title="Import Portfolio Book"
-      description="Upload an .xlsx workbook or a single .csv sheet from New Booking. Each upload is appended as a tracked batch."
+      description="Upload an .xlsx workbook or a single .csv sheet from Deal Capture. Each upload is appended as a tracked batch."
       size="lg"
       closeOnOverlay={!isProcessing}
     >
@@ -161,6 +165,71 @@ export function ImportBookModal({
                 </p>
               </div>
             </div>
+
+            {importState.summary.length > 0 && (
+              <div className="rounded-lg border border-border bg-surface p-4">
+                <div className="mb-2 text-xs font-semibold uppercase tracking-wider text-dark-gray/50">
+                  Sheets processed
+                </div>
+                <ul className="space-y-1 text-xs text-dark-gray/70">
+                  {importState.summary.map((sheet) => (
+                    <li key={sheet.sheetName} className="flex justify-between gap-3">
+                      <span>
+                        {sheet.sheetName}{" "}
+                        <span className="text-dark-gray/45">({sheet.detectedType})</span>
+                      </span>
+                      <span className="shrink-0 tabular-nums">
+                        {sheet.rowsParsed} parsed
+                        {sheet.rowsSkipped > 0 ? ` · ${sheet.rowsSkipped} skipped` : ""}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            )}
+
+            {unrecognizedSheets.length > 0 && (
+              <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-3">
+                <AlertTriangle className="mt-0.5 h-4 w-4 shrink-0 text-amber-600" />
+                <div className="space-y-1">
+                  <p className="text-sm font-semibold text-amber-800">
+                    {unrecognizedSheets.length} sheet
+                    {unrecognizedSheets.length === 1 ? "" : "s"} not recognized
+                    and skipped
+                  </p>
+                  <ul className="space-y-0.5 text-xs text-amber-700">
+                    {unrecognizedSheets.map((sheet) => (
+                      <li key={sheet.sheetName}>
+                        {sheet.sheetName} ({sheet.rowCount} row
+                        {sheet.rowCount === 1 ? "" : "s"})
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              </div>
+            )}
+
+            {sheetsWithWarnings.length > 0 && (
+              <div className="rounded-lg border border-amber-300 bg-amber-50 p-4">
+                <div className="mb-2 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-amber-700">
+                  <AlertTriangle className="h-3.5 w-3.5" /> Sheet warnings
+                </div>
+                <div className="space-y-3">
+                  {sheetsWithWarnings.map((sheet) => (
+                    <div key={sheet.sheetName}>
+                      <p className="text-xs font-semibold text-amber-800">
+                        {sheet.sheetName}
+                      </p>
+                      <ul className="mt-0.5 list-disc space-y-0.5 pl-4 text-xs text-amber-700">
+                        {sheet.warnings.map((warning, idx) => (
+                          <li key={idx}>{warning}</li>
+                        ))}
+                      </ul>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
 
             <div className="rounded-lg border border-border bg-surface p-4">
               <div className="mb-3 flex items-center gap-2 text-xs font-semibold uppercase tracking-wider text-dark-gray/50">

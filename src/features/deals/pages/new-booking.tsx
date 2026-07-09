@@ -74,7 +74,7 @@ export function NewBooking() {
         <div className="flex flex-wrap items-start justify-between gap-3">
           <div>
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">Deal Capture</p>
-            <h1 className="mt-1 text-2xl font-bold text-dark-gray">New Deal Slip</h1>
+            <h1 className="mt-1 text-2xl font-bold text-dark-gray">Deal Capture</h1>
             <p className="mt-1 text-sm text-gray-500">
               No investment transaction exists outside a deal slip. Capture the deal below — it enters the
               maker-checker workflow and only reaches the investment register once fully approved and settled.
