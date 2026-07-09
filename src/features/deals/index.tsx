@@ -66,7 +66,7 @@ const NAV: ModuleNavItem[] = [
   },
   {
     id: "new-booking",
-    label: "New Booking",
+    label: "Deal Capture",
     icon: <PlusSquare className="h-4 w-4" />,
     group: "trades",
   },
@@ -159,19 +159,19 @@ function PageBody({ page }: { page: DealsPage }) {
         title={isWorkflowDriven ? "No Deal Slips Yet" : "Load A Portfolio Book First"}
         description={
           isWorkflowDriven
-            ? "This view is derived entirely from the deal-slip pipeline — capture your first deal in New Booking to populate it."
-            : "These lifecycle and control pages remain empty until you book a deal manually or upload a workbook in New Booking."
+            ? "This view is derived entirely from the deal-slip pipeline — capture your first deal in Deal Capture to populate it."
+            : "These lifecycle and control pages remain empty until you book a deal manually or upload a workbook in Deal Capture."
         }
         bullets={
           isWorkflowDriven
             ? [
-                "Book a single instrument with the New Booking form.",
+                "Book a single instrument with the Deal Capture form.",
                 "Walk it through review, approval, and settlement in the Trade Blotter.",
                 "Return here once at least one deal slip exists.",
               ]
             : [
-                "Book a single instrument with the New Booking form.",
-                "Upload an .xlsx or .csv batch from New Booking.",
+                "Book a single instrument with the Deal Capture form.",
+                "Upload an .xlsx or .csv batch from Deal Capture.",
                 "Return here after the shared portfolio book is populated.",
               ]
         }

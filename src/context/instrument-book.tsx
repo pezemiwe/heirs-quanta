@@ -30,6 +30,7 @@ import {
   instrumentToSecurity,
   instrumentToHolding,
   type SheetSummary,
+  type UnrecognizedSheet,
 } from "../features/deals/engine/workbook-parser";
 
 /* ─────────────────────────────────────────────────────────────
@@ -51,6 +52,7 @@ export interface ImportState {
   fileName: string | null;
   importedAt: string | null;
   summary: SheetSummary[];
+  unrecognizedSheets: UnrecognizedSheet[];
   error: string | null;
 }
 
@@ -66,6 +68,7 @@ export interface ImportBatch {
   instrumentsAdded: number;
   totalInstrumentsAfter: number;
   summary: SheetSummary[];
+  unrecognizedSheets: UnrecognizedSheet[];
 }
 
 interface InstrumentBookValue {
@@ -136,6 +139,7 @@ const IDLE_STATE: ImportState = {
   fileName: null,
   importedAt: null,
   summary: [],
+  unrecognizedSheets: [],
   error: null,
 };
 
@@ -161,12 +165,14 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
   );
   const [importState, setImportState] = useState<ImportState>(() => {
     if (persisted.current) {
+      const latestBatch = persisted.current.batches[persisted.current.batches.length - 1];
       return {
         ...IDLE_STATE,
         phase: "done",
         fileName: persisted.current.fileName,
         importedAt: persisted.current.importedAt,
-        summary: [],
+        summary: latestBatch?.summary ?? [],
+        unrecognizedSheets: latestBatch?.unrecognizedSheets ?? [],
       };
     }
     return IDLE_STATE;
@@ -192,6 +198,7 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
       fileName: file.name,
       importedAt: null,
       summary: [],
+      unrecognizedSheets: [],
       error: null,
     });
 
@@ -252,6 +259,7 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
         instrumentsAdded: taggedInstruments.length,
         totalInstrumentsAfter: nextInstruments.length,
         summary: result.sheets,
+        unrecognizedSheets: result.unrecognizedSheets,
       };
 
       const nextBatches = [...batches, nextBatch];
@@ -274,6 +282,7 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
         fileName: file.name,
         importedAt,
         summary: result.sheets,
+        unrecognizedSheets: result.unrecognizedSheets,
         error: null,
       });
     } catch (err) {

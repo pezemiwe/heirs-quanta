@@ -41,12 +41,19 @@ export interface SheetSummary {
   warnings: string[];
 }
 
+/** A sheet whose name didn't match any known type — parsed by nothing, tracked instead of silently dropped. */
+export interface UnrecognizedSheet {
+  sheetName: string;
+  rowCount: number;
+}
+
 export interface ParsedWorkbook {
   instruments: Instrument[];
   securities: Security[];
   holdings: Holding[];
   sheets: SheetSummary[];
   totalInstruments: number;
+  unrecognizedSheets: UnrecognizedSheet[];
 }
 
 /* ─────────────────────────────────────────────────────────────
@@ -146,6 +153,53 @@ function findHeaderRow(rows: unknown[][]): number {
   return 1; // default: title on row 0, headers on row 1
 }
 
+/* ─────────────────────────────────────────────────────────────
+   Column resolution by header name (not fixed position)
+   ─────────────────────────────────────────────────────────────
+   The Heirs workbook template is hand-maintained and columns have shifted
+   before (this is the same failure class as the dd-Mon-yy year-pivot bug —
+   just in a different column). Every sheet parser below resolves each field
+   it needs by looking up the actual header text in that sheet's header row
+   first, and only falls back to the historically-hardcoded position — with
+   a warning — if none of that field's known header aliases are present. */
+
+/** Normalise a header cell → canonical lookup key (lowercase, alphanumeric only) */
+function normaliseHeader(h: unknown): string {
+  return String(h ?? "").toLowerCase().replace(/[^a-z0-9]/g, "");
+}
+
+/** Build a normalised-header → column-index map from a sheet's header row. First occurrence wins. */
+function buildHeaderMap(headerRow: unknown[] | undefined): Map<string, number> {
+  const map = new Map<string, number>();
+  (headerRow ?? []).forEach((cell, idx) => {
+    const key = normaliseHeader(cell);
+    if (key && !map.has(key)) map.set(key, idx);
+  });
+  return map;
+}
+
+/**
+ * Resolves a column index by trying header-name aliases (normalised) against
+ * the sheet's header map, in order. Falls back to `fallbackIndex` — the
+ * historically hardcoded position — only if none of the aliases matched,
+ * pushing a warning onto `warnings` so the fallback is never silent.
+ */
+function resolveColumn(
+  headerMap: Map<string, number>,
+  warnings: string[],
+  label: string,
+  aliases: string[],
+  fallbackIndex: number,
+): number {
+  for (const alias of aliases) {
+    const idx = headerMap.get(alias);
+    if (idx !== undefined) return idx;
+  }
+  warnings.push(`Expected column '${label}' not found — falling back to position ${fallbackIndex + 1}`);
+  console.warn(`[workbook-parser] Expected column '${label}' not found — falling back to position ${fallbackIndex + 1}`);
+  return fallbackIndex;
+}
+
 /** Sheet-name-based type detection */
 function detectSheetType(
   name: string,
@@ -179,6 +233,28 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
   const warnings: string[] = [];
   const instruments: Instrument[] = [];
   const hdr = findHeaderRow(rows);
+  const headerMap = buildHeaderMap(rows[hdr]);
+  const col = (label: string, aliases: string[], fallback: number) =>
+    resolveColumn(headerMap, warnings, label, aliases, fallback);
+
+  const cId = col("IDENTIFIER", ["identifier"], 1);
+  const cDealId = col("IDENTIFIER/DEAL ID", ["identifierdealid"], 4);
+  const cDealer = col("DEALER", ["dealer"], 2);
+  const cPortfolio = col("PORTFOLIO", ["portfolio"], 3);
+  const cDescription = col("DESCRIPTION", ["description"], 5);
+  const cValueDate = col("VALUE DATE", ["valuedate"], 6);
+  const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 7);
+  const cCouponRate = col("COUPON RATE", ["couponrate"], 8);
+  const cFaceValue = col("FACE VALUE", ["facevalue"], 12);
+  const cConsiderationFmdq = col(
+    "CONSIDERATION INCL FMDQ+SEC",
+    ["considerationinclfmdqsec", "considerationinclfmdq"],
+    18,
+  );
+  const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 17);
+  const cCostPriceClean = col("COST PRICE/CLEAN", ["costpriceclean"], 15);
+  const cMarketYield = col("CURRENT MARKET YIELD", ["currentmarketyield"], 31);
+  const cMarketPrice = col("CURRENT MARKET PRICE", ["currentmarketprice"], 32);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -188,18 +264,18 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue; // skip sub-header rows
 
-    const id = str(r[1]) || str(r[4]) || `FGN-${i}`;
-    const name = str(r[5]) || `FGN Bond ${id}`;
-    const purchaseDate = parseDate(r[6]);
-    const maturityDate = parseDate(r[7]);
-    const couponRate = parseRate(r[8]);
-    const faceValue = parseNum(r[12]);
-    // Prefer consideration incl. FMDQ (col 18, 0-based: idx 18), else consideration (idx 17)
-    const purchasePrice = parseNum(r[18]) || parseNum(r[17]) || parseNum(r[15]);
-    const marketYield = parseRate(r[31]);
-    const marketPrice = parseNum(r[32]);
-    const bookedBy = str(r[2]);
-    const portfolioBook = str(r[3]) || "FGN Bond Book";
+    const id = str(r[cId]) || str(r[cDealId]) || `FGN-${i}`;
+    const name = str(r[cDescription]) || `FGN Bond ${id}`;
+    const purchaseDate = parseDate(r[cValueDate]);
+    const maturityDate = parseDate(r[cMaturityDate]);
+    const couponRate = parseRate(r[cCouponRate]);
+    const faceValue = parseNum(r[cFaceValue]);
+    // Prefer consideration incl. FMDQ, else consideration, else clean cost price
+    const purchasePrice = parseNum(r[cConsiderationFmdq]) || parseNum(r[cConsideration]) || parseNum(r[cCostPriceClean]);
+    const marketYield = parseRate(r[cMarketYield]);
+    const marketPrice = parseNum(r[cMarketPrice]);
+    const bookedBy = str(r[cDealer]);
+    const portfolioBook = str(r[cPortfolio]) || "FGN Bond Book";
 
     if (!purchaseDate) warnings.push(`Row ${i + 1}: missing value date for ${id}`);
     if (!maturityDate) warnings.push(`Row ${i + 1}: missing maturity date for ${id}`);
@@ -243,6 +319,20 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
   const warnings: string[] = [];
   const instruments: Instrument[] = [];
   const hdr = findHeaderRow(rows);
+  const headerMap = buildHeaderMap(rows[hdr]);
+  const col = (label: string, aliases: string[], fallback: number) =>
+    resolveColumn(headerMap, warnings, label, aliases, fallback);
+
+  const cId = col("IDENTIFIER/DEAL ID", ["identifierdealid"], 1);
+  const cDealer = col("INVESTMENT FIRM", ["investmentfirm"], 2);
+  const cPortfolio = col("FUND TYPE", ["fundtype"], 3);
+  const cBondName = col("BOND NAME", ["bondname"], 4);
+  const cValueDate = col("VALUE DATE", ["valuedate"], 5);
+  const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 6);
+  const cCouponRate = col("COUPON RATE", ["couponrate"], 7);
+  const cFaceValue = col("FACE VALUE", ["facevalue"], 11);
+  const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 15);
+  const cCost = col("COST", ["cost"], 14);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -251,15 +341,15 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[1]) || `SG-${i}`;
-    const name = str(r[4]) || `State Bond ${id}`;
-    const purchaseDate = parseDate(r[5]);
-    const maturityDate = parseDate(r[6]);
-    const couponRate = parseRate(r[7]);
-    const faceValue = parseNum(r[11]);
-    const purchasePrice = parseNum(r[15]) || parseNum(r[14]);
-    const bookedBy = str(r[2]);
-    const portfolioBook = str(r[3]) || "State Bond Book";
+    const id = str(r[cId]) || `SG-${i}`;
+    const name = str(r[cBondName]) || `State Bond ${id}`;
+    const purchaseDate = parseDate(r[cValueDate]);
+    const maturityDate = parseDate(r[cMaturityDate]);
+    const couponRate = parseRate(r[cCouponRate]);
+    const faceValue = parseNum(r[cFaceValue]);
+    const purchasePrice = parseNum(r[cConsideration]) || parseNum(r[cCost]);
+    const bookedBy = str(r[cDealer]);
+    const portfolioBook = str(r[cPortfolio]) || "State Bond Book";
 
     if (!purchaseDate) warnings.push(`Row ${i + 1}: missing value date for ${id}`);
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
@@ -311,6 +401,20 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
   const warnings: string[] = [];
   const instruments: Instrument[] = [];
   const hdr = findHeaderRow(rows);
+  const headerMap = buildHeaderMap(rows[hdr]);
+  const col = (label: string, aliases: string[], fallback: number) =>
+    resolveColumn(headerMap, warnings, label, aliases, fallback);
+
+  const cId = col("IDENTIFIER", ["identifier"], 1);
+  const cDealer = col("DEALER", ["dealer"], 2);
+  const cPortfolio = col("PORTFOLIO", ["portfolio"], 3);
+  const cBondName = col("BOND NAME", ["bondname"], 4);
+  const cValueDate = col("VALUE DATE", ["valuedate"], 5);
+  const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 6);
+  const cCouponRate = col("COUPON RATE", ["couponrate"], 7);
+  const cFaceValue = col("FACE VALUE", ["facevalue"], 11);
+  const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 15);
+  const cCost = col("COST", ["cost"], 14);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -319,15 +423,15 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[1]) || `COR-${i}`;
-    const name = str(r[4]) || `Corporate Bond ${id}`;
-    const purchaseDate = parseDate(r[5]);
-    const maturityDate = parseDate(r[6]);
-    const couponRate = parseRate(r[7]);
-    const faceValue = parseNum(r[11]);
-    const purchasePrice = parseNum(r[15]) || parseNum(r[14]);
-    const bookedBy = str(r[2]);
-    const portfolioBook = str(r[3]) || "Corporate Bond Book";
+    const id = str(r[cId]) || `COR-${i}`;
+    const name = str(r[cBondName]) || `Corporate Bond ${id}`;
+    const purchaseDate = parseDate(r[cValueDate]);
+    const maturityDate = parseDate(r[cMaturityDate]);
+    const couponRate = parseRate(r[cCouponRate]);
+    const faceValue = parseNum(r[cFaceValue]);
+    const purchasePrice = parseNum(r[cConsideration]) || parseNum(r[cCost]);
+    const bookedBy = str(r[cDealer]);
+    const portfolioBook = str(r[cPortfolio]) || "Corporate Bond Book";
 
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
@@ -387,6 +491,19 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
   const warnings: string[] = [];
   const instruments: Instrument[] = [];
   const hdr = findHeaderRow(rows);
+  const headerMap = buildHeaderMap(rows[hdr]);
+  const col = (label: string, aliases: string[], fallback: number) =>
+    resolveColumn(headerMap, warnings, label, aliases, fallback);
+
+  const cDealer = col("DEALER", ["dealer"], 1);
+  const cId = col("IDENTIFIER", ["identifier"], 2);
+  const cPortfolio = col("PORTFOLIO", ["portfolio"], 3);
+  const cDescription = col("DESCRIPTION", ["description"], 4);
+  const cPurchaseCost = col("PURCHASE COST", ["purchasecost"], 5);
+  const cValueDate = col("VALUE DATE", ["valuedate"], 6);
+  const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 7);
+  const cInterestRate = col("INTEREST RATE", ["interestrate"], 8);
+  const cFaceValue = col("FACEVALUE", ["facevalue"], 9);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -395,15 +512,15 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[2]) || `TB-${i}`;
-    const name = str(r[4]) || `Treasury Bill ${id}`;
-    const purchasePrice = parseNum(r[5]);
-    const purchaseDate = parseDate(r[6]);
-    const maturityDate = parseDate(r[7]);
-    const couponRate = parseRate(r[8]); // discount rate
-    const faceValue = parseNum(r[9]);
-    const bookedBy = str(r[1]);
-    const portfolioBook = str(r[3]) || "Treasury Bill Book";
+    const id = str(r[cId]) || `TB-${i}`;
+    const name = str(r[cDescription]) || `Treasury Bill ${id}`;
+    const purchasePrice = parseNum(r[cPurchaseCost]);
+    const purchaseDate = parseDate(r[cValueDate]);
+    const maturityDate = parseDate(r[cMaturityDate]);
+    const couponRate = parseRate(r[cInterestRate]); // discount rate
+    const faceValue = parseNum(r[cFaceValue]);
+    const bookedBy = str(r[cDealer]);
+    const portfolioBook = str(r[cPortfolio]) || "Treasury Bill Book";
 
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
@@ -443,6 +560,18 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
   const warnings: string[] = [];
   const instruments: Instrument[] = [];
   const hdr = findHeaderRow(rows);
+  const headerMap = buildHeaderMap(rows[hdr]);
+  const col = (label: string, aliases: string[], fallback: number) =>
+    resolveColumn(headerMap, warnings, label, aliases, fallback);
+
+  const cDealer = col("DEALER", ["dealer"], 1);
+  const cId = col("IDENTIFIER", ["identifier"], 2);
+  const cPortfolio = col("PORTFOLIO", ["portfolio"], 3);
+  const cPrincipalUSD = col("PRINCIPAL USD ($)", ["principalusd"], 6);
+  const cFxRate = col("EXCHANGE RATE @ PURCHASE", ["exchangerateatpurchase", "exchangerate"], 7);
+  const cRate = col("RATE", ["rate"], 9);
+  const cValueDate = col("VALUE DATE", ["valuedate"], 10);
+  const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 11);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -451,14 +580,14 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[2]) || `PUSD-${i}`;
-    const dealer = str(r[1]);
-    const principalUSD = parseNum(r[6]);
-    const fxRate = parseNum(r[7]);
-    const couponRate = parseRate(r[9]);
-    const purchaseDate = parseDate(r[10]);
-    const maturityDate = parseDate(r[11]);
-    const portfolioBook = str(r[3]) || "USD Placement Book";
+    const id = str(r[cId]) || `PUSD-${i}`;
+    const dealer = str(r[cDealer]);
+    const principalUSD = parseNum(r[cPrincipalUSD]);
+    const fxRate = parseNum(r[cFxRate]);
+    const couponRate = parseRate(r[cRate]);
+    const purchaseDate = parseDate(r[cValueDate]);
+    const maturityDate = parseDate(r[cMaturityDate]);
+    const portfolioBook = str(r[cPortfolio]) || "USD Placement Book";
 
     instruments.push({
       id,
@@ -496,6 +625,16 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
   const warnings: string[] = [];
   const instruments: Instrument[] = [];
   const hdr = findHeaderRow(rows);
+  const headerMap = buildHeaderMap(rows[hdr]);
+  const col = (label: string, aliases: string[], fallback: number) =>
+    resolveColumn(headerMap, warnings, label, aliases, fallback);
+
+  const cId = col("IDENTIFIER", ["identifier"], 1);
+  const cInstitution = col("INSTITUTION", ["institution"], 2);
+  const cPrincipal = col("PRINCIPAL", ["principal"], 3);
+  const cRate = col("RATE", ["rate"], 4);
+  const cValueDate = col("VALUE DATE", ["valuedate"], 5);
+  const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 6);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -504,12 +643,12 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[1]) || `PLC-${i}`;
-    const institution = str(r[2]);
-    const principal = parseNum(r[3]);
-    const couponRate = parseRate(r[4]);
-    const purchaseDate = parseDate(r[5]);
-    const maturityDate = parseDate(r[6]);
+    const id = str(r[cId]) || `PLC-${i}`;
+    const institution = str(r[cInstitution]);
+    const principal = parseNum(r[cPrincipal]);
+    const couponRate = parseRate(r[cRate]);
+    const purchaseDate = parseDate(r[cValueDate]);
+    const maturityDate = parseDate(r[cMaturityDate]);
     const portfolioBook = "Placements <90 Days";
 
     instruments.push({
@@ -553,6 +692,19 @@ function parseQuotedEquity(
   const instruments: Instrument[] = [];
   const holdings: Holding[] = [];
   const hdr = findHeaderRow(rows);
+  const headerMap = buildHeaderMap(rows[hdr]);
+  const col = (label: string, aliases: string[], fallback: number) =>
+    resolveColumn(headerMap, warnings, label, aliases, fallback);
+
+  const cId = col("IDENTIFIER", ["identifier"], 1);
+  const cPortfolio = col("PORTFOLIO", ["portfolio"], 2);
+  const cCompany = col("COMPANY", ["company"], 3);
+  const cPurchaseDate = col("PURCHASE DATE", ["purchasedate"], 4);
+  const cHoldings = col("HOLDINGS", ["holdings"], 5);
+  const cCostPriceUnit = col("COST PRICE UNIT", ["costpriceunit"], 6);
+  const cCost = col("COST", ["cost"], 7);
+  const cClosingMarketPrice = col("CLOSING MARKET PRICE", ["closingmarketprice"], 8);
+  const cCurrentMarketValue = col("CURRENT MARKET VALUE", ["currentmarketvalue"], 9);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -560,15 +712,15 @@ function parseQuotedEquity(
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue; // skip sub-header/unit rows
 
-    const id = str(r[1]) || `EQ-${i}`;
-    const company = str(r[3]) || `Equity ${id}`;
-    const purchaseDate = parseDate(r[4]);
-    const quantity = parseNum(r[5]);
-    const costPriceUnit = parseNum(r[6]);
-    const totalCost = parseNum(r[7]);
-    const marketPriceUnit = parseNum(r[8]);
-    const marketValueTotal = parseNum(r[9]);
-    const portfolioBook = str(r[2]) || "Quoted Equity Book";
+    const id = str(r[cId]) || `EQ-${i}`;
+    const company = str(r[cCompany]) || `Equity ${id}`;
+    const purchaseDate = parseDate(r[cPurchaseDate]);
+    const quantity = parseNum(r[cHoldings]);
+    const costPriceUnit = parseNum(r[cCostPriceUnit]);
+    const totalCost = parseNum(r[cCost]);
+    const marketPriceUnit = parseNum(r[cClosingMarketPrice]);
+    const marketValueTotal = parseNum(r[cCurrentMarketValue]);
+    const portfolioBook = str(r[cPortfolio]) || "Quoted Equity Book";
 
     const costBasisM = totalCost / 1_000_000;
     const mktValueM =
@@ -778,6 +930,7 @@ export function parseWorkbook(buffer: ArrayBuffer): ParsedWorkbook {
   const allInstruments: Instrument[] = [];
   const allHoldings: Holding[] = [];
   const sheets: SheetSummary[] = [];
+  const unrecognizedSheets: UnrecognizedSheet[] = [];
 
   for (const sheetName of wb.SheetNames) {
     const ws = wb.Sheets[sheetName];
@@ -841,7 +994,10 @@ export function parseWorkbook(buffer: ArrayBuffer): ParsedWorkbook {
         break;
       }
       default:
-        // Unrecognised sheet — skip silently
+        // Unrecognised sheet — tracked and surfaced to the UI instead of
+        // silently dropped (a sheet the template renamed or added is a real
+        // data-loss risk, not something to swallow).
+        unrecognizedSheets.push({ sheetName, rowCount: nonEmpty.length });
         continue;
     }
 
@@ -849,6 +1005,14 @@ export function parseWorkbook(buffer: ArrayBuffer): ParsedWorkbook {
       ...instrument,
       sourceSheet: sheetName,
     }));
+
+    // A recognised sheet that parsed zero rows is a fully-broken sheet
+    // (wrong header row, unexpected layout, etc.) — the aggregate
+    // rowsSkipped number alone can hide this, so call it out explicitly.
+    const candidateRows = Math.max(0, nonEmpty.length - 2);
+    if (parsed.length === 0 && candidateRows > 0) {
+      warnings = [`0 of ${candidateRows} rows parsed — sheet may be malformed or using an unexpected layout`, ...warnings];
+    }
 
     const typeLabels: Record<string, string> = {
       fgn: "FGN Bonds",
@@ -893,6 +1057,7 @@ export function parseWorkbook(buffer: ArrayBuffer): ParsedWorkbook {
     holdings: allHoldings,
     sheets,
     totalInstruments: allInstruments.length,
+    unrecognizedSheets,
   };
 }
 
