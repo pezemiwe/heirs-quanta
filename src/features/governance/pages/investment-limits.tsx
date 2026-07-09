@@ -14,7 +14,7 @@ import { usePersona } from "../../../context/persona";
 import {
   fmtCompact,
   fmtPct,
-  BOOK_COMPUTED,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 const STATUS_META: Record<
@@ -33,6 +33,7 @@ const STATUS_META: Record<
 export function InvestmentLimits() {
   const { logAction } = useGovernance();
   const { persona } = usePersona();
+  const { computed: BOOK_COMPUTED } = useBookComputed();
   const [waived, setWaived] = useState<string[]>([]);
 
   const canManage = ["Chief Financial Officer", "Chief Risk Officer"].includes(

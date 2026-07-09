@@ -8,9 +8,9 @@ import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 interface AccrualRow {
@@ -27,6 +27,7 @@ interface AccrualRow {
 type Row = AccrualRow & Record<string, unknown>;
 
 export function Accruals() {
+  const { computed: BOOK_COMPUTED } = useBookComputed();
   const [selected, setSelected] = useState<Row | null>(null);
   const rows = useMemo<Row[]>(() => {
     return BOOK_COMPUTED.valuations
@@ -42,7 +43,7 @@ export function Accruals() {
         monthlyAccrual: (v.instrument.faceValue * v.instrument.couponRate) / 12,
       }))
       .sort((a, b) => b.accruedInterest - a.accruedInterest) as Row[];
-  }, []);
+  }, [BOOK_COMPUTED]);
 
   const totalAccrued = rows.reduce((s, r) => s + r.accruedInterest, 0);
   const totalMonthly = rows.reduce((s, r) => s + r.monthlyAccrual, 0);

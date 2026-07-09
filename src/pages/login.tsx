@@ -14,7 +14,7 @@ import {
 } from "lucide-react";
 
 /* ── Personas ────────────────────────────────────────────────── */
-const PERSONAS = [
+export const PERSONAS = [
   {
     name: "Amaka Osei",
     role: "Chief Financial Officer",

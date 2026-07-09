@@ -1,9 +1,8 @@
+import { useMemo } from "react";
 import {
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../../features/portfolio/engine/book-compute";
 import {
   DataTable,
@@ -25,33 +24,6 @@ type BenchmarkRow = {
   duration: number;
   bsvNGN: number;
 };
-
-const ROWS: BenchmarkRow[] = BOOK_INSTRUMENTS.map((inst, i) => {
-  const val = BOOK_VALUATIONS[i];
-  const mktYield = val?.marketYieldUsed ?? inst.couponRate;
-  const bv = BENCHMARK_YIELD;
-  return {
-    id: inst.id,
-    name: inst.name,
-    instrumentType: inst.instrumentType,
-    marketYield: mktYield,
-    benchmarkYield: bv,
-    spread: mktYield - bv,
-    eir: val?.eir ?? inst.couponRate,
-    eirVsBenchmark: (val?.eir ?? inst.couponRate) - bv,
-    duration: val?.risk.modifiedDuration ?? 0,
-    bsvNGN: val?.balanceSheetValueNGN ?? 0,
-  };
-});
-
-const totals = BOOK_COMPUTED.totals;
-const totalBSV = totals.totalBSValueNGN;
-const wAvgYield =
-  ROWS.reduce((s, r) => s + r.marketYield * r.bsvNGN, 0) / (totalBSV || 1);
-const wAvgEIR =
-  ROWS.reduce((s, r) => s + r.eir * r.bsvNGN, 0) / (totalBSV || 1);
-const overBenchmark = ROWS.filter((r) => r.spread > 0).length;
-const avgSpread = wAvgYield - BENCHMARK_YIELD;
 
 const COLUMNS: DataTableColumn<BenchmarkRow>[] = [
   {
@@ -130,6 +102,43 @@ const COLUMNS: DataTableColumn<BenchmarkRow>[] = [
 ];
 
 export function Benchmarks() {
+  const {
+    computed: BOOK_COMPUTED,
+    instruments: BOOK_INSTRUMENTS,
+    valuations: BOOK_VALUATIONS,
+  } = useBookComputed();
+
+  const ROWS: BenchmarkRow[] = useMemo(
+    () =>
+      BOOK_INSTRUMENTS.map((inst, i) => {
+        const val = BOOK_VALUATIONS[i];
+        const mktYield = val?.marketYieldUsed ?? inst.couponRate;
+        const bv = BENCHMARK_YIELD;
+        return {
+          id: inst.id,
+          name: inst.name,
+          instrumentType: inst.instrumentType,
+          marketYield: mktYield,
+          benchmarkYield: bv,
+          spread: mktYield - bv,
+          eir: val?.eir ?? inst.couponRate,
+          eirVsBenchmark: (val?.eir ?? inst.couponRate) - bv,
+          duration: val?.risk.modifiedDuration ?? 0,
+          bsvNGN: val?.balanceSheetValueNGN ?? 0,
+        };
+      }),
+    [BOOK_INSTRUMENTS, BOOK_VALUATIONS],
+  );
+
+  const totals = BOOK_COMPUTED.totals;
+  const totalBSV = totals.totalBSValueNGN;
+  const wAvgYield =
+    ROWS.reduce((s, r) => s + r.marketYield * r.bsvNGN, 0) / (totalBSV || 1);
+  const wAvgEIR =
+    ROWS.reduce((s, r) => s + r.eir * r.bsvNGN, 0) / (totalBSV || 1);
+  const overBenchmark = ROWS.filter((r) => r.spread > 0).length;
+  const avgSpread = wAvgYield - BENCHMARK_YIELD;
+
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>

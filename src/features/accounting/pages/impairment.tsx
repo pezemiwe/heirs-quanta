@@ -8,10 +8,9 @@ import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 interface ImpairmentRow {
@@ -28,6 +27,8 @@ interface ImpairmentRow {
 type Row = ImpairmentRow & Record<string, unknown>;
 
 export function Impairment() {
+  const { computed: BOOK_COMPUTED, instruments: BOOK_INSTRUMENTS } =
+    useBookComputed();
   const [selected, setSelected] = useState<Row | null>(null);
   const { stage1, stage2, stage3, totalECL, totalExposure } = useMemo(() => {
     const valMap = new Map(
@@ -63,7 +64,7 @@ export function Impairment() {
       totalECL: BOOK_COMPUTED.totals.totalECLNGN,
       totalExposure: BOOK_COMPUTED.totals.totalBSValueNGN,
     };
-  }, []);
+  }, [BOOK_COMPUTED, BOOK_INSTRUMENTS]);
 
   const cols: DataTableColumn<Row>[] = [
     { key: "id", header: "ID", width: "90px" },

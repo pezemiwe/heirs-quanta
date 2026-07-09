@@ -7,8 +7,7 @@ import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
+  useBookComputed,
   fmtCompact,
   fmtPct,
   fmtDate,
@@ -44,6 +43,9 @@ const LEVEL_LABEL: Record<string, string> = {
 };
 
 export function ValuationReport() {
+  const { computed: BOOK_COMPUTED, instruments: BOOK_INSTRUMENTS } =
+    useBookComputed();
+
   const { l1, l2, l3, totalFV } = useMemo(() => {
     const valMap = new Map(
       BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
@@ -94,7 +96,7 @@ export function ValuationReport() {
         .sort((a, b) => b.fairValue - a.fairValue) as HierarchyRow[],
       totalFV: total,
     };
-  }, []);
+  }, [BOOK_COMPUTED, BOOK_INSTRUMENTS]);
 
   const l1Total = l1.reduce((s, r) => s + r.fairValue, 0);
   const l2Total = l2.reduce((s, r) => s + r.fairValue, 0);

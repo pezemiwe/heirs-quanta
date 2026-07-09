@@ -10,8 +10,12 @@ import {
 export type Permission =
   | "deal.view"
   | "deal.create"
+  | "deal.review"
   | "deal.approve"
   | "deal.reject"
+  | "settlement.raise"
+  | "settlement.confirm"
+  | "exception.manage"
   | "ecl.view"
   | "ecl.modify"
   | "ecl.approve"
@@ -41,8 +45,12 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
   "Chief Financial Officer": [
     "deal.view",
     "deal.create",
+    "deal.review",
     "deal.approve",
     "deal.reject",
+    "settlement.raise",
+    "settlement.confirm",
+    "exception.manage",
     "ecl.view",
     "ecl.modify",
     "ecl.approve",
@@ -62,6 +70,12 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
   ],
   "Chief Risk Officer": [
     "deal.view",
+    "deal.review",
+    "deal.approve",
+    "deal.reject",
+    "settlement.raise",
+    "settlement.confirm",
+    "exception.manage",
     "ecl.view",
     "ecl.modify",
     "ecl.approve",
@@ -77,6 +91,8 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
   "Portfolio Analyst": [
     "deal.view",
     "deal.create",
+    "settlement.raise",
+    "settlement.confirm",
     "ecl.view",
     "journal.view",
     "valuation.view",
@@ -87,6 +103,12 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
   ],
   "Risk Manager": [
     "deal.view",
+    "deal.review",
+    "deal.approve",
+    "deal.reject",
+    "settlement.raise",
+    "settlement.confirm",
+    "exception.manage",
     "ecl.view",
     "ecl.modify",
     "ecl.approve",
@@ -99,6 +121,7 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
   ],
   "Compliance Officer": [
     "deal.view",
+    "exception.manage",
     "ecl.view",
     "journal.view",
     "valuation.view",

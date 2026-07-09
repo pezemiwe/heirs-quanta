@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { Menu, X } from "lucide-react";
 import { Logo } from "./logo";
 import { UserMenu } from "./user-menu";
+import { NotificationBell } from "./notification-bell";
 import { usePersona } from "../../context/persona";
 
 export interface ModuleNavItem {
@@ -118,14 +119,17 @@ export function ModuleShell({
             </span>
           )}
         </div>
-        <UserMenu
-          persona={persona}
-          onSwitchModules={() => navigate("/modules")}
-          onLogout={() => {
-            setPersona({ name: "", role: "", avatar: "" });
-            navigate("/");
-          }}
-        />
+        <div className="flex items-center gap-2">
+          <NotificationBell />
+          <UserMenu
+            persona={persona}
+            onSwitchModules={() => navigate("/modules")}
+            onLogout={() => {
+              setPersona({ name: "", role: "", avatar: "" });
+              navigate("/");
+            }}
+          />
+        </div>
       </header>
 
       <div className="flex flex-1 overflow-hidden">

@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import {
   BarChart,
   Bar,
@@ -11,13 +12,10 @@ import { SectionCard } from "../../../components/shared/section-card";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { Badge } from "../../../components/shared/badge";
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
+  useBookComputed,
   fmtCompact,
   fmtPct,
 } from "../../portfolio/engine/book-compute";
-
-const totals = BOOK_COMPUTED.totals;
 
 function SummaryRow({
   label,
@@ -41,11 +39,20 @@ function SummaryRow({
 }
 
 export function ReportingDashboard() {
-  const maturityData = BOOK_COMPUTED.maturityProfile.map((m) => ({
-    bucket: m.bucket,
-    faceValue: m.faceValueNGN,
-    count: m.count,
-  }));
+  const { computed: BOOK_COMPUTED, instruments: BOOK_INSTRUMENTS } =
+    useBookComputed();
+
+  const totals = BOOK_COMPUTED.totals;
+
+  const maturityData = useMemo(
+    () =>
+      BOOK_COMPUTED.maturityProfile.map((m) => ({
+        bucket: m.bucket,
+        faceValue: m.faceValueNGN,
+        count: m.count,
+      })),
+    [BOOK_COMPUTED],
+  );
 
   const byClass = BOOK_COMPUTED.byClassification;
   const bySector = BOOK_COMPUTED.bySector.slice(0, 8);

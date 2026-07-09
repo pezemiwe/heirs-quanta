@@ -1,9 +1,9 @@
+import { useMemo } from "react";
 import {
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
   fmtCompact,
   fmtPct,
   fmtDate,
+  useBookComputed,
 } from "../../../features/portfolio/engine/book-compute";
 import {
   DataTable,
@@ -24,27 +24,6 @@ type EIRRow = {
   accruedInterest: number;
   status: string;
 };
-
-const ROWS: EIRRow[] = BOOK_INSTRUMENTS.filter(
-  (i) => i.classification === "AC" || i.classification === "FVOCI",
-).map((inst, idx) => {
-  const allIdx = BOOK_INSTRUMENTS.indexOf(inst);
-  const val = BOOK_VALUATIONS[allIdx];
-  return {
-    id: inst.id,
-    name: inst.name,
-    classification: inst.classification,
-    purchaseDate: inst.purchaseDate,
-    maturityDate: inst.maturityDate ?? "—",
-    faceValue: inst.faceValue,
-    purchasePrice: inst.purchasePrice,
-    eir: val?.eir ?? inst.couponRate,
-    carryingValue: val?.acCarryingValue ?? inst.faceValue * inst.purchasePrice,
-    annualAmort: val?.annualEIRIncome ?? 0,
-    accruedInterest: val?.accruedInterest ?? 0,
-    status: inst.status,
-  };
-});
 
 const CLASS_STYLE: Record<string, string> = {
   AC: "bg-blue-100 text-blue-700",
@@ -128,13 +107,43 @@ const COLUMNS: DataTableColumn<EIRRow>[] = [
   },
 ];
 
-const totalCarrying = ROWS.reduce((s, r) => s + r.carryingValue, 0);
-const totalIncome = ROWS.reduce((s, r) => s + r.annualAmort, 0);
-const totalAccrued = ROWS.reduce((s, r) => s + r.accruedInterest, 0);
-const avgEIR =
-  ROWS.reduce((s, r) => s + r.eir * r.carryingValue, 0) / (totalCarrying || 1);
-
 export function EIRAmortisation() {
+  const { instruments: BOOK_INSTRUMENTS, valuations: BOOK_VALUATIONS } =
+    useBookComputed();
+
+  const { ROWS, totalCarrying, totalIncome, totalAccrued, avgEIR } = useMemo(() => {
+    const rows: EIRRow[] = BOOK_INSTRUMENTS.filter(
+      (i) => i.classification === "AC" || i.classification === "FVOCI",
+    ).map((inst) => {
+      const allIdx = BOOK_INSTRUMENTS.indexOf(inst);
+      const val = BOOK_VALUATIONS[allIdx];
+      return {
+        id: inst.id,
+        name: inst.name,
+        classification: inst.classification,
+        purchaseDate: inst.purchaseDate,
+        maturityDate: inst.maturityDate ?? "—",
+        faceValue: inst.faceValue,
+        purchasePrice: inst.purchasePrice,
+        eir: val?.eir ?? inst.couponRate,
+        carryingValue:
+          val?.acCarryingValue ?? inst.faceValue * inst.purchasePrice,
+        annualAmort: val?.annualEIRIncome ?? 0,
+        accruedInterest: val?.accruedInterest ?? 0,
+        status: inst.status,
+      };
+    });
+
+    const totalCarrying = rows.reduce((s, r) => s + r.carryingValue, 0);
+    const totalIncome = rows.reduce((s, r) => s + r.annualAmort, 0);
+    const totalAccrued = rows.reduce((s, r) => s + r.accruedInterest, 0);
+    const avgEIR =
+      rows.reduce((s, r) => s + r.eir * r.carryingValue, 0) /
+      (totalCarrying || 1);
+
+    return { ROWS: rows, totalCarrying, totalIncome, totalAccrued, avgEIR };
+  }, [BOOK_INSTRUMENTS, BOOK_VALUATIONS]);
+
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>

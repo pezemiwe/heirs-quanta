@@ -4,6 +4,7 @@
    All downstream modules (Deals, Performance, Accounting, Reporting)
    import from here rather than running the engine themselves.
    ───────────────────────────────────────────────────────── */
+import { useMemo } from "react";
 import { runPortfolioEngine } from "../../valuation/engine";
 import {
   DEFAULT_ASSUMPTIONS,
@@ -16,6 +17,7 @@ import type {
   InstrumentValuation,
   PortfolioResult,
 } from "../../valuation/engine/types";
+import { useInstrumentBook } from "../../../context/instrument-book";
 
 export const VALUATION_DATE = "2026-05-28";
 export const FX_USD = 1580;
@@ -82,4 +84,42 @@ export function daysBetween(a: string, b: string): number {
       new Date(a + "T00:00:00Z").getTime()) /
       86400000,
   );
+}
+
+/* ─────────────────────────────────────────────────────────
+   Live book hook
+   Reads from the shared InstrumentBook when a workbook has been
+   uploaded; falls back to the static 204-instrument demo book
+   (BOOK_INSTRUMENTS / BOOK_COMPUTED) when the platform is empty.
+   Accounting, Reporting, Performance and Governance all read the
+   book through this hook instead of the static exports directly,
+   so they stay in sync with whatever is currently loaded.
+   ───────────────────────────────────────────────────────── */
+export interface LiveBookComputed {
+  instruments: Instrument[];
+  valuations: InstrumentValuation[];
+  computed: PortfolioResult;
+  hasData: boolean;
+}
+
+export function useBookComputed(): LiveBookComputed {
+  const book = useInstrumentBook();
+  return useMemo(() => {
+    if (book.hasData) {
+      const instruments = book.instruments as Instrument[];
+      const computed = runPortfolioEngine(instruments, DEFAULT_ASSUMPTIONS);
+      return {
+        instruments,
+        valuations: computed.valuations,
+        computed,
+        hasData: true,
+      };
+    }
+    return {
+      instruments: BOOK_INSTRUMENTS,
+      valuations: BOOK_VALUATIONS,
+      computed: BOOK_COMPUTED,
+      hasData: false,
+    };
+  }, [book.hasData, book.instruments]);
 }

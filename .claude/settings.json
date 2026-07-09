@@ -1,0 +1,39 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(node --input-type=module)",
+      "Bash(npx --version)",
+      "Bash(echo \"EXIT:$?\")",
+      "Skill(run)",
+      "Skill(run:*)",
+      "Bash(chromium-cli --version)",
+      "Bash(npx --yes playwright --version)",
+      "Bash(node build-workbook.cjs)",
+      "Bash(npx --yes tsx verify-parse.ts)",
+      "Bash(seq 1 30)",
+      "Bash(curl -sf http://localhost:5183)",
+      "Bash(echo \"UP\")",
+      "Bash(break)",
+      "Bash(sleep 1)",
+      "Read(//tmp/**)",
+      "Bash(npm root *)",
+      "Bash(node e2e-verify.cjs)",
+      "Bash(pkill -f \"vite --port 5183\")",
+      "Bash(pkill -f \"npm run dev\")",
+      "Bash(node workflow-acceptance.cjs)",
+      "Bash(sed -i '158s/500/1400/' workflow-acceptance.cjs)",
+      "Bash(sed -i '189s/1000/1400/' workflow-acceptance.cjs)",
+      "Bash(pkill -f \"vite --port 5184\")",
+      "Bash(echo \"TSC_EXIT:$?\")",
+      "Skill(dataviz)",
+      "Skill(dataviz:*)",
+      "Bash(echo \"EXIT_CODE=$?\")",
+      "Bash(node deals-extension-verify.cjs)",
+      "Bash(node recon-break-verify.cjs)",
+      "Bash(pkill -f \"vite --port\")",
+      "Bash(grep -rln \"from \\\\\"\\\\\\\\.\\\\\\\\./pages/portfolio\\\\\"\\\\|from \\\\\"\\\\\\\\./pages/portfolio\\\\\"\" \"/c/Users/DELL/Documents/heirs-quanta/src\")",
+      "Bash(grep -rn \"\\\\\"\\\\\\\\.\\\\\\\\./\\\\\\\\.\\\\\\\\./pages/portfolio\\\\|\\\\\"\\\\\\\\.\\\\\\\\./pages/portfolio/index\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./pages/portfolio\\\\\"\" \"/c/Users/DELL/Documents/heirs-quanta/src\")",
+      "Bash(node notifications-verify.cjs)"
+    ]
+  }
+}

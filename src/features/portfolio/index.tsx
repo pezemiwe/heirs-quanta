@@ -16,8 +16,10 @@ import {
 } from "lucide-react";
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
+import { NotificationBell } from "../../components/shared/notification-bell";
 import { PortfolioProvider, usePortfolio } from "./store";
 import { ValuationProvider } from "../valuation/store";
+import { IFRS9Provider } from "../ifrs9/store";
 import { PortfolioDashboard } from "./pages/dashboard";
 import { PortfolioHoldings } from "./pages/holdings";
 import { PortfolioAllocation } from "./pages/allocation";
@@ -205,6 +207,7 @@ export function PortfolioModule() {
 
   return (
     <ValuationProvider>
+      <IFRS9Provider>
       <PortfolioProvider>
         <div className="flex h-screen flex-col bg-surface-muted font-sans text-dark-gray overflow-hidden">
           <header className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-surface px-5 z-10">
@@ -216,6 +219,7 @@ export function PortfolioModule() {
               </span>
             </div>
             <div className="flex items-center gap-3">
+              <NotificationBell />
               <UserMenu
                 persona={persona}
                 onSwitchModules={() => navigate("/modules")}
@@ -279,6 +283,7 @@ export function PortfolioModule() {
           </div>
         </div>
       </PortfolioProvider>
+      </IFRS9Provider>
     </ValuationProvider>
   );
 }

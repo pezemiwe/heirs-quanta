@@ -16,10 +16,9 @@ import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 const COLORS = [
@@ -40,6 +39,8 @@ function fmtAxis(v: number) {
 }
 
 export function PerformanceDashboard() {
+  const { computed: BOOK_COMPUTED, instruments: BOOK_INSTRUMENTS } =
+    useBookComputed();
   const { totals, byType, bySector, byClassification, income } = BOOK_COMPUTED;
 
   // Weighted portfolio yield
@@ -54,7 +55,7 @@ export function PerformanceDashboard() {
       }
     }
     return totalWeight > 0 ? weightedSum / totalWeight : 0;
-  }, []);
+  }, [BOOK_COMPUTED]);
 
   // Weighted duration
   const weightedDuration = useMemo(() => {
@@ -68,7 +69,7 @@ export function PerformanceDashboard() {
       }
     }
     return dWeight > 0 ? dSum / dWeight : 0;
-  }, []);
+  }, [BOOK_COMPUTED]);
 
   const totalOCI = BOOK_COMPUTED.totals.totalOCIReserveNGN;
   const totalFVTPL = BOOK_COMPUTED.totals.totalFVTPLUnrealisedGLNGN;

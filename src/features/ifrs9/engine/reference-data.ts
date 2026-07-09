@@ -498,7 +498,7 @@ const buildOverlay = (start: number): number[] =>
   });
 
 export const DEFAULT_ASSUMPTIONS: Assumptions = {
-  reportingDate: new Date(2022, 11, 31), // 31 Dec 2022 — matches the sample portfolio
+  reportingDate: new Date(), // today — TTM and staging should run as-at now, not a stale fixed date
   sovereignRecoveryRate: 0.53,
   baseline: buildOverlay(1.0), // multiplier of 1× through horizon
   bestCase: buildOverlay(0.85), // starts 15% lower, rises to 1

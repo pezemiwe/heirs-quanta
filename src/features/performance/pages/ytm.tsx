@@ -8,11 +8,10 @@ import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
   fmtPct,
   fmtCompact,
   fmtDate,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 const VALUATION_DATE = "2026-05-28";
@@ -69,6 +68,8 @@ interface YTMRow {
 type Row = YTMRow & Record<string, unknown>;
 
 export function YTMAnalysis() {
+  const { computed: BOOK_COMPUTED, instruments: BOOK_INSTRUMENTS } =
+    useBookComputed();
   const [selected, setSelected] = useState<Row | null>(null);
   const rows = useMemo<Row[]>(() => {
     return BOOK_COMPUTED.valuations.map((v) => ({
@@ -92,7 +93,7 @@ export function YTMAnalysis() {
       dv01: v.risk.dv01,
       maturityDate: v.instrument.maturityDate,
     })) as Row[];
-  }, []);
+  }, [BOOK_COMPUTED]);
 
   const callableRows = rows.filter((r) => r.ytc !== null);
   const avgYTC =

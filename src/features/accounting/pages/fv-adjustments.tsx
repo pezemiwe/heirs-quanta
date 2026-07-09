@@ -8,9 +8,9 @@ import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { AcronymTip } from "../../../components/shared/acronym-tip";
 import {
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 interface FVRow {
@@ -28,6 +28,7 @@ interface FVRow {
 type Row = FVRow & Record<string, unknown>;
 
 export function FVAdjustments() {
+  const { computed: BOOK_COMPUTED } = useBookComputed();
   const { ociRows, fvtplRows, totalOCI, totalFVTPL } = useMemo(() => {
     const oci: FVRow[] = [];
     const fvtpl: FVRow[] = [];
@@ -72,7 +73,7 @@ export function FVAdjustments() {
       totalOCI: oci.reduce((s, r) => s + r.movement, 0),
       totalFVTPL: fvtpl.reduce((s, r) => s + r.movement, 0),
     };
-  }, []);
+  }, [BOOK_COMPUTED]);
 
   const cols = (
     acLabel: ReactNode,

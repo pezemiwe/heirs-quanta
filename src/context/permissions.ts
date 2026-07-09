@@ -57,12 +57,14 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
   "Chief Financial Officer": ALL_FULL,
 
   /**
-   * CRO — risk, credit loss, valuation and market data.
-   * No access to front-office deal capture or accounting GL.
+   * CRO — risk, credit loss, valuation and market data. Also acts as a deal
+   * slip reviewer/approver and settlement checker in the maker-checker
+   * workflow, so deal-capture is a write module for this role even though
+   * the CRO never originates a booking. No access to accounting GL.
    */
   "Chief Risk Officer": {
     portfolio: "read-only",
-    "deal-capture": "none",
+    "deal-capture": "full",
     "market-data": "full",
     valuation: "full",
     ifrs9: "full",
@@ -92,12 +94,13 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
 
   /**
    * Risk Manager — IFRS 9, valuation and duration risk are primary domains.
-   * Portfolio and performance are read-only reference views.
-   * No deal capture or accounting access.
+   * Portfolio and performance are read-only reference views. Also reviews /
+   * approves deal slips and can act as settlement checker, so deal-capture
+   * is a write module. No accounting access.
    */
   "Risk Manager": {
     portfolio: "read-only",
-    "deal-capture": "none",
+    "deal-capture": "full",
     "market-data": "full",
     valuation: "full",
     ifrs9: "full",

@@ -1,9 +1,8 @@
+import { useMemo } from "react";
 import {
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../../features/portfolio/engine/book-compute";
 import {
   DataTable,
@@ -24,53 +23,6 @@ type FXRow = {
   unrealisedFX: number;
   classification: string;
 };
-
-const ROWS: FXRow[] = BOOK_INSTRUMENTS.filter((i) => i.currency !== "NGN").map(
-  (inst) => {
-    const allIdx = BOOK_INSTRUMENTS.indexOf(inst);
-    const val = BOOK_VALUATIONS[allIdx];
-    const rate =
-      inst.currency === "USD"
-        ? FX_USD
-        : inst.currency === "GBP"
-          ? FX_GBP
-          : FX_EUR;
-    const bsvNGN = val?.balanceSheetValueNGN ?? inst.faceValue * rate;
-    // unrealised FX: 2% ngn appreciation scenario
-    const unrealisedFX = bsvNGN * 0.02;
-    return {
-      id: inst.id,
-      name: inst.name,
-      currency: inst.currency,
-      faceValue: inst.faceValue,
-      fxRate: rate,
-      bsvNGN,
-      unrealisedFX,
-      classification: inst.classification,
-    };
-  },
-);
-
-// Group by currency
-const byCurrency = new Map<
-  string,
-  { count: number; bsvNGN: number; unrealised: number }
->();
-ROWS.forEach((r) => {
-  const cur = byCurrency.get(r.currency) ?? {
-    count: 0,
-    bsvNGN: 0,
-    unrealised: 0,
-  };
-  cur.count++;
-  cur.bsvNGN += r.bsvNGN;
-  cur.unrealised += r.unrealisedFX;
-  byCurrency.set(r.currency, cur);
-});
-
-const totalFCY = ROWS.reduce((s, r) => s + r.bsvNGN, 0);
-const totalPortfolio = BOOK_COMPUTED.totals.totalBSValueNGN;
-const totalUnrealisedFX = ROWS.reduce((s, r) => s + r.unrealisedFX, 0);
 
 const CCY_STYLE: Record<string, string> = {
   USD: "bg-green-100 text-green-700",
@@ -141,6 +93,66 @@ const COLUMNS: DataTableColumn<FXRow>[] = [
 ];
 
 export function MultiCurrency() {
+  const {
+    instruments: BOOK_INSTRUMENTS,
+    valuations: BOOK_VALUATIONS,
+    computed: BOOK_COMPUTED,
+  } = useBookComputed();
+
+  const { ROWS, byCurrency, totalFCY, totalPortfolio, totalUnrealisedFX } =
+    useMemo(() => {
+      const rows: FXRow[] = BOOK_INSTRUMENTS.filter(
+        (i) => i.currency !== "NGN",
+      ).map((inst) => {
+        const allIdx = BOOK_INSTRUMENTS.indexOf(inst);
+        const val = BOOK_VALUATIONS[allIdx];
+        const rate =
+          inst.currency === "USD"
+            ? FX_USD
+            : inst.currency === "GBP"
+              ? FX_GBP
+              : FX_EUR;
+        const bsvNGN = val?.balanceSheetValueNGN ?? inst.faceValue * rate;
+        // unrealised FX: 2% ngn appreciation scenario
+        const unrealisedFX = bsvNGN * 0.02;
+        return {
+          id: inst.id,
+          name: inst.name,
+          currency: inst.currency,
+          faceValue: inst.faceValue,
+          fxRate: rate,
+          bsvNGN,
+          unrealisedFX,
+          classification: inst.classification,
+        };
+      });
+
+      // Group by currency
+      const byCcy = new Map<
+        string,
+        { count: number; bsvNGN: number; unrealised: number }
+      >();
+      rows.forEach((r) => {
+        const cur = byCcy.get(r.currency) ?? {
+          count: 0,
+          bsvNGN: 0,
+          unrealised: 0,
+        };
+        cur.count++;
+        cur.bsvNGN += r.bsvNGN;
+        cur.unrealised += r.unrealisedFX;
+        byCcy.set(r.currency, cur);
+      });
+
+      return {
+        ROWS: rows,
+        byCurrency: byCcy,
+        totalFCY: rows.reduce((s, r) => s + r.bsvNGN, 0),
+        totalPortfolio: BOOK_COMPUTED.totals.totalBSValueNGN,
+        totalUnrealisedFX: rows.reduce((s, r) => s + r.unrealisedFX, 0),
+      };
+    }, [BOOK_INSTRUMENTS, BOOK_VALUATIONS, BOOK_COMPUTED]);
+
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>
