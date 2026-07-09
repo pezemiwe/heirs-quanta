@@ -1,5 +1,6 @@
 import { Briefcase, Wallet, ShieldAlert, Activity } from "lucide-react";
 import { useValuation } from "../store";
+import { useIFRS9 } from "../../ifrs9/store";
 import { SectionCard } from "../../../components/shared/section-card";
 import { StatCard } from "../../../components/shared/stat-card";
 import { fmtMoneyCompact, fmtNumber, CLASSIFICATION_BADGE } from "../utils";
@@ -8,6 +9,7 @@ import { AcronymTip } from "../../../components/shared/acronym-tip";
 
 export function ValuationOverview() {
   const v = useValuation();
+  const ifrs9 = useIFRS9();
   if (!v.hasData) return <EmptyPortfolio />;
   const { totals, byClassification } = v.result;
 
@@ -38,8 +40,8 @@ export function ValuationOverview() {
         />
         <StatCard
           title="ECL Provision"
-          value={fmtMoneyCompact(totals.totalECLNGN, "NGN")}
-          subtitle="Amortised Cost + Fair Value (OCI) stages"
+          value={fmtMoneyCompact(ifrs9.result.totals.impairmentLcy, "NGN")}
+          subtitle="Live IFRS 9 engine output"
           icon={<ShieldAlert className="h-4 w-4" />}
           variant="warning"
         />

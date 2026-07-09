@@ -1,7 +1,6 @@
+import { useMemo } from "react";
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
+  useBookComputed,
   fmtCompact,
   fmtPct,
 } from "../../../features/portfolio/engine/book-compute";
@@ -10,47 +9,7 @@ import {
   DataTableColumn,
 } from "../../../components/shared/data-table";
 
-const totals = BOOK_COMPUTED.totals;
-const bySector = BOOK_COMPUTED.bySector;
-const matProfile = BOOK_COMPUTED.maturityProfile;
-
-// IFRS 7 credit risk: by stage
-const stage1Insts = BOOK_INSTRUMENTS.filter(
-  (i) => i.impairmentStage === "Stage 1",
-);
-const stage2Insts = BOOK_INSTRUMENTS.filter(
-  (i) => i.impairmentStage === "Stage 2",
-);
-const stage3Insts = BOOK_INSTRUMENTS.filter(
-  (i) => i.impairmentStage === "Stage 3",
-);
-
-const bsvByStage = (stage: string) =>
-  BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === stage).reduce(
-    (s, inst) => {
-      const idx = BOOK_INSTRUMENTS.indexOf(inst);
-      return s + (BOOK_VALUATIONS[idx]?.balanceSheetValueNGN ?? 0);
-    },
-    0,
-  );
-
-// market risk: IFRS 7 sensitivity
-const totalDV01 = BOOK_VALUATIONS.reduce((s, v) => s + v.risk.dv01, 0);
-
-// FVTPL mark-to-market
-const fvtplInsts = BOOK_INSTRUMENTS.filter((i) => i.classification === "FVTPL");
-const totalFVTPLbsv = fvtplInsts.reduce((s, inst) => {
-  const idx = BOOK_INSTRUMENTS.indexOf(inst);
-  return s + (BOOK_VALUATIONS[idx]?.balanceSheetValueNGN ?? 0);
-}, 0);
-
 type LiqRow = { bucket: string; count: number; faceValue: number; pct: number };
-const LIQ_ROWS: LiqRow[] = matProfile.map((b) => ({
-  bucket: b.bucket,
-  count: b.count,
-  faceValue: b.faceValueNGN,
-  pct: b.faceValueNGN / totals.totalBSValueNGN,
-}));
 
 const LIQ_COLS: DataTableColumn<LiqRow>[] = [
   {
@@ -86,6 +45,70 @@ const LIQ_COLS: DataTableColumn<LiqRow>[] = [
 ];
 
 export function IFRS7Disclosures() {
+  const {
+    computed: BOOK_COMPUTED,
+    instruments: BOOK_INSTRUMENTS,
+    valuations: BOOK_VALUATIONS,
+  } = useBookComputed();
+
+  const totals = BOOK_COMPUTED.totals;
+  const bySector = BOOK_COMPUTED.bySector;
+  const matProfile = BOOK_COMPUTED.maturityProfile;
+
+  // IFRS 7 credit risk: by stage
+  const stage1Insts = useMemo(
+    () => BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === "Stage 1"),
+    [BOOK_INSTRUMENTS],
+  );
+  const stage2Insts = useMemo(
+    () => BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === "Stage 2"),
+    [BOOK_INSTRUMENTS],
+  );
+  const stage3Insts = useMemo(
+    () => BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === "Stage 3"),
+    [BOOK_INSTRUMENTS],
+  );
+
+  const bsvByStage = (stage: string) =>
+    BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === stage).reduce(
+      (s, inst) => {
+        const idx = BOOK_INSTRUMENTS.indexOf(inst);
+        return s + (BOOK_VALUATIONS[idx]?.balanceSheetValueNGN ?? 0);
+      },
+      0,
+    );
+
+  // market risk: IFRS 7 sensitivity
+  const totalDV01 = useMemo(
+    () => BOOK_VALUATIONS.reduce((s, v) => s + v.risk.dv01, 0),
+    [BOOK_VALUATIONS],
+  );
+
+  // FVTPL mark-to-market
+  const fvtplInsts = useMemo(
+    () => BOOK_INSTRUMENTS.filter((i) => i.classification === "FVTPL"),
+    [BOOK_INSTRUMENTS],
+  );
+  const totalFVTPLbsv = useMemo(
+    () =>
+      fvtplInsts.reduce((s, inst) => {
+        const idx = BOOK_INSTRUMENTS.indexOf(inst);
+        return s + (BOOK_VALUATIONS[idx]?.balanceSheetValueNGN ?? 0);
+      }, 0),
+    [fvtplInsts, BOOK_INSTRUMENTS, BOOK_VALUATIONS],
+  );
+
+  const LIQ_ROWS: LiqRow[] = useMemo(
+    () =>
+      matProfile.map((b) => ({
+        bucket: b.bucket,
+        count: b.count,
+        faceValue: b.faceValueNGN,
+        pct: b.faceValueNGN / totals.totalBSValueNGN,
+      })),
+    [matProfile, totals.totalBSValueNGN],
+  );
+
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-8">
       <div>

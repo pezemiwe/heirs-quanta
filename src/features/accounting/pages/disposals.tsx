@@ -1,10 +1,11 @@
 import { FileX } from "lucide-react";
 import {
-  BOOK_COMPUTED,
   fmtCompact,
+  useBookComputed,
 } from "../../../features/portfolio/engine/book-compute";
 
 export function Disposals() {
+  const { computed: BOOK_COMPUTED } = useBookComputed();
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>

@@ -14,9 +14,9 @@ import {
   type DataTableColumn,
 } from "../../../components/shared/data-table";
 import {
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 interface SectorRow {
@@ -35,6 +35,7 @@ type Row = {
 };
 
 export function Attribution() {
+  const { computed: BOOK_COMPUTED } = useBookComputed();
   const rows: Row[] = BOOK_COMPUTED.bySector
     .filter((s) => s.bsValueNGN > 0)
     .sort((a, b) => b.bsValueNGN - a.bsValueNGN) as unknown as Row[];

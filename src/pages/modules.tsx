@@ -3,6 +3,7 @@ import { useNavigate } from "react-router-dom";
 import { useInstrumentBook } from "../context/instrument-book";
 import { usePersona } from "../context/persona";
 import { getModuleAccess, type ModuleId } from "../context/permissions";
+import { NotificationBell } from "../components/shared/notification-bell";
 import {
   BarChart2,
   Calculator,
@@ -264,6 +265,7 @@ export function ModulesPage() {
 
           {/* User + logout */}
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <div className="hidden items-center gap-3 sm:flex">
               <div className="text-right">
                 <p className="text-sm font-semibold text-dark-gray">

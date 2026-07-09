@@ -18,6 +18,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 import { useValuation } from "../../valuation/store";
+import { useIFRS9 } from "../../ifrs9/store";
 import { fmtCompact, fmtPct } from "../engine/book-compute";
 import { EmptyState } from "../../../components/shared/empty-state";
 import { useInstrumentBook } from "../../../context/instrument-book";
@@ -35,6 +36,7 @@ interface Props {
 
 export function PortfolioDashboard({ persona }: Props) {
   const v = useValuation();
+  const ifrs9 = useIFRS9();
   const book = useInstrumentBook();
   const navigate = useNavigate();
   const hour = new Date().getHours();
@@ -92,7 +94,7 @@ export function PortfolioDashboard({ persona }: Props) {
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
             {[
               { label: "Total Portfolio Value", value: fmtCompact(computed!.totals.totalBSValueNGN), change: `${computed!.totalUnrealisedPL >= 0 ? "+" : ""}${fmtCompact(computed!.totalUnrealisedPL)}`, positive: computed!.totalUnrealisedPL >= 0, sub: "unrealised P&L", icon: <DollarSign className="h-5 w-5" />, accent: "#C8102E" },
-              { label: "Weighted Avg Yield", value: fmtPct(computed!.weightedYield), change: fmtCompact(computed!.totals.totalECLNGN), positive: true, sub: "ECL provision", icon: <Percent className="h-5 w-5" />, accent: "#1E3A5F" },
+              { label: "Weighted Avg Yield", value: fmtPct(computed!.weightedYield), change: fmtCompact(ifrs9.result.totals.impairmentLcy), positive: true, sub: "ECL provision", icon: <Percent className="h-5 w-5" />, accent: "#1E3A5F" },
               { label: "Total Instruments", value: String(computed!.totals.instruments), change: `${computed!.byClassification.length} IFRS 9 classes`, positive: true, sub: "across the book", icon: <BarChart2 className="h-5 w-5" />, accent: "#5C0000" },
               { label: "Annual Income (EIR)", value: fmtCompact(computed!.totalAnnualIncome), change: fmtCompact(computed!.totalAnnualIncome / 12), positive: true, sub: "monthly run rate", icon: <Activity className="h-5 w-5" />, accent: "#B30000" },
             ].map((k) => (
@@ -198,7 +200,7 @@ export function PortfolioDashboard({ persona }: Props) {
           <div className="rounded-xl border border-amber-200 bg-amber-50 p-4 flex flex-wrap gap-6">
             <div>
               <p className="text-xs font-semibold text-amber-800">IFRS 9 ECL Summary</p>
-              <p className="mt-0.5 text-xs text-amber-700">Total provision: <span className="font-bold">{fmtCompact(computed!.totals.totalECLNGN)}</span> Coverage: <span className="font-bold">{fmtPct(computed!.totals.totalECLNGN / computed!.totals.totalBSValueNGN)}</span></p>
+              <p className="mt-0.5 text-xs text-amber-700">Total provision: <span className="font-bold">{fmtCompact(ifrs9.result.totals.impairmentLcy)}</span> Coverage: <span className="font-bold">{fmtPct(ifrs9.result.totals.impairmentLcy / computed!.totals.totalBSValueNGN)}</span></p>
             </div>
             <div>
               <p className="text-xs font-semibold text-amber-800">Stage Distribution</p>

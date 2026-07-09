@@ -1,7 +1,6 @@
+import { useMemo } from "react";
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
+  useBookComputed,
   fmtCompact,
   fmtPct,
 } from "../../../features/portfolio/engine/book-compute";
@@ -15,35 +14,51 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
-const totals = BOOK_COMPUTED.totals;
-const byClass = BOOK_COMPUTED.byClassification;
-const bySector = BOOK_COMPUTED.bySector;
-const matProfile = BOOK_COMPUTED.maturityProfile;
-
-const wEIR =
-  BOOK_VALUATIONS.reduce((s, v) => s + v.eir * v.balanceSheetValueNGN, 0) /
-  (totals.totalBSValueNGN || 1);
-
-const wDur =
-  BOOK_VALUATIONS.reduce(
-    (s, v) => s + v.risk.modifiedDuration * v.balanceSheetValueNGN,
-    0,
-  ) / (totals.totalBSValueNGN || 1);
-
-const totalAnnualIncome = BOOK_VALUATIONS.reduce(
-  (s, v) => s + v.annualEIRIncome,
-  0,
-);
-
-const topHoldings = [...BOOK_VALUATIONS]
-  .map((v, i) => ({
-    name: BOOK_INSTRUMENTS[i].name,
-    bsv: v.balanceSheetValueNGN,
-  }))
-  .sort((a, b) => b.bsv - a.bsv)
-  .slice(0, 10);
-
 export function InvestmentCommittee() {
+  const {
+    computed: BOOK_COMPUTED,
+    instruments: BOOK_INSTRUMENTS,
+    valuations: BOOK_VALUATIONS,
+  } = useBookComputed();
+
+  const totals = BOOK_COMPUTED.totals;
+  const byClass = BOOK_COMPUTED.byClassification;
+  const bySector = BOOK_COMPUTED.bySector;
+  const matProfile = BOOK_COMPUTED.maturityProfile;
+
+  const wEIR = useMemo(
+    () =>
+      BOOK_VALUATIONS.reduce((s, v) => s + v.eir * v.balanceSheetValueNGN, 0) /
+      (totals.totalBSValueNGN || 1),
+    [BOOK_VALUATIONS, totals.totalBSValueNGN],
+  );
+
+  const wDur = useMemo(
+    () =>
+      BOOK_VALUATIONS.reduce(
+        (s, v) => s + v.risk.modifiedDuration * v.balanceSheetValueNGN,
+        0,
+      ) / (totals.totalBSValueNGN || 1),
+    [BOOK_VALUATIONS, totals.totalBSValueNGN],
+  );
+
+  const totalAnnualIncome = useMemo(
+    () => BOOK_VALUATIONS.reduce((s, v) => s + v.annualEIRIncome, 0),
+    [BOOK_VALUATIONS],
+  );
+
+  const topHoldings = useMemo(
+    () =>
+      [...BOOK_VALUATIONS]
+        .map((v, i) => ({
+          name: BOOK_INSTRUMENTS[i].name,
+          bsv: v.balanceSheetValueNGN,
+        }))
+        .sort((a, b) => b.bsv - a.bsv)
+        .slice(0, 10),
+    [BOOK_VALUATIONS, BOOK_INSTRUMENTS],
+  );
+
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-8">
       <div className="flex items-start justify-between">

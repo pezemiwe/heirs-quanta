@@ -1,172 +1,415 @@
-import * as XLSX from "xlsx";
-import { useCallback, useEffect, useRef, useState, useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useNavigate } from "react-router-dom";
 import {
   Search,
   Filter,
-  Download,
-  Pencil,
-  Trash2,
-  X,
-  ChevronRight,
   ArrowRight,
+  ChevronRight,
+  ShieldAlert,
+  XCircle,
+  RotateCcw,
+  CheckCircle2,
+  PlayCircle,
+  ArrowUpDown,
+  Bookmark,
+  BookmarkPlus,
+  Trash2,
 } from "lucide-react";
 import {
   DataTable,
   type DataTableColumn,
 } from "../../../components/shared/data-table";
 import { SectionCard } from "../../../components/shared/section-card";
-import { Badge } from "../../../components/shared/badge";
+import { Badge, type BadgeVariant } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
-import { AcronymTip } from "../../../components/shared/acronym-tip";
-import { RowDetailModal } from "../../../components/shared/row-detail-modal";
-import { useInstrumentBook } from "../../../context/instrument-book";
+import { Modal } from "../../../components/shared/modal";
+import { usePersona } from "../../../context/persona";
+import { useGovernance } from "../../../context/governance";
+import { useWorkflow } from "../../workflow/store";
+import { DealSlipWorkspace } from "../../workflow/components/deal-slip-workspace";
+import { ChecksPanel } from "../../workflow/components/checks-panel";
+import { SettlementPanel } from "../../workflow/components/settlement-panel";
+import { StatusTimeline } from "../../workflow/components/status-timeline";
+import { LimitAlerts, LimitAlertsSummary } from "../../workflow/components/limit-alerts";
+import { isEditable } from "../../workflow/engine/transitions";
+import type { DealSlip, DealSlipStatus, RegisterEntry } from "../../workflow/types";
 import {
-  fmtCompact,
-  fmtPct,
-  fmtDate,
-} from "../../portfolio/engine/book-compute";
-import type { Instrument } from "../../portfolio/engine/book-compute";
+  useSavedBlotterViews,
+  type BlotterSortField,
+  type SortDirection,
+} from "../hooks/use-saved-views";
 
-const CLF_COLOR: Record<string, "info" | "success" | "warning"> = {
-  AC: "info",
-  FVOCI: "success",
-  FVTPL: "warning",
+const STATUS_BADGE: Record<DealSlipStatus, BadgeVariant> = {
+  Draft: "neutral",
+  Submitted: "info",
+  "Under Review": "warning",
+  "Returned for Amendment": "warning",
+  Rejected: "danger",
+  Approved: "success",
+  "Pending Settlement": "brand",
+  Settled: "success",
+  Active: "active",
+  "Matured/Sold/Rolled Over": "neutral",
 };
 
-type Row = Instrument & Record<string, unknown>;
+const fmtCompact = (n: number): string => {
+  if (!isFinite(n)) return "—";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (abs >= 1e9) return `${sign}₦${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${sign}₦${(abs / 1e6).toFixed(2)}M`;
+  if (abs >= 1e3) return `${sign}₦${(abs / 1e3).toFixed(2)}K`;
+  return `${sign}₦${abs.toFixed(0)}`;
+};
+
+const fmtDate = (iso: string) => {
+  if (!iso) return "—";
+  const d = new Date(iso + "T00:00:00Z");
+  if (isNaN(d.getTime())) return iso;
+  return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
+};
+
+type Row = DealSlip & Record<string, unknown>;
+
+const registerCols: DataTableColumn<RegisterEntry & Record<string, unknown>>[] = [
+  { key: "id", header: "Register Ref", width: "120px", render: (r) => <span className="font-mono text-xs">{r.id}</span> },
+  { key: "dealSlipId", header: "Deal Slip", render: (r) => <span className="font-mono text-xs">{r.dealSlipId}</span> },
+  { key: "instrumentName", header: "Instrument" },
+  { key: "issuer", header: "Issuer" },
+  { key: "faceValue", header: "Face Value", align: "right", render: (r) => fmtCompact(r.faceValue) },
+  {
+    key: "status",
+    header: "Status",
+    render: (r) => (
+      <Badge variant={r.status === "Active" ? "active" : "neutral"} size="sm">
+        {r.status}
+      </Badge>
+    ),
+  },
+  { key: "settledBy", header: "Settled By", render: (r) => r.settledBy.name },
+];
 
 /* ─────────────────────────────────────────────────────────────
-   Trade Blotter
+   Deal slip detail — composes workspace / checks / settlement / timeline
+   and the persona-and-status-gated workflow actions.
+   ───────────────────────────────────────────────────────────── */
+function DealSlipDetail({ slip }: { slip: DealSlip }) {
+  const { persona } = usePersona();
+  const { hasPermission } = useGovernance();
+  const { beginReview, approveDealSlip, rejectDealSlip, returnForAmendment, closePosition } = useWorkflow();
+  const [reason, setReason] = useState("");
+  const [pendingAction, setPendingAction] = useState<"reject" | "return" | "close" | null>(null);
+  const [error, setError] = useState<string | null>(null);
+
+  const canReview = hasPermission(persona.role, "deal.review");
+  const canApprove = hasPermission(persona.role, "deal.approve");
+  const canReject = hasPermission(persona.role, "deal.reject");
+  const canClose = hasPermission(persona.role, "portfolio.manage");
+
+  const act = (fn: () => void) => {
+    setError(null);
+    try {
+      fn();
+      setPendingAction(null);
+      setReason("");
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  };
+
+  return (
+    <div className="space-y-6">
+      <div className="flex flex-wrap items-center justify-between gap-3">
+        <div>
+          <div className="flex items-center gap-2">
+            <span className="font-mono text-sm font-semibold text-dark-gray">{slip.id}</span>
+            <Badge variant={STATUS_BADGE[slip.status]} size="md">
+              {slip.status}
+            </Badge>
+          </div>
+          <p className="mt-1 text-sm text-dark-gray/60">
+            {slip.economics.instrumentName} · {slip.economics.issuer} · Booked by {slip.createdBy.name}
+          </p>
+        </div>
+      </div>
+
+      {error && (
+        <div className="flex items-start gap-2 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+          <ShieldAlert className="mt-0.5 h-4 w-4 shrink-0" /> {error}
+        </div>
+      )}
+
+      <LimitAlerts slip={slip} />
+
+      {/* Workflow actions for the current status */}
+      {slip.status === "Submitted" && (
+        <div className="flex items-center justify-between rounded-lg border border-sky-200 bg-sky-50 px-4 py-3">
+          <p className="text-sm text-sky-800">Awaiting a reviewer to begin control review.</p>
+          <button
+            type="button"
+            disabled={!canReview}
+            onClick={() => act(() => beginReview(slip.id))}
+            title={!canReview ? `${persona.role} does not have deal.review permission` : undefined}
+            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-semibold text-white disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            <PlayCircle className="h-4 w-4" /> Begin Review
+          </button>
+        </div>
+      )}
+
+      {slip.status === "Under Review" && (
+        <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
+          <p className="mb-3 text-sm text-amber-800">Reviewer decision — approval requires all control checks to pass or be cleared.</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <button
+              type="button"
+              disabled={!canApprove}
+              onClick={() => act(() => approveDealSlip(slip.id))}
+              title={!canApprove ? `${persona.role} does not have deal.approve permission` : undefined}
+              className="flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2 text-sm font-semibold text-white hover:bg-emerald-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <CheckCircle2 className="h-4 w-4" /> Approve
+            </button>
+            <button
+              type="button"
+              disabled={!canReject}
+              onClick={() => setPendingAction("return")}
+              className="flex items-center gap-2 rounded-lg border border-orange-300 bg-orange-50 px-4 py-2 text-sm font-semibold text-orange-700 hover:bg-orange-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <RotateCcw className="h-4 w-4" /> Return for Amendment
+            </button>
+            <button
+              type="button"
+              disabled={!canReject}
+              onClick={() => setPendingAction("reject")}
+              className="flex items-center gap-2 rounded-lg border border-red-300 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              <XCircle className="h-4 w-4" /> Reject
+            </button>
+          </div>
+          {(pendingAction === "reject" || pendingAction === "return") && (
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <input
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder={pendingAction === "reject" ? "Reason for rejection (required)" : "Reason for returning to trader (required)"}
+                className="min-w-64 flex-1 rounded-md border border-border bg-white px-2.5 py-1.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+              <button
+                type="button"
+                disabled={!reason.trim()}
+                onClick={() =>
+                  act(() =>
+                    pendingAction === "reject" ? rejectDealSlip(slip.id, reason.trim()) : returnForAmendment(slip.id, reason.trim()),
+                  )
+                }
+                className="rounded-md bg-primary px-3 py-1.5 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Confirm
+              </button>
+              <button type="button" onClick={() => setPendingAction(null)} className="text-xs text-dark-gray/50 hover:text-dark-gray">
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {slip.status === "Active" && (
+        <div className="rounded-lg border border-border bg-surface-muted px-4 py-3">
+          {pendingAction !== "close" ? (
+            <div className="flex items-center justify-between">
+              <p className="text-sm text-dark-gray/60">Position is live in the investment register.</p>
+              <button
+                type="button"
+                disabled={!canClose}
+                onClick={() => setPendingAction("close")}
+                className="rounded-lg border border-border px-4 py-2 text-sm font-medium text-dark-gray hover:border-primary hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+              >
+                Close Position (Matured / Sold / Rolled Over)
+              </button>
+            </div>
+          ) : (
+            <div className="flex flex-wrap items-center gap-2">
+              <input
+                value={reason}
+                onChange={(e) => setReason(e.target.value)}
+                placeholder="Close-out reason"
+                className="min-w-56 flex-1 rounded-md border border-border bg-white px-2.5 py-1.5 text-sm outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+              {(["Matured", "Sold", "Rolled Over"] as const).map((outcome) => (
+                <button
+                  key={outcome}
+                  type="button"
+                  onClick={() => act(() => closePosition(slip.id, outcome, reason.trim() || outcome))}
+                  className="rounded-md border border-border bg-white px-3 py-1.5 text-xs font-semibold text-dark-gray hover:border-primary hover:text-primary"
+                >
+                  {outcome}
+                </button>
+              ))}
+              <button type="button" onClick={() => setPendingAction(null)} className="text-xs text-dark-gray/50 hover:text-dark-gray">
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+
+      <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
+        <div className="space-y-6">
+          <SectionCard title="Deal Terms" description={isEditable(slip.status) ? "Editable while Draft / Returned for Amendment" : "Locked"}>
+            <DealSlipWorkspace slip={slip} />
+          </SectionCard>
+        </div>
+        <div className="space-y-6">
+          <SectionCard title="Control Checks">
+            <ChecksPanel slip={slip} canClear={canApprove} />
+          </SectionCard>
+          <SectionCard title="Settlement">
+            <SettlementPanel slip={slip} />
+          </SectionCard>
+          <SectionCard title="Status Timeline">
+            <StatusTimeline slip={slip} />
+          </SectionCard>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+/* ─────────────────────────────────────────────────────────────
+   Trade Blotter — the full deal slip pipeline + investment register
    ───────────────────────────────────────────────────────────── */
 
 export function DealBlotter() {
   const navigate = useNavigate();
-  const book = useInstrumentBook();
-  const [instruments, setInstruments] = useState<Instrument[]>([]);
+  const { persona } = usePersona();
+  const { dealSlips, register } = useWorkflow();
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("All");
-  const [clfFilter, setClfFilter] = useState("All");
-  const [selected, setSelected] = useState<Row | null>(null);
-  const [editing, setEditing] = useState<Row | null>(null);
-  const [deleting, setDeleting] = useState<Row | null>(null);
+  const [statusFilter, setStatusFilter] = useState<"All" | DealSlipStatus>("All");
+  const [sortBy, setSortBy] = useState<BlotterSortField>("purchaseDate");
+  const [sortDir, setSortDir] = useState<SortDirection>("desc");
+  const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [viewName, setViewName] = useState("");
+  const [showSaveView, setShowSaveView] = useState(false);
+  const { views: savedViews, saveView, deleteView } = useSavedBlotterViews(persona.name);
+  // Derive the selected slip live from the store on every render, rather than
+  // holding a stale snapshot — otherwise the modal wouldn't reflect a status
+  // change (e.g. Begin Review) made from inside itself.
+  const selected = selectedId ? (dealSlips.find((s) => s.id === selectedId) ?? null) : null;
 
-  useEffect(() => {
-    setInstruments(book.instruments as Instrument[]);
-  }, [book.instruments]);
-
-  const types = useMemo(
-    () => ["All", ...Array.from(new Set(instruments.map((i) => i.instrumentType))).sort()],
-    [instruments],
-  );
-
-  const rows = useMemo<Row[]>(() => {
-    return instruments.filter((i) => {
-      const matchType = typeFilter === "All" || i.instrumentType === typeFilter;
-      const matchClf = clfFilter === "All" || i.classification === clfFilter;
-      const q = search.toLowerCase();
-      return matchType && matchClf && (!q || i.name.toLowerCase().includes(q) || i.id.toLowerCase().includes(q) || i.issuer.toLowerCase().includes(q));
-    }) as Row[];
-  }, [instruments, search, typeFilter, clfFilter]);
-
-  const totals = useMemo(
-    () => ({
-      totalFaceValueNGN: instruments.reduce((sum, instrument) => sum + instrument.faceValue, 0),
-      totalBSValueNGN: instruments.reduce((sum, instrument) => sum + instrument.purchasePrice, 0),
-    }),
-    [instruments],
-  );
-
-  const cols: DataTableColumn<Row>[] = [
-    { key: "id", header: "ID", width: "90px" },
-    { key: "name", header: "Instrument Name" },
-    { key: "instrumentType", header: "Type", render: (r) => <Badge variant="neutral" size="sm">{r.instrumentType}</Badge> },
-    { key: "issuer", header: "Issuer / Counterparty" },
-    {
-      key: "classification", header: "Classification",
-      render: (r) => (
-        <AcronymTip term={r.classification}>
-          <Badge variant={CLF_COLOR[r.classification]} size="sm">{r.classification}</Badge>
-        </AcronymTip>
-      ),
-    },
-    { key: "currency", header: "CCY", width: "60px" },
-    { key: "faceValue", header: "Face Value", align: "right", render: (r) => fmtCompact(r.faceValue) },
-    {
-      key: "couponRate", header: "Coupon", align: "right",
-      render: (r) => r.couponRate > 0 ? fmtPct(r.couponRate) : <span className="text-gray-400">Disc.</span>,
-    },
-    { key: "couponFrequency", header: "Freq", width: "80px" },
-    { key: "purchaseDate", header: "Purchase", render: (r) => fmtDate(r.purchaseDate) },
-    { key: "maturityDate", header: "Maturity", render: (r) => fmtDate(r.maturityDate) },
-    {
-      key: "impairmentStage", header: "Stage",
-      render: (r) => {
-        const stage = r.impairmentStage ?? "N/A";
-        const v = stage === "Stage 1" ? "stage1" : stage === "Stage 2" ? "stage2" : stage === "Stage 3" ? "stage3" : "neutral";
-        return <Badge variant={v as never} size="sm">{stage}</Badge>;
-      },
-    },
-    { key: "status", header: "Status", render: (r) => <Badge variant="performing" size="sm">{r.status}</Badge> },
-    {
-      key: "_actions" as never, header: "", width: "72px",
-      render: (r) => (
-        <div className="flex items-center justify-end gap-1" onClick={(e) => e.stopPropagation()}>
-          <button onClick={() => setEditing(r)} className="rounded p-1 text-gray-400 hover:bg-gray-100 hover:text-primary" title="Edit">
-            <Pencil className="h-3.5 w-3.5" />
-          </button>
-          <button onClick={() => setDeleting(r)} className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-danger" title="Delete">
-            <Trash2 className="h-3.5 w-3.5" />
-          </button>
-        </div>
-      ),
-    },
+  const statuses: (DealSlipStatus | "All")[] = [
+    "All",
+    "Draft",
+    "Submitted",
+    "Under Review",
+    "Returned for Amendment",
+    "Approved",
+    "Pending Settlement",
+    "Settled",
+    "Active",
+    "Rejected",
+    "Matured/Sold/Rolled Over",
   ];
 
-  const exportXlsx = () => {
-    const headers = ["ID","Instrument","Issuer","Type","Sector","Classification","Currency","Face Value","Purchase Price","Purchase Date","Maturity Date","Coupon Rate %","Coupon Frequency","Status","Stage"];
-    const data = rows.map((r) => [r.id,r.name,r.issuer,r.instrumentType,r.sector,r.classification,r.currency,r.faceValue,r.purchasePrice,r.purchaseDate,r.maturityDate,r.couponRate > 0 ? +(r.couponRate * 100).toFixed(4) : 0,r.couponFrequency,r.status,r.impairmentStage ?? ""]);
-    const ws = XLSX.utils.aoa_to_sheet([headers, ...data]);
-    const wb = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(wb, ws, "Trade Blotter");
-    XLSX.writeFile(wb, `trade-blotter-${new Date().toISOString().slice(0, 10)}.xlsx`);
+  const SORT_OPTIONS: { value: BlotterSortField; label: string }[] = [
+    { value: "purchaseDate", label: "Trade Date" },
+    { value: "faceValue", label: "Face Value" },
+    { value: "status", label: "Status" },
+    { value: "instrumentName", label: "Instrument Name" },
+  ];
+
+  const applyView = (filters: { statusFilter: "All" | DealSlipStatus; search: string; sortBy: BlotterSortField; sortDir: SortDirection }) => {
+    setStatusFilter(filters.statusFilter);
+    setSearch(filters.search);
+    setSortBy(filters.sortBy);
+    setSortDir(filters.sortDir);
   };
 
-  const sourceLabel =
-    book.source === "uploaded"
-      ? (book.importState.fileName ?? "Uploaded book")
-      : book.source === "captured"
-        ? "Captured in New Booking"
-      : "No book loaded";
+  const rows = useMemo<Row[]>(() => {
+    const filtered = dealSlips.filter((s) => {
+      const matchStatus = statusFilter === "All" || s.status === statusFilter;
+      const q = search.toLowerCase();
+      const matchSearch =
+        !q ||
+        s.economics.instrumentName.toLowerCase().includes(q) ||
+        s.id.toLowerCase().includes(q) ||
+        s.economics.issuer.toLowerCase().includes(q);
+      return matchStatus && matchSearch;
+    });
+    const dir = sortDir === "asc" ? 1 : -1;
+    const sorted = [...filtered].sort((a, b) => {
+      switch (sortBy) {
+        case "faceValue":
+          return (a.economics.faceValue - b.economics.faceValue) * dir;
+        case "status":
+          return a.status.localeCompare(b.status) * dir;
+        case "instrumentName":
+          return a.economics.instrumentName.localeCompare(b.economics.instrumentName) * dir;
+        case "purchaseDate":
+        default:
+          return a.economics.purchaseDate.localeCompare(b.economics.purchaseDate) * dir;
+      }
+    });
+    return sorted as Row[];
+  }, [dealSlips, search, statusFilter, sortBy, sortDir]);
+
+  const inWorkflow = dealSlips.filter(
+    (s) => !["Settled", "Active", "Rejected", "Matured/Sold/Rolled Over"].includes(s.status),
+  ).length;
+  const activePositions = register.filter((r) => r.status === "Active").length;
+  const registerFaceValue = register.filter((r) => r.status === "Active").reduce((s, r) => s + r.faceValue, 0);
+
+  const cols: DataTableColumn<Row>[] = [
+    { key: "id", header: "Ref", width: "110px", render: (r) => <span className="font-mono text-xs">{r.id}</span> },
+    { key: "instrumentName" as never, header: "Instrument", render: (r) => r.economics.instrumentName },
+    {
+      key: "assetClass" as never,
+      header: "Asset Class",
+      render: (r) => (
+        <Badge variant="neutral" size="sm">
+          {r.economics.assetClass}
+        </Badge>
+      ),
+    },
+    { key: "issuer" as never, header: "Issuer / Counterparty", render: (r) => r.economics.issuer },
+    {
+      key: "faceValue" as never,
+      header: "Face Value",
+      align: "right",
+      render: (r) => fmtCompact(r.economics.faceValue),
+    },
+    { key: "purchaseDate" as never, header: "Trade Date", render: (r) => fmtDate(r.economics.purchaseDate) },
+    {
+      key: "status",
+      header: "Status",
+      render: (r) => (
+        <Badge variant={STATUS_BADGE[r.status]} size="sm">
+          {r.status}
+        </Badge>
+      ),
+    },
+    { key: "createdBy" as never, header: "Booked By", render: (r) => r.createdBy.name },
+  ];
 
   return (
     <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">Trade Blotter</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">Trade Blotter — Deal Slip Pipeline</h1>
           <p className="mt-1 text-sm text-dark-gray/60">
-            {rows.length} of {instruments.length} instruments ·{" "}
-            <span className={`font-medium ${book.source === "uploaded" ? "text-success" : "text-dark-gray/50"}`}>{sourceLabel}</span>
+            {rows.length} of {dealSlips.length} deal slips · every transaction here started life as a deal slip
           </p>
         </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => navigate("/deal-capture/new-booking")}
-            className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
-          >
-            <ArrowRight className="h-4 w-4" />
-            New Booking
-          </button>
-          <button
-            onClick={exportXlsx}
-            className="flex items-center gap-2 rounded-lg border border-border bg-surface px-4 py-2 text-sm font-medium text-dark-gray/70 hover:border-primary hover:text-primary"
-          >
-            <Download className="h-4 w-4" /> Export
-          </button>
-        </div>
+        <button
+          onClick={() => navigate("/deal-capture/new-booking")}
+          className="flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
+        >
+          <ArrowRight className="h-4 w-4" /> New Deal Slip
+        </button>
       </div>
 
-      {!book.hasData && (
+      {dealSlips.length === 0 && (
         <div
           onClick={() => navigate("/deal-capture/new-booking")}
           className="flex cursor-pointer items-center gap-4 rounded-xl border-2 border-dashed border-primary/30 bg-primary/5 p-5 hover:border-primary/50 transition-colors"
@@ -175,159 +418,154 @@ export function DealBlotter() {
             <ArrowRight className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-primary">Go to New Booking to load your portfolio book</p>
-            <p className="text-xs text-dark-gray/50">Use New Booking for either manual deal capture or workbook upload, then return here to review the blotter.</p>
+            <p className="text-sm font-semibold text-primary">No deal slips yet — capture your first deal</p>
+            <p className="text-xs text-dark-gray/50">
+              Every position in the investment register starts as a deal slip that walks through review, approval, and settlement.
+            </p>
           </div>
           <ChevronRight className="ml-auto h-5 w-5 text-primary/60 shrink-0" />
         </div>
       )}
 
+      <LimitAlertsSummary onSelect={(id) => setSelectedId(id)} />
+
       <StatCardGrid>
-        <StatCard title="Total Instruments" value={String(instruments.length)} subtitle={book.source === "uploaded" ? "Imported from workbook" : book.source === "captured" ? "Captured in New Booking" : "Shared book is empty"} variant="highlight" />
-        <StatCard title="Total Face Value" value={fmtCompact(totals.totalFaceValueNGN)} subtitle="NGN equivalent" variant="default" />
-        <StatCard title="Total Book Value" value={fmtCompact(totals.totalBSValueNGN)} subtitle="Balance-sheet carrying amount" variant="default" />
-        <StatCard title="Filtered Rows" value={String(rows.length)} subtitle="After current filters" variant="default" />
+        <StatCard title="Total Deal Slips" value={String(dealSlips.length)} subtitle="All statuses" variant="highlight" />
+        <StatCard title="In Workflow" value={String(inWorkflow)} subtitle="Not yet settled, rejected, or closed" variant="default" />
+        <StatCard title="Active Positions" value={String(activePositions)} subtitle="Investment register — settled deals only" variant="default" />
+        <StatCard title="Register Face Value" value={fmtCompact(registerFaceValue)} subtitle="Sum of active positions" variant="default" />
       </StatCardGrid>
 
-      <SectionCard title="Instrument Book">
-        <div className="mb-4 flex flex-wrap gap-3">
+      <SectionCard title="Deal Slips" description="Click a row to review, approve, settle, or amend">
+        <div className="mb-3 flex flex-wrap items-center gap-3">
           <div className="relative flex-1 min-w-56">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="Search by ID, name or issuer…"
+              placeholder="Search by ref, instrument, or issuer…"
               className="w-full rounded-lg border border-border bg-white py-2 pl-9 pr-4 text-sm text-dark-gray placeholder-gray-400 focus:border-primary focus:outline-none"
             />
           </div>
           <div className="flex items-center gap-2">
             <Filter className="h-4 w-4 text-gray-400" />
-            <select value={typeFilter} onChange={(e) => setTypeFilter(e.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray focus:border-primary focus:outline-none">
-              {types.map((t) => <option key={t}>{t}</option>)}
-            </select>
-            <select value={clfFilter} onChange={(e) => setClfFilter(e.target.value)} className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray focus:border-primary focus:outline-none">
-              <option value="All">All Classifications</option>
-              <option value="AC">AC — Amortised Cost</option>
-              <option value="FVOCI">FVOCI — Fair Value (OCI)</option>
-              <option value="FVTPL">FVTPL — Fair Value (P&L)</option>
+            <select
+              value={statusFilter}
+              onChange={(e) => setStatusFilter(e.target.value as typeof statusFilter)}
+              className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray focus:border-primary focus:outline-none"
+            >
+              {statuses.map((s) => (
+                <option key={s}>{s}</option>
+              ))}
             </select>
           </div>
+          <div className="flex items-center gap-2">
+            <ArrowUpDown className="h-4 w-4 text-gray-400" />
+            <select
+              value={sortBy}
+              onChange={(e) => setSortBy(e.target.value as BlotterSortField)}
+              className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray focus:border-primary focus:outline-none"
+            >
+              {SORT_OPTIONS.map((o) => (
+                <option key={o.value} value={o.value}>
+                  Sort: {o.label}
+                </option>
+              ))}
+            </select>
+            <button
+              type="button"
+              onClick={() => setSortDir((d) => (d === "asc" ? "desc" : "asc"))}
+              title={sortDir === "asc" ? "Ascending" : "Descending"}
+              className="rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray hover:border-primary hover:text-primary"
+            >
+              {sortDir === "asc" ? "↑" : "↓"}
+            </button>
+          </div>
         </div>
-        <DataTable<Row> columns={cols} data={rows} keyExtractor={(r) => `${String(r.importBatchId ?? "manual")}-${r.id}`} emptyMessage="No instruments match your filters" pageSize={20} onRowClick={setSelected} />
-      </SectionCard>
-      <RowDetailModal
-        isOpen={selected !== null}
-        onClose={() => setSelected(null)}
-        title={selected?.name ?? "Instrument Detail"}
-        subtitle={selected?.id}
-        fields={selected ? [
-          { label: "ID", value: selected.id },
-          { label: "Type", value: <Badge variant="neutral" size="sm">{selected.instrumentType}</Badge> },
-          { label: "Issuer / Counterparty", value: selected.issuer },
-          { label: "Classification", value: <AcronymTip term={selected.classification}><Badge variant={CLF_COLOR[selected.classification]} size="sm">{selected.classification}</Badge></AcronymTip> },
-          { label: "Currency", value: selected.currency },
-          { label: "Face Value", value: fmtCompact(selected.faceValue) },
-          { label: "Coupon Rate", value: selected.couponRate > 0 ? fmtPct(selected.couponRate) : "Discount" },
-          { label: "Coupon Frequency", value: selected.couponFrequency },
-          { label: "Purchase Date", value: fmtDate(selected.purchaseDate) },
-          { label: "Maturity Date", value: fmtDate(selected.maturityDate) },
-          { label: "Stage", value: selected.impairmentStage ?? "N/A" },
-          { label: "Status", value: <Badge variant="performing" size="sm">{selected.status}</Badge> },
-        ] : []}
-      />
 
-      {editing && (
-        <EditBlotterDrawer
-          row={editing}
-          onSave={(patch) => { setInstruments((prev) => prev.map((i) => (i.id === editing.id ? { ...i, ...patch } : i))); setEditing(null); }}
-          onClose={() => setEditing(null)}
-        />
-      )}
-
-      {deleting && (
-        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40" onClick={() => setDeleting(null)}>
-          <div className="w-full max-w-sm rounded-2xl bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-            <h3 className="text-base font-semibold text-dark-gray">Remove Trade</h3>
-            <p className="mt-2 text-sm text-gray-500">
-              Remove <span className="font-medium text-dark-gray">{String(deleting.name)}</span> ({String(deleting.id)}) from the blotter?
-            </p>
-            <div className="mt-5 flex justify-end gap-2">
-              <button onClick={() => setDeleting(null)} className="rounded-lg border border-border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
+        {/* Saved views — persisted filter/sort presets per user */}
+        <div className="mb-4 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
+          <Bookmark className="h-3.5 w-3.5 text-gray-400" />
+          <span className="text-xs font-medium text-dark-gray/50">Saved views:</span>
+          {savedViews.length === 0 && !showSaveView && (
+            <span className="text-xs text-dark-gray/35">None yet</span>
+          )}
+          {savedViews.map((v) => (
+            <span
+              key={v.id}
+              className="flex items-center gap-1.5 rounded-full border border-border bg-white pl-3 pr-1.5 py-1 text-xs text-dark-gray hover:border-primary"
+            >
+              <button type="button" onClick={() => applyView(v.filters)} className="font-medium hover:text-primary">
+                {v.name}
+              </button>
               <button
-                onClick={() => { book.removeInstrument(String(deleting.id), typeof deleting.importBatchId === "string" ? deleting.importBatchId : undefined); setDeleting(null); }}
-                className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
-              >Remove</button>
+                type="button"
+                onClick={() => deleteView(v.id)}
+                title="Delete this saved view"
+                className="rounded p-0.5 text-gray-400 hover:bg-red-50 hover:text-danger"
+              >
+                <Trash2 className="h-3 w-3" />
+              </button>
+            </span>
+          ))}
+          {!showSaveView ? (
+            <button
+              type="button"
+              onClick={() => setShowSaveView(true)}
+              className="flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+            >
+              <BookmarkPlus className="h-3.5 w-3.5" /> Save current view
+            </button>
+          ) : (
+            <div className="flex items-center gap-2">
+              <input
+                value={viewName}
+                onChange={(e) => setViewName(e.target.value)}
+                placeholder="View name"
+                className="rounded-md border border-border bg-white px-2 py-1 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary"
+              />
+              <button
+                type="button"
+                disabled={!viewName.trim()}
+                onClick={() => {
+                  saveView(viewName.trim(), { statusFilter, search, sortBy, sortDir });
+                  setViewName("");
+                  setShowSaveView(false);
+                }}
+                className="rounded-md bg-primary px-2.5 py-1 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-40"
+              >
+                Save
+              </button>
+              <button type="button" onClick={() => setShowSaveView(false)} className="text-xs text-dark-gray/50 hover:text-dark-gray">
+                Cancel
+              </button>
             </div>
-          </div>
+          )}
         </div>
-      )}
-    </div>
-  );
-}
 
-/* ─── edit blotter drawer ───────────────────────────────── */
-const inputCls = "w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary";
+        <DataTable<Row>
+          columns={cols}
+          data={rows}
+          keyExtractor={(r) => r.id}
+          emptyMessage="No deal slips match your filters"
+          pageSize={20}
+          onRowClick={(r) => setSelectedId(r.id)}
+        />
+      </SectionCard>
 
-function EditBlotterDrawer({ row, onSave, onClose }: { row: Row; onSave: (patch: Partial<Instrument>) => void; onClose: () => void }) {
-  const [name, setName] = useState(String(row.name ?? ""));
-  const [issuer, setIssuer] = useState(String(row.issuer ?? ""));
-  const [faceValue, setFaceValue] = useState(Number(row.faceValue ?? 0));
-  const [couponRate, setCouponRate] = useState(Number(row.couponRate ?? 0));
-  const [stage, setStage] = useState(String(row.impairmentStage ?? "Stage 1"));
-  const [status, setStatus] = useState(String(row.status ?? "Active"));
+      <SectionCard title="Investment Register" description="Single source of truth for active positions — only ever gains an entry when a deal slip reaches Settled">
+        <DataTable<RegisterEntry & Record<string, unknown>>
+          columns={registerCols}
+          data={register as (RegisterEntry & Record<string, unknown>)[]}
+          keyExtractor={(r) => r.id}
+          emptyMessage="No settled positions yet — the register only fills once a deal slip is Settled"
+          pageSize={10}
+        />
+      </SectionCard>
 
-  return (
-    <div className="fixed inset-0 z-50 flex justify-end bg-black/40" onClick={onClose}>
-      <div className="h-full w-full max-w-md overflow-y-auto bg-white p-6 shadow-2xl" onClick={(e) => e.stopPropagation()}>
-        <div className="mb-5 flex items-start justify-between">
-          <div>
-            <h3 className="text-base font-semibold text-dark-gray">Edit Trade</h3>
-            <p className="mt-0.5 text-xs text-gray-500">{String(row.id)}</p>
-          </div>
-          <button onClick={onClose} className="rounded-md p-1 text-gray-400 hover:bg-gray-100"><X className="h-4 w-4" /></button>
-        </div>
-        <div className="space-y-3">
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Instrument Name</label>
-            <input value={name} onChange={(e) => setName(e.target.value)} className={inputCls} />
-          </div>
-          <div>
-            <label className="mb-1 block text-xs font-medium text-gray-500">Issuer / Counterparty</label>
-            <input value={issuer} onChange={(e) => setIssuer(e.target.value)} className={inputCls} />
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Face Value (NGN)</label>
-              <input type="number" value={faceValue} onChange={(e) => setFaceValue(Number(e.target.value))} className={inputCls} />
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Coupon Rate</label>
-              <input type="number" step="0.001" value={couponRate} onChange={(e) => setCouponRate(Number(e.target.value))} className={inputCls} />
-            </div>
-          </div>
-          <div className="grid grid-cols-2 gap-3">
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Impairment Stage</label>
-              <select value={stage} onChange={(e) => setStage(e.target.value)} className={inputCls}>
-                <option>Stage 1</option><option>Stage 2</option><option>Stage 3</option><option>N/A</option>
-              </select>
-            </div>
-            <div>
-              <label className="mb-1 block text-xs font-medium text-gray-500">Status</label>
-              <select value={status} onChange={(e) => setStatus(e.target.value)} className={inputCls}>
-                <option>Active</option><option>Matured</option><option>Disposed</option>
-              </select>
-            </div>
-          </div>
-        </div>
-        <div className="mt-6 flex justify-end gap-2">
-          <button onClick={onClose} className="rounded-lg border border-border px-4 py-2 text-sm text-gray-600 hover:bg-gray-50">Cancel</button>
-          <button
-            onClick={() => onSave({ name, issuer, faceValue, couponRate, impairmentStage: stage as never, status: status as never })}
-            className="rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white hover:bg-mid-red"
-          >Save Changes</button>
-        </div>
-      </div>
+      <Modal isOpen={selected !== null} onClose={() => setSelectedId(null)} title={selected ? `Deal Slip ${selected.id}` : undefined} size="xl">
+        {selected && <DealSlipDetail slip={selected} />}
+      </Modal>
     </div>
   );
 }

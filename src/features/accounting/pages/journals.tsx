@@ -9,9 +9,9 @@ import {
 import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import { GovernanceBar } from "../../../components/shared/governance-bar";
 import {
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 interface JournalEntry {
@@ -31,6 +31,7 @@ interface JournalEntry {
 type Row = JournalEntry & Record<string, unknown>;
 
 export function Journals() {
+  const { computed: BOOK_COMPUTED } = useBookComputed();
   const [selected, setSelected] = useState<Row | null>(null);
   const rows = useMemo<Row[]>(() => {
     return BOOK_COMPUTED.valuations
@@ -66,7 +67,7 @@ export function Journals() {
         } as Row;
       })
       .sort((a, b) => b.eirIncome - a.eirIncome);
-  }, []);
+  }, [BOOK_COMPUTED]);
 
   const totalIncome = rows.reduce((s, r) => s + r.eirIncome, 0);
   const totalCoupon = rows.reduce((s, r) => s + r.couponCash, 0);

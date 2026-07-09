@@ -3,6 +3,8 @@ import { Navigate, Route, Routes } from "react-router-dom";
 import { PersonaProvider } from "./context/persona";
 import { GovernanceProvider } from "./context/governance";
 import { InstrumentBookProvider } from "./context/instrument-book";
+import { WorkflowProvider } from "./features/workflow/store";
+import { NotificationsProvider } from "./context/notifications";
 import { PortfolioRegistryProvider } from "./features/portfolio/portfolio-registry";
 import { RequireAuth, ProtectedModule } from "./components/shared/require-auth";
 import { LandingPage } from "./pages/landing";
@@ -59,6 +61,8 @@ export function App() {
     <PersonaProvider>
       <GovernanceProvider>
         <InstrumentBookProvider>
+        <WorkflowProvider>
+        <NotificationsProvider>
         <PortfolioRegistryProvider>
           <Suspense fallback={<PageLoader label="Loading module…" />}>
             <Routes>
@@ -277,6 +281,8 @@ export function App() {
             </Routes>
           </Suspense>
         </PortfolioRegistryProvider>
+        </NotificationsProvider>
+        </WorkflowProvider>
         </InstrumentBookProvider>
       </GovernanceProvider>
     </PersonaProvider>

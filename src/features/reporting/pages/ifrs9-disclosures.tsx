@@ -7,8 +7,7 @@ import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
+  useBookComputed,
   fmtCompact,
   fmtPct,
 } from "../../portfolio/engine/book-compute";
@@ -38,6 +37,11 @@ type StagRow = StagingRow & Record<string, unknown>;
 type InstRow = InstrumentRow & Record<string, unknown>;
 
 export function IFRS9Disclosures() {
+  const {
+    computed: BOOK_COMPUTED,
+    instruments: BOOK_INSTRUMENTS,
+  } = useBookComputed();
+
   const {
     stagingRows,
     stage23rows,
@@ -110,7 +114,7 @@ export function IFRS9Disclosures() {
       stage2Count: agg["Stage 2"].count,
       stage3Count: agg["Stage 3"].count,
     };
-  }, []);
+  }, [BOOK_COMPUTED, BOOK_INSTRUMENTS]);
 
   const stageCols: DataTableColumn<StagRow>[] = [
     {

@@ -8,9 +8,9 @@ import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 const VALUATION_DATE = "2026-05-28";
@@ -59,6 +59,7 @@ type Row = ReturnsRow & Record<string, unknown>;
 type MRow = ReturnMetricsRow & Record<string, unknown>;
 
 export function Returns() {
+  const { computed: BOOK_COMPUTED } = useBookComputed();
   const [selected, setSelected] = useState<Row | null>(null);
   const [selectedM, setSelectedM] = useState<MRow | null>(null);
 
@@ -106,7 +107,7 @@ export function Returns() {
       ociTotal: oci.reduce((s, r) => s + r.ociReserve, 0),
       fvtplTotal: fvtpl.reduce((s, r) => s + r.unrealisedGL, 0),
     };
-  }, []);
+  }, [BOOK_COMPUTED]);
 
   /** Return metrics: HPR, TWR, MWR, Projected for all instruments */
   const metricsRows = useMemo<MRow[]>(() => {
@@ -143,7 +144,7 @@ export function Returns() {
         } as MRow;
       })
       .sort((a, b) => b.twr - a.twr);
-  }, []);
+  }, [BOOK_COMPUTED]);
 
   const totalBSV = BOOK_COMPUTED.totals.totalBSValueNGN;
   const wAvgTWR =

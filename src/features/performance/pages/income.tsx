@@ -7,9 +7,9 @@ import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import {
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 interface IncomeRow {
@@ -27,6 +27,7 @@ interface IncomeRow {
 type Row = IncomeRow & Record<string, unknown>;
 
 export function Income() {
+  const { computed: BOOK_COMPUTED } = useBookComputed();
   const { rows, totalAnnual, totalMonthly } = useMemo(() => {
     const result: IncomeRow[] = BOOK_COMPUTED.valuations
       .filter((v) => v.annualEIRIncome > 0)
@@ -48,7 +49,7 @@ export function Income() {
       totalAnnual: result.reduce((s, r) => s + r.annualEIRIncome, 0),
       totalMonthly: result.reduce((s, r) => s + r.monthlyIncome, 0),
     };
-  }, []);
+  }, [BOOK_COMPUTED]);
 
   const cols: DataTableColumn<Row>[] = [
     { key: "id", header: "ID", width: "90px" },

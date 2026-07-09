@@ -1,9 +1,8 @@
+import { useMemo } from "react";
 import {
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../../features/portfolio/engine/book-compute";
 import {
   DataTable,
@@ -25,40 +24,6 @@ type RiskAdjRow = {
   bsvNGN: number;
   classification: string;
 };
-
-const ROWS: RiskAdjRow[] = BOOK_INSTRUMENTS.map((inst, i) => {
-  const val = BOOK_VALUATIONS[i];
-  const eir = val?.eir ?? inst.couponRate;
-  const excess = eir - RISK_FREE;
-  const dur = val?.risk.modifiedDuration ?? 1;
-  // Sharpe-like: excess return / duration volatility proxy (dur * 0.01)
-  const durationVol = Math.max(dur * 0.01, 0.001);
-  const sharpe = excess / durationVol;
-  return {
-    id: inst.id,
-    name: inst.name,
-    instrumentType: inst.instrumentType,
-    eir,
-    excessReturn: excess,
-    modDuration: dur,
-    sharpe,
-    dv01: val?.risk.dv01 ?? 0,
-    bsvNGN: val?.balanceSheetValueNGN ?? 0,
-    classification: inst.classification,
-  };
-});
-
-const sortedRows = [...ROWS].sort((a, b) => b.sharpe - a.sharpe);
-
-const totals = BOOK_COMPUTED.totals;
-const totalBSV = totals.totalBSValueNGN;
-const portEIR =
-  ROWS.reduce((s, r) => s + r.eir * r.bsvNGN, 0) / (totalBSV || 1);
-const portExcess = portEIR - RISK_FREE;
-const portDur =
-  ROWS.reduce((s, r) => s + r.modDuration * r.bsvNGN, 0) / (totalBSV || 1);
-const portSharpe = portExcess / Math.max(portDur * 0.01, 0.001);
-const positiveAlpha = ROWS.filter((r) => r.excessReturn > 0).length;
 
 const COLUMNS: DataTableColumn<RiskAdjRow>[] = [
   {
@@ -133,6 +98,50 @@ const COLUMNS: DataTableColumn<RiskAdjRow>[] = [
 ];
 
 export function RiskAdjusted() {
+  const {
+    computed: BOOK_COMPUTED,
+    instruments: BOOK_INSTRUMENTS,
+    valuations: BOOK_VALUATIONS,
+  } = useBookComputed();
+
+  const ROWS: RiskAdjRow[] = useMemo(
+    () =>
+      BOOK_INSTRUMENTS.map((inst, i) => {
+        const val = BOOK_VALUATIONS[i];
+        const eir = val?.eir ?? inst.couponRate;
+        const excess = eir - RISK_FREE;
+        const dur = val?.risk.modifiedDuration ?? 1;
+        // Sharpe-like: excess return / duration volatility proxy (dur * 0.01)
+        const durationVol = Math.max(dur * 0.01, 0.001);
+        const sharpe = excess / durationVol;
+        return {
+          id: inst.id,
+          name: inst.name,
+          instrumentType: inst.instrumentType,
+          eir,
+          excessReturn: excess,
+          modDuration: dur,
+          sharpe,
+          dv01: val?.risk.dv01 ?? 0,
+          bsvNGN: val?.balanceSheetValueNGN ?? 0,
+          classification: inst.classification,
+        };
+      }),
+    [BOOK_INSTRUMENTS, BOOK_VALUATIONS],
+  );
+
+  const sortedRows = [...ROWS].sort((a, b) => b.sharpe - a.sharpe);
+
+  const totals = BOOK_COMPUTED.totals;
+  const totalBSV = totals.totalBSValueNGN;
+  const portEIR =
+    ROWS.reduce((s, r) => s + r.eir * r.bsvNGN, 0) / (totalBSV || 1);
+  const portExcess = portEIR - RISK_FREE;
+  const portDur =
+    ROWS.reduce((s, r) => s + r.modDuration * r.bsvNGN, 0) / (totalBSV || 1);
+  const portSharpe = portExcess / Math.max(portDur * 0.01, 0.001);
+  const positiveAlpha = ROWS.filter((r) => r.excessReturn > 0).length;
+
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>

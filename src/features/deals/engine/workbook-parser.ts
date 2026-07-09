@@ -80,7 +80,9 @@ function parseDate(s: unknown): string {
     const day = parseInt(mdm[1]);
     const mon = MONTH[mdm[2].toLowerCase()] ?? 0;
     let yr = parseInt(mdm[3]);
-    if (yr < 100) yr += yr < 30 ? 2000 : 1900;
+    // Always pivot 2-digit years to the 2000s — this book's bond maturities run
+    // out to "50" (2050) and no legitimate 19XX date exists in this platform's data.
+    if (yr < 100) yr += 2000;
     return new Date(yr, mon, day).toISOString().slice(0, 10);
   }
 

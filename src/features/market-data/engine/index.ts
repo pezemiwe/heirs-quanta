@@ -298,14 +298,15 @@ function simInflationMpr(asOf: string): InflationMprPoint[] {
 function simPortfolioPnl(
   asOf: string,
   ngnHist: YieldCurveHistoryPoint[],
+  baseValue = 285_000_000_000, // ₦285B demo fallback
+  duration = 4.2, // demo fallback modified duration
 ): PortfolioPnlPoint[] {
   const rand = mulberry32(2025);
-  const baseValue = 285_000_000_000; // ₦285B
   let v = baseValue;
   return ngnHist.map((day, i) => {
     const yChange = i === 0 ? 0 : day.yields[5] - ngnHist[i - 1].yields[5];
-    // duration ~ 4.2, value moves by -dur * dy * value + noise
-    const drift = -4.2 * yChange * v + gauss(rand) * 1e8;
+    // value moves by -duration * dy * value + noise
+    const drift = -duration * yChange * v + gauss(rand) * 1e8;
     v += drift;
     return {
       date: day.date,
@@ -421,13 +422,23 @@ export function buildSnapshot(
 
 /* ─── top-level build ────────────────────────────────────────────────── */
 
-export function buildMarketState(asOf: string = VALUATION_DATE): MarketState {
+export function buildMarketState(
+  asOf: string = VALUATION_DATE,
+  livePortfolio?: { totalValueNGN: number; duration: number },
+): MarketState {
   const ngnHist = simNgnCurveHistory(asOf);
   const usdHist = simUsdCurveHistory(asOf);
   const fxHist = simFxHistory(asOf);
   const bondHist = simBondPriceHistory(asOf, ngnHist);
   const infl = simInflationMpr(asOf);
-  const pnl = simPortfolioPnl(asOf, ngnHist);
+  const pnl = livePortfolio
+    ? simPortfolioPnl(
+        asOf,
+        ngnHist,
+        livePortfolio.totalValueNGN,
+        livePortfolio.duration,
+      )
+    : simPortfolioPnl(asOf, ngnHist);
   const alerts = buildAlerts(ngnHist);
 
   const snapshot = buildSnapshot(

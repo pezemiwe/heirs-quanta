@@ -1,26 +1,10 @@
+import { useMemo } from "react";
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
+  useBookComputed,
   fmtCompact,
   fmtPct,
 } from "../../../features/portfolio/engine/book-compute";
 import { ShieldCheck, AlertTriangle, Info } from "lucide-react";
-
-const totals = BOOK_COMPUTED.totals;
-const bySector = BOOK_COMPUTED.bySector;
-const totalBSV = totals.totalBSValueNGN;
-
-// Top issuer concentrations
-const issuerMap = new Map<string, number>();
-BOOK_INSTRUMENTS.forEach((inst, i) => {
-  const bsv = BOOK_VALUATIONS[i]?.balanceSheetValueNGN ?? 0;
-  issuerMap.set(inst.issuer, (issuerMap.get(inst.issuer) ?? 0) + bsv);
-});
-const sortedIssuers = [...issuerMap.entries()].sort((a, b) => b[1] - a[1]);
-
-// Assumed capital base: 20% of AuM as proxy
-const capitalBase = totalBSV * 0.2;
 
 type LimitRow = {
   category: string;
@@ -32,68 +16,6 @@ type LimitRow = {
   utilisation: number;
   status: "ok" | "watch" | "breached";
 };
-
-const ISSUER_LIMITS: LimitRow[] = sortedIssuers
-  .slice(0, 8)
-  .map(([issuer, bsv]) => {
-    const limitPct = 0.1;
-    const limit = totalBSV * limitPct;
-    const util = bsv / limit;
-    return {
-      category: "Issuer Limit",
-      entity: issuer,
-      exposure: bsv,
-      limit,
-      limitPct,
-      exposurePct: bsv / totalBSV,
-      utilisation: util,
-      status: util > 1 ? "breached" : util > 0.85 ? "watch" : "ok",
-    };
-  });
-
-const SECTOR_LIMITS: LimitRow[] = bySector.slice(0, 6).map((s) => {
-  const limitPct = 0.3;
-  const limit = totalBSV * limitPct;
-  const util = s.bsValueNGN / limit;
-  return {
-    category: "Sector Limit",
-    entity: s.sector,
-    exposure: s.bsValueNGN,
-    limit,
-    limitPct,
-    exposurePct: s.pctOfPortfolio,
-    utilisation: util,
-    status: util > 1 ? "breached" : util > 0.85 ? "watch" : "ok",
-  };
-});
-
-// Currency limits
-const ccy = new Map<string, number>();
-BOOK_INSTRUMENTS.forEach((inst, i) => {
-  const bsv = BOOK_VALUATIONS[i]?.balanceSheetValueNGN ?? 0;
-  ccy.set(inst.currency, (ccy.get(inst.currency) ?? 0) + bsv);
-});
-const CURRENCY_LIMITS: LimitRow[] = [...ccy.entries()].map(
-  ([currency, bsv]) => {
-    const limitPct = currency === "NGN" ? 0.8 : 0.25;
-    const limit = totalBSV * limitPct;
-    const util = bsv / limit;
-    return {
-      category: "Currency Limit",
-      entity: currency,
-      exposure: bsv,
-      limit,
-      limitPct,
-      exposurePct: bsv / totalBSV,
-      utilisation: util,
-      status: util > 1 ? "breached" : util > 0.85 ? "watch" : "ok",
-    };
-  },
-);
-
-const ALL_LIMITS = [...ISSUER_LIMITS, ...SECTOR_LIMITS, ...CURRENCY_LIMITS];
-const breaches = ALL_LIMITS.filter((l) => l.status === "breached").length;
-const warnings = ALL_LIMITS.filter((l) => l.status === "watch").length;
 
 function StatusBadge({ s }: { s: "ok" | "watch" | "breached" }) {
   if (s === "ok")
@@ -183,6 +105,106 @@ function LimitTable({ rows, title }: { rows: LimitRow[]; title: string }) {
 }
 
 export function RegulatoryLimits() {
+  const {
+    computed: BOOK_COMPUTED,
+    instruments: BOOK_INSTRUMENTS,
+    valuations: BOOK_VALUATIONS,
+  } = useBookComputed();
+
+  const totals = BOOK_COMPUTED.totals;
+  const bySector = BOOK_COMPUTED.bySector;
+  const totalBSV = totals.totalBSValueNGN;
+
+  // Top issuer concentrations
+  const sortedIssuers = useMemo(() => {
+    const issuerMap = new Map<string, number>();
+    BOOK_INSTRUMENTS.forEach((inst, i) => {
+      const bsv = BOOK_VALUATIONS[i]?.balanceSheetValueNGN ?? 0;
+      issuerMap.set(inst.issuer, (issuerMap.get(inst.issuer) ?? 0) + bsv);
+    });
+    return [...issuerMap.entries()].sort((a, b) => b[1] - a[1]);
+  }, [BOOK_INSTRUMENTS, BOOK_VALUATIONS]);
+
+  // Assumed capital base: 20% of AuM as proxy
+  const capitalBase = totalBSV * 0.2;
+
+  const ISSUER_LIMITS: LimitRow[] = useMemo(
+    () =>
+      sortedIssuers.slice(0, 8).map(([issuer, bsv]) => {
+        const limitPct = 0.1;
+        const limit = totalBSV * limitPct;
+        const util = bsv / limit;
+        return {
+          category: "Issuer Limit",
+          entity: issuer,
+          exposure: bsv,
+          limit,
+          limitPct,
+          exposurePct: bsv / totalBSV,
+          utilisation: util,
+          status: util > 1 ? "breached" : util > 0.85 ? "watch" : "ok",
+        };
+      }),
+    [sortedIssuers, totalBSV],
+  );
+
+  const SECTOR_LIMITS: LimitRow[] = useMemo(
+    () =>
+      bySector.slice(0, 6).map((s) => {
+        const limitPct = 0.3;
+        const limit = totalBSV * limitPct;
+        const util = s.bsValueNGN / limit;
+        return {
+          category: "Sector Limit",
+          entity: s.sector,
+          exposure: s.bsValueNGN,
+          limit,
+          limitPct,
+          exposurePct: s.pctOfPortfolio,
+          utilisation: util,
+          status: util > 1 ? "breached" : util > 0.85 ? "watch" : "ok",
+        };
+      }),
+    [bySector, totalBSV],
+  );
+
+  // Currency limits
+  const CURRENCY_LIMITS: LimitRow[] = useMemo(() => {
+    const ccy = new Map<string, number>();
+    BOOK_INSTRUMENTS.forEach((inst, i) => {
+      const bsv = BOOK_VALUATIONS[i]?.balanceSheetValueNGN ?? 0;
+      ccy.set(inst.currency, (ccy.get(inst.currency) ?? 0) + bsv);
+    });
+    return [...ccy.entries()].map(([currency, bsv]) => {
+      const limitPct = currency === "NGN" ? 0.8 : 0.25;
+      const limit = totalBSV * limitPct;
+      const util = bsv / limit;
+      return {
+        category: "Currency Limit",
+        entity: currency,
+        exposure: bsv,
+        limit,
+        limitPct,
+        exposurePct: bsv / totalBSV,
+        utilisation: util,
+        status: util > 1 ? "breached" : util > 0.85 ? "watch" : "ok",
+      };
+    });
+  }, [BOOK_INSTRUMENTS, BOOK_VALUATIONS, totalBSV]);
+
+  const ALL_LIMITS = useMemo(
+    () => [...ISSUER_LIMITS, ...SECTOR_LIMITS, ...CURRENCY_LIMITS],
+    [ISSUER_LIMITS, SECTOR_LIMITS, CURRENCY_LIMITS],
+  );
+  const breaches = useMemo(
+    () => ALL_LIMITS.filter((l) => l.status === "breached").length,
+    [ALL_LIMITS],
+  );
+  const warnings = useMemo(
+    () => ALL_LIMITS.filter((l) => l.status === "watch").length,
+    [ALL_LIMITS],
+  );
+
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>

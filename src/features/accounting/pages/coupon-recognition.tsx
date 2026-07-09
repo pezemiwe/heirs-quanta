@@ -1,9 +1,9 @@
+import { useMemo } from "react";
 import {
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
   fmtCompact,
   fmtPct,
   fmtDate,
+  useBookComputed,
 } from "../../../features/portfolio/engine/book-compute";
 import {
   DataTable,
@@ -33,32 +33,6 @@ const FREQ_MONTHS: Record<string, number> = {
 };
 
 const VALUATION_DATE = new Date("2026-05-28");
-
-const ROWS: CouponRow[] = BOOK_INSTRUMENTS.filter(
-  (i) => i.couponRate > 0 && i.couponFrequency !== "Zero",
-).map((inst) => {
-  const allIdx = BOOK_INSTRUMENTS.indexOf(inst);
-  const val = BOOK_VALUATIONS[allIdx];
-  const freqMonths = FREQ_MONTHS[inst.couponFrequency] ?? 6;
-  const annualCoupon = inst.faceValue * inst.couponRate;
-  const periodCoupon = annualCoupon / (12 / freqMonths);
-  const wtax = periodCoupon * 0.1; // 10% withholding tax
-  const nextMs = VALUATION_DATE.getTime() + freqMonths * 30 * 86400000;
-  return {
-    id: inst.id,
-    name: inst.name,
-    issuer: inst.issuer,
-    couponRate: inst.couponRate,
-    couponFrequency: inst.couponFrequency,
-    faceValue: inst.faceValue,
-    annualCoupon,
-    periodCoupon,
-    nextCouponDate: new Date(nextMs).toISOString().slice(0, 10),
-    wtax,
-    netCoupon: periodCoupon - wtax,
-    maturityDate: inst.maturityDate ?? "—",
-  };
-});
 
 const COLUMNS: DataTableColumn<CouponRow>[] = [
   {
@@ -134,11 +108,45 @@ const COLUMNS: DataTableColumn<CouponRow>[] = [
   },
 ];
 
-const totalAnnual = ROWS.reduce((s, r) => s + r.annualCoupon, 0);
-const totalPeriod = ROWS.reduce((s, r) => s + r.periodCoupon, 0);
-const totalNet = ROWS.reduce((s, r) => s + r.netCoupon, 0);
-
 export function CouponRecognition() {
+  const { instruments: BOOK_INSTRUMENTS, valuations: BOOK_VALUATIONS } =
+    useBookComputed();
+
+  const { ROWS, totalAnnual, totalPeriod, totalNet } = useMemo(() => {
+    const rows: CouponRow[] = BOOK_INSTRUMENTS.filter(
+      (i) => i.couponRate > 0 && i.couponFrequency !== "Zero",
+    ).map((inst) => {
+      const allIdx = BOOK_INSTRUMENTS.indexOf(inst);
+      const val = BOOK_VALUATIONS[allIdx];
+      const freqMonths = FREQ_MONTHS[inst.couponFrequency] ?? 6;
+      const annualCoupon = inst.faceValue * inst.couponRate;
+      const periodCoupon = annualCoupon / (12 / freqMonths);
+      const wtax = periodCoupon * 0.1; // 10% withholding tax
+      const nextMs = VALUATION_DATE.getTime() + freqMonths * 30 * 86400000;
+      return {
+        id: inst.id,
+        name: inst.name,
+        issuer: inst.issuer,
+        couponRate: inst.couponRate,
+        couponFrequency: inst.couponFrequency,
+        faceValue: inst.faceValue,
+        annualCoupon,
+        periodCoupon,
+        nextCouponDate: new Date(nextMs).toISOString().slice(0, 10),
+        wtax,
+        netCoupon: periodCoupon - wtax,
+        maturityDate: inst.maturityDate ?? "—",
+      };
+    });
+
+    return {
+      ROWS: rows,
+      totalAnnual: rows.reduce((s, r) => s + r.annualCoupon, 0),
+      totalPeriod: rows.reduce((s, r) => s + r.periodCoupon, 0),
+      totalNet: rows.reduce((s, r) => s + r.netCoupon, 0),
+    };
+  }, [BOOK_INSTRUMENTS, BOOK_VALUATIONS]);
+
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
       <div>

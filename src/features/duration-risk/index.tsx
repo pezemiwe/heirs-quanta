@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
+import { NotificationBell } from "../../components/shared/notification-bell";
 
 import { DurationRiskProvider } from "./store";
 import { DurationRiskDataManager } from "./pages/data-manager";
@@ -160,6 +161,7 @@ export function DurationRiskModule() {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <UserMenu
               persona={persona}
               onSwitchModules={() => navigate("/modules")}

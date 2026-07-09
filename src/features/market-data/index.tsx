@@ -14,6 +14,7 @@ import {
 import { usePersona } from "../../context/persona";
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
+import { NotificationBell } from "../../components/shared/notification-bell";
 
 import { MarketDataProvider } from "./store";
 import { MarketDataDashboard } from "./pages/dashboard";
@@ -155,6 +156,7 @@ export function MarketDataModule() {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <UserMenu
               persona={persona}
               onSwitchModules={() => navigate("/modules")}

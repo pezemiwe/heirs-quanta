@@ -1,7 +1,5 @@
 import {
-  BOOK_COMPUTED,
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
+  useBookComputed,
   fmtCompact,
   fmtPct,
   fmtDate,
@@ -11,8 +9,6 @@ import {
   DataTableColumn,
 } from "../../../components/shared/data-table";
 import { useState, useMemo } from "react";
-
-const totals = BOOK_COMPUTED.totals;
 
 type ECLRow = {
   id: string;
@@ -26,28 +22,6 @@ type ECLRow = {
   eclPct: number;
   maturityDate: string;
 };
-
-const ALL_ROWS: ECLRow[] = BOOK_INSTRUMENTS.map((inst, i) => {
-  const val = BOOK_VALUATIONS[i];
-  const bsv = val?.balanceSheetValueNGN ?? 0;
-  const ecl = inst.eclProvision ?? 0;
-  const eclNGN = ecl * bsv;
-  const stageLabel = inst.impairmentStage ?? "Stage 1";
-  const stageNum =
-    stageLabel === "Stage 3" ? 3 : stageLabel === "Stage 2" ? 2 : 1;
-  return {
-    id: inst.id,
-    name: inst.name,
-    issuer: inst.issuer,
-    classification: inst.classification,
-    stageLabel,
-    stageNum,
-    bsvNGN: bsv,
-    eclNGN,
-    eclPct: bsv > 0 ? eclNGN / bsv : 0,
-    maturityDate: inst.maturityDate ?? "—",
-  };
-}).sort((a, b) => b.eclNGN - a.eclNGN);
 
 const STAGE_STYLE: Record<number, string> = {
   1: "bg-green-100 text-success",
@@ -122,18 +96,56 @@ const COLUMNS: DataTableColumn<ECLRow>[] = [
   },
 ];
 
-// Stage totals
-const stageTotals = [1, 2, 3].map((s) => {
-  const rows = ALL_ROWS.filter((r) => r.stageNum === s);
-  return {
-    stage: s,
-    count: rows.length,
-    bsv: rows.reduce((a, r) => a + r.bsvNGN, 0),
-    ecl: rows.reduce((a, r) => a + r.eclNGN, 0),
-  };
-});
-
 export function ECLReports() {
+  const {
+    computed: BOOK_COMPUTED,
+    instruments: BOOK_INSTRUMENTS,
+    valuations: BOOK_VALUATIONS,
+  } = useBookComputed();
+
+  const totals = BOOK_COMPUTED.totals;
+
+  const ALL_ROWS: ECLRow[] = useMemo(
+    () =>
+      BOOK_INSTRUMENTS.map((inst, i) => {
+        const val = BOOK_VALUATIONS[i];
+        const bsv = val?.balanceSheetValueNGN ?? 0;
+        const ecl = inst.eclProvision ?? 0;
+        const eclNGN = ecl * bsv;
+        const stageLabel = inst.impairmentStage ?? "Stage 1";
+        const stageNum =
+          stageLabel === "Stage 3" ? 3 : stageLabel === "Stage 2" ? 2 : 1;
+        return {
+          id: inst.id,
+          name: inst.name,
+          issuer: inst.issuer,
+          classification: inst.classification,
+          stageLabel,
+          stageNum,
+          bsvNGN: bsv,
+          eclNGN,
+          eclPct: bsv > 0 ? eclNGN / bsv : 0,
+          maturityDate: inst.maturityDate ?? "—",
+        };
+      }).sort((a, b) => b.eclNGN - a.eclNGN),
+    [BOOK_INSTRUMENTS, BOOK_VALUATIONS],
+  );
+
+  // Stage totals
+  const stageTotals = useMemo(
+    () =>
+      [1, 2, 3].map((s) => {
+        const rows = ALL_ROWS.filter((r) => r.stageNum === s);
+        return {
+          stage: s,
+          count: rows.length,
+          bsv: rows.reduce((a, r) => a + r.bsvNGN, 0),
+          ecl: rows.reduce((a, r) => a + r.eclNGN, 0),
+        };
+      }),
+    [ALL_ROWS],
+  );
+
   const [stageFilter, setStageFilter] = useState<number | "All">("All");
 
   const filtered = useMemo(
@@ -141,7 +153,7 @@ export function ECLReports() {
       stageFilter === "All"
         ? ALL_ROWS
         : ALL_ROWS.filter((r) => r.stageNum === stageFilter),
-    [stageFilter],
+    [stageFilter, ALL_ROWS],
   );
 
   return (

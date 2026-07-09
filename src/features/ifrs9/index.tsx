@@ -13,6 +13,7 @@ import {
 } from "lucide-react";
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
+import { NotificationBell } from "../../components/shared/notification-bell";
 
 import { IFRS9Provider } from "./store";
 import { IFRS9DataManager } from "./pages/data-manager";
@@ -158,6 +159,7 @@ export function IFRS9Module() {
           </div>
 
           <div className="flex items-center gap-3">
+            <NotificationBell />
             <UserMenu
               persona={persona}
               onSwitchModules={() => navigate("/modules")}

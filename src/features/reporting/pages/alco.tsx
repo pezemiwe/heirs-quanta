@@ -1,48 +1,61 @@
+import { useMemo } from "react";
 import {
-  BOOK_COMPUTED,
-  BOOK_VALUATIONS,
+  useBookComputed,
   fmtCompact,
   fmtPct,
 } from "../../../features/portfolio/engine/book-compute";
 
-const totals = BOOK_COMPUTED.totals;
-const matProfile = BOOK_COMPUTED.maturityProfile;
-
-const totalBSV = totals.totalBSValueNGN;
-const totalDV01 = BOOK_VALUATIONS.reduce((s, v) => s + v.risk.dv01, 0);
-const wDur =
-  BOOK_VALUATIONS.reduce(
-    (s, v) => s + v.risk.modifiedDuration * v.balanceSheetValueNGN,
-    0,
-  ) / (totalBSV || 1);
-
-// Duration gap buckets: assets vs liabilities proxy (assets = book, liabilities = 5yr flat)
-const assetDur = wDur;
-const liabilityDur = 5.0; // proxy
-const durationGap = assetDur - liabilityDur;
-
-// DV01 by maturity bucket
-const dv01ByBucket = matProfile.map((b) => ({
-  bucket: b.bucket,
-  faceValue: b.faceValueNGN,
-  dv01Est:
-    b.faceValueNGN *
-    0.0001 *
-    (b.bucket === "0-1yr"
-      ? 0.5
-      : b.bucket === "1-3yr"
-        ? 2
-        : b.bucket === "3-5yr"
-          ? 4
-          : b.bucket === "5-10yr"
-            ? 7
-            : 12),
-}));
-
-// Interest rate sensitivity: EaR for +100bps shock
-const earShock = Math.abs(totalDV01) * 100; // ₦ impact
-
 export function ALCO() {
+  const { computed: BOOK_COMPUTED, valuations: BOOK_VALUATIONS } =
+    useBookComputed();
+
+  const totals = BOOK_COMPUTED.totals;
+  const matProfile = BOOK_COMPUTED.maturityProfile;
+
+  const totalBSV = totals.totalBSValueNGN;
+  const totalDV01 = useMemo(
+    () => BOOK_VALUATIONS.reduce((s, v) => s + v.risk.dv01, 0),
+    [BOOK_VALUATIONS],
+  );
+  const wDur = useMemo(
+    () =>
+      BOOK_VALUATIONS.reduce(
+        (s, v) => s + v.risk.modifiedDuration * v.balanceSheetValueNGN,
+        0,
+      ) / (totalBSV || 1),
+    [BOOK_VALUATIONS, totalBSV],
+  );
+
+  // Duration gap buckets: assets vs liabilities proxy (assets = book, liabilities = 5yr flat)
+  const assetDur = wDur;
+  const liabilityDur = 5.0; // proxy
+  const durationGap = assetDur - liabilityDur;
+
+  // DV01 by maturity bucket
+  const dv01ByBucket = useMemo(
+    () =>
+      matProfile.map((b) => ({
+        bucket: b.bucket,
+        faceValue: b.faceValueNGN,
+        dv01Est:
+          b.faceValueNGN *
+          0.0001 *
+          (b.bucket === "0-1yr"
+            ? 0.5
+            : b.bucket === "1-3yr"
+              ? 2
+              : b.bucket === "3-5yr"
+                ? 4
+                : b.bucket === "5-10yr"
+                  ? 7
+                  : 12),
+      })),
+    [matProfile],
+  );
+
+  // Interest rate sensitivity: EaR for +100bps shock
+  const earShock = Math.abs(totalDV01) * 100; // ₦ impact
+
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-8">
       <div className="flex items-start justify-between">

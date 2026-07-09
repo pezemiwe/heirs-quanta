@@ -8,9 +8,9 @@ import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { RowDetailModal } from "../../../components/shared/row-detail-modal";
 import {
-  BOOK_COMPUTED,
   fmtCompact,
   fmtPct,
+  useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
 interface CarryRow {
@@ -28,6 +28,7 @@ interface CarryRow {
 type Row = CarryRow & Record<string, unknown>;
 
 export function Carry() {
+  const { computed: BOOK_COMPUTED } = useBookComputed();
   const [selected, setSelected] = useState<Row | null>(null);
   const { rows, positiveCarry, negativeCarry, totalCarryIncome } =
     useMemo(() => {
@@ -55,7 +56,7 @@ export function Carry() {
         negativeCarry: result.filter((r) => r.carrySpread < 0),
         totalCarryIncome: result.reduce((s, r) => s + r.carryIncome, 0),
       };
-    }, []);
+    }, [BOOK_COMPUTED]);
 
   const avgSpread =
     rows.reduce((s, r) => s + r.carrySpread, 0) / (rows.length || 1);
