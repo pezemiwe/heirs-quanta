@@ -33,7 +33,26 @@
       "Bash(pkill -f \"vite --port\")",
       "Bash(grep -rln \"from \\\\\"\\\\\\\\.\\\\\\\\./pages/portfolio\\\\\"\\\\|from \\\\\"\\\\\\\\./pages/portfolio\\\\\"\" \"/c/Users/DELL/Documents/heirs-quanta/src\")",
       "Bash(grep -rn \"\\\\\"\\\\\\\\.\\\\\\\\./\\\\\\\\.\\\\\\\\./pages/portfolio\\\\|\\\\\"\\\\\\\\.\\\\\\\\./pages/portfolio/index\\\\|from \\\\\"\\\\\\\\.\\\\\\\\./pages/portfolio\\\\\"\" \"/c/Users/DELL/Documents/heirs-quanta/src\")",
-      "Bash(node notifications-verify.cjs)"
+      "Bash(node notifications-verify.cjs)",
+      "Bash(npx tsx *)",
+      "Bash(node -e ' *)",
+      "Bash(npx tsx -e ' *)",
+      "Bash(curl -s http://localhost:5173)",
+      "Bash(curl -s http://localhost:5186)",
+      "Bash(node import-hardening-verify.cjs)",
+      "Bash(node cfo-governance-verify.cjs)",
+      "Bash(ls src/config)",
+      "Bash(ls src/lib)",
+      "Bash(ls src/shared)",
+      "Bash(ls src/context)",
+      "Bash(find /c/Users/DELL -iname \"*heirs*sample*\" -o -iname \"*sample*workbook*\" 2>/dev/null | grep -iv node_modules | head -20)",
+      "Read(//c/Users/DELL/**)",
+      "Bash(node ifrs9-reportingdate-verify.cjs)",
+      "Bash(node ecl-consistency-verify.cjs)",
+      "Bash(node blotter-backbook-verify.cjs)",
+      "Bash(node delete-draft-verify.cjs)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5186)",
+      "Bash(node book-wiring-verify.cjs)"
     ]
   }
 }

@@ -6,7 +6,12 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import type { Assumptions, EngineResult, Security } from "./engine/types";
+import type {
+  Assumptions,
+  EngineResult,
+  Security,
+  SecurityComputed,
+} from "./engine/types";
 import { runEngine } from "./engine";
 import { parseSecuritiesCSV } from "./engine/parsing";
 import { DEFAULT_ASSUMPTIONS } from "./engine/reference-data";
@@ -16,6 +21,14 @@ interface IFRS9ContextValue {
   securities: Security[];
   assumptions: Assumptions;
   result: EngineResult;
+  /**
+   * result.rows keyed by Instrument.id, for pages that need per-instrument
+   * stage/ECL/coverage (Security itself carries no instrument id). Correct
+   * whenever `securities` is still in sync with the shared instrument book
+   * (the normal upload → view-reports flow); may miss rows if a user has
+   * manually edited securities via the IFRS 9 Data Manager.
+   */
+  resultByInstrumentId: Map<string, SecurityComputed>;
   hasData: boolean;
   lastUploadedFile: string | null;
   parseErrors: { row: number; message: string }[];
@@ -69,10 +82,23 @@ export function IFRS9Provider({ children }: { children: ReactNode }) {
     [securities, assumptions],
   );
 
+  const resultByInstrumentId = useMemo(() => {
+    const eligible = book.instruments.filter(
+      (i) => i.instrumentType !== "Equity" && i.couponFrequency !== "N/A",
+    );
+    const map = new Map<string, SecurityComputed>();
+    eligible.forEach((inst, idx) => {
+      const row = result.rows[idx];
+      if (row) map.set(inst.id, row);
+    });
+    return map;
+  }, [book.instruments, result.rows]);
+
   const value: IFRS9ContextValue = {
     securities,
     assumptions,
     result,
+    resultByInstrumentId,
     hasData: securities.length > 0,
     lastUploadedFile,
     parseErrors,

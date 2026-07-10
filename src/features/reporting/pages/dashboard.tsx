@@ -16,6 +16,7 @@ import {
   fmtCompact,
   fmtPct,
 } from "../../portfolio/engine/book-compute";
+import { useIFRS9 } from "../../ifrs9/store";
 
 function SummaryRow({
   label,
@@ -41,8 +42,10 @@ function SummaryRow({
 export function ReportingDashboard() {
   const { computed: BOOK_COMPUTED, instruments: BOOK_INSTRUMENTS } =
     useBookComputed();
+  const ifrs9 = useIFRS9();
 
   const totals = BOOK_COMPUTED.totals;
+  const totalECL = ifrs9.result.totals.impairmentLcy;
 
   const maturityData = useMemo(
     () =>
@@ -84,7 +87,7 @@ export function ReportingDashboard() {
         />
         <StatCard
           title="Total ECL Provision"
-          value={fmtCompact(totals.totalECLNGN)}
+          value={fmtCompact(totalECL)}
           subtitle="Expected credit loss (IFRS 9)"
           variant="warning"
         />
@@ -123,7 +126,7 @@ export function ReportingDashboard() {
             />
             <SummaryRow
               label="ECL provision"
-              value={fmtCompact(totals.totalECLNGN)}
+              value={fmtCompact(totalECL)}
             />
             <SummaryRow
               label="OCI reserve (FVOCI)"

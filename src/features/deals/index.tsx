@@ -19,6 +19,7 @@ import {
 import { PlaceholderPage } from "../../components/shared/placeholder-page";
 import { useInstrumentBook } from "../../context/instrument-book";
 import { useWorkflow } from "../workflow/store";
+import { IFRS9Provider } from "../ifrs9/store";
 import { DealBlotter } from "./pages/blotter";
 import { CouponSchedules } from "./pages/coupon-schedules";
 import { Settlements } from "./pages/settlements";
@@ -52,6 +53,7 @@ const WORKFLOW_DRIVEN_PAGES: DealsPage[] = [
   "new-booking",
   "exceptions",
   "reconciliation",
+  "settlements",
   "treasury-cash",
   "trader-performance",
   "counterparty-exposure",
@@ -217,7 +219,9 @@ export function DealsModule() {
       nav={NAV}
       groups={GROUPS}
     >
-      <PageBody page={page} />
+      <IFRS9Provider>
+        <PageBody page={page} />
+      </IFRS9Provider>
     </ModuleShell>
   );
 }

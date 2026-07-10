@@ -11,12 +11,12 @@ import { GovernanceBar } from "../../../components/shared/governance-bar";
 import { useGovernance } from "../../../context/governance";
 import { usePersona } from "../../../context/persona";
 import {
-  BOOK_INSTRUMENTS,
-  BOOK_COMPUTED,
+  useBookComputed,
   fmtCompact,
   fmtPct,
   fmtDate,
 } from "../../portfolio/engine/book-compute";
+import { useIFRS9 } from "../../ifrs9/store";
 
 interface ApprovalRow {
   id: string;
@@ -46,6 +46,9 @@ export function Approvals() {
   const { logAction, hasPermission } = useGovernance();
   const { persona } = usePersona();
   const canApprove = hasPermission(persona.role, "deal.approve");
+  const { instruments: BOOK_INSTRUMENTS, computed: BOOK_COMPUTED } =
+    useBookComputed();
+  const ifrs9 = useIFRS9();
 
   const decide = (id: string, decision: "approved" | "rejected") => {
     setDecisions((prev) => ({ ...prev, [id]: decision }));
@@ -66,32 +69,36 @@ export function Approvals() {
       BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
     );
 
-    const rows: ApprovalRow[] = BOOK_INSTRUMENTS.filter(
-      (i) => i.impairmentStage === "Stage 2" || i.impairmentStage === "Stage 3",
-    ).map((i) => {
+    // Stage/ECL come from the live IFRS 9 engine (ifrs9.resultByInstrumentId),
+    // not the static instrument.impairmentStage/eclProvision fields set once
+    // at import time — otherwise this page would never agree with the IFRS 9
+    // module's own numbers.
+    const rows: ApprovalRow[] = BOOK_INSTRUMENTS.map((i) => {
+      const computed = ifrs9.resultByInstrumentId.get(i.id);
       const val = valMap.get(i.id);
+      const stage = computed ? `Stage ${computed.finalStage}` : (i.impairmentStage ?? "N/A");
       return {
         id: i.id,
         name: i.name,
         type: i.instrumentType,
         issuer: i.issuer,
-        stage: i.impairmentStage ?? "N/A",
+        stage,
         classification: i.classification,
         faceValue: i.faceValue,
         bsValue: val?.balanceSheetValueNGN ?? i.purchasePrice,
-        eclProvision: val?.instrument.eclProvision ?? 0,
+        eclProvision: computed?.ecl ?? 0,
         maturityDate: i.maturityDate,
-        reason: STAGE_REASON[i.impairmentStage ?? ""] ?? "Review pending",
+        reason: STAGE_REASON[stage] ?? "Review pending",
       };
-    });
+    }).filter((r) => r.stage === "Stage 2" || r.stage === "Stage 3");
 
     return {
       stage2: rows.filter((r) => r.stage === "Stage 2"),
       stage3: rows.filter((r) => r.stage === "Stage 3"),
-      totalECL: BOOK_COMPUTED.totals.totalECLNGN,
+      totalECL: ifrs9.result.totals.impairmentLcy,
       totalExposure: BOOK_COMPUTED.totals.totalBSValueNGN,
     };
-  }, []);
+  }, [BOOK_COMPUTED, BOOK_INSTRUMENTS, ifrs9.resultByInstrumentId, ifrs9.result.totals.impairmentLcy]);
 
   const allRows = [...stage3, ...stage2] as Row[];
 

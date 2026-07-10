@@ -23,8 +23,10 @@ import { SectionCard } from "../../../components/shared/section-card";
 import { Badge, type BadgeVariant } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { Modal } from "../../../components/shared/modal";
+import { ConfirmDialog } from "../../../components/shared/confirm-dialog";
 import { usePersona } from "../../../context/persona";
 import { useGovernance } from "../../../context/governance";
+import { useInstrumentBook } from "../../../context/instrument-book";
 import { useWorkflow } from "../../workflow/store";
 import { DealSlipWorkspace } from "../../workflow/components/deal-slip-workspace";
 import { ChecksPanel } from "../../workflow/components/checks-panel";
@@ -33,6 +35,7 @@ import { StatusTimeline } from "../../workflow/components/status-timeline";
 import { LimitAlerts, LimitAlertsSummary } from "../../workflow/components/limit-alerts";
 import { isEditable } from "../../workflow/engine/transitions";
 import type { DealSlip, DealSlipStatus, RegisterEntry } from "../../workflow/types";
+import type { Currency, Instrument } from "../../valuation/engine/types";
 import {
   useSavedBlotterViews,
   type BlotterSortField,
@@ -62,6 +65,16 @@ const fmtCompact = (n: number): string => {
   return `${sign}₦${abs.toFixed(0)}`;
 };
 
+const fmtCompactCcy = (n: number, symbol: string): string => {
+  if (!isFinite(n)) return "—";
+  const abs = Math.abs(n);
+  const sign = n < 0 ? "-" : "";
+  if (abs >= 1e9) return `${sign}${symbol}${(abs / 1e9).toFixed(2)}B`;
+  if (abs >= 1e6) return `${sign}${symbol}${(abs / 1e6).toFixed(2)}M`;
+  if (abs >= 1e3) return `${sign}${symbol}${(abs / 1e3).toFixed(2)}K`;
+  return `${sign}${symbol}${abs.toFixed(0)}`;
+};
+
 const fmtDate = (iso: string) => {
   if (!iso) return "—";
   const d = new Date(iso + "T00:00:00Z");
@@ -70,6 +83,24 @@ const fmtDate = (iso: string) => {
 };
 
 type Row = DealSlip & Record<string, unknown>;
+
+const CURRENCY_SYMBOLS: Record<Currency, string> = {
+  NGN: "₦",
+  USD: "$",
+  GBP: "£",
+  EUR: "€",
+};
+
+interface BackBookRow {
+  id: string;
+  name: string;
+  type: string;
+  issuer: string;
+  currency: Currency;
+  faceValue: number;
+  source: string;
+}
+type BackBookTableRow = BackBookRow & Record<string, unknown>;
 
 const registerCols: DataTableColumn<RegisterEntry & Record<string, unknown>>[] = [
   { key: "id", header: "Register Ref", width: "120px", render: (r) => <span className="font-mono text-xs">{r.id}</span> },
@@ -284,7 +315,9 @@ function DealSlipDetail({ slip }: { slip: DealSlip }) {
 export function DealBlotter() {
   const navigate = useNavigate();
   const { persona } = usePersona();
-  const { dealSlips, register } = useWorkflow();
+  const { dealSlips, register, removeDraft } = useWorkflow();
+  const { instruments } = useInstrumentBook();
+  const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState<"All" | DealSlipStatus>("All");
   const [sortBy, setSortBy] = useState<BlotterSortField>("purchaseDate");
@@ -360,6 +393,53 @@ export function DealBlotter() {
   const activePositions = register.filter((r) => r.status === "Active").length;
   const registerFaceValue = register.filter((r) => r.status === "Active").reduce((s, r) => s + r.faceValue, 0);
 
+  // Instruments in the shared instrument book with no corresponding active
+  // register entry — these bypassed the deal-slip workflow entirely
+  // (typically a bulk workbook upload of historical opening balances).
+  // Same computation pattern as reconciliation.tsx's `withoutSlip`.
+  const withoutSlip = useMemo<Instrument[]>(() => {
+    const activeRegister = register.filter((r) => r.status === "Active");
+    const activeRegisterByInstrumentId = new Map(
+      activeRegister.map((r) => [r.instrumentId, r]),
+    );
+    return instruments.filter(
+      (inst) => !activeRegisterByInstrumentId.has(inst.id),
+    );
+  }, [register, instruments]);
+
+  const backBookRows: BackBookTableRow[] = withoutSlip.map((inst) => ({
+    id: inst.id,
+    name: inst.name,
+    type: inst.instrumentType,
+    issuer: inst.issuer,
+    currency: inst.currency,
+    faceValue: inst.faceValue,
+    source: inst.sourceFileName ?? inst.importBatchLabel ?? "Unknown",
+  }));
+
+  const backBookCols: DataTableColumn<BackBookTableRow>[] = [
+    { key: "id", header: "ID", width: "100px", render: (r) => <span className="font-mono text-xs">{r.id}</span> },
+    { key: "name", header: "Instrument" },
+    {
+      key: "type",
+      header: "Type",
+      render: (r) => (
+        <Badge variant="neutral" size="sm">
+          {r.type}
+        </Badge>
+      ),
+    },
+    { key: "issuer", header: "Issuer / Counterparty" },
+    { key: "currency", header: "CCY", width: "70px" },
+    {
+      key: "faceValue",
+      header: "Face Value",
+      align: "right",
+      render: (r) => fmtCompactCcy(r.faceValue, CURRENCY_SYMBOLS[r.currency]),
+    },
+    { key: "source", header: "Import Batch" },
+  ];
+
   const cols: DataTableColumn<Row>[] = [
     { key: "id", header: "Ref", width: "110px", render: (r) => <span className="font-mono text-xs">{r.id}</span> },
     { key: "instrumentName" as never, header: "Instrument", render: (r) => r.economics.instrumentName },
@@ -390,6 +470,25 @@ export function DealBlotter() {
       ),
     },
     { key: "createdBy" as never, header: "Booked By", render: (r) => r.createdBy.name },
+    {
+      key: "delete" as never,
+      header: "",
+      width: "48px",
+      render: (r) =>
+        r.status === "Draft" ? (
+          <button
+            type="button"
+            onClick={(e) => {
+              e.stopPropagation();
+              setConfirmDeleteId(r.id);
+            }}
+            title="Delete this draft deal slip"
+            className="rounded p-1 text-gray-400 hover:bg-red-50 hover:text-danger"
+          >
+            <Trash2 className="h-3.5 w-3.5" />
+          </button>
+        ) : null,
+    },
   ];
 
   return (
@@ -563,9 +662,42 @@ export function DealBlotter() {
         />
       </SectionCard>
 
+      <SectionCard
+        title="Back-Book Positions (loaded without a deal slip)"
+        description={`${withoutSlip.length} instrument${withoutSlip.length === 1 ? "" : "s"} in the shared instrument book with no matching active deal-slip register entry`}
+      >
+        <p className="mb-3 text-xs text-dark-gray/50">
+          These positions were loaded as opening balances from an uploaded workbook and are not subject to
+          deal-slip review — new trades booked from today forward go through Deal Capture and full approval.
+        </p>
+        <DataTable<BackBookTableRow>
+          columns={backBookCols}
+          data={backBookRows}
+          keyExtractor={(r) => r.id}
+          emptyMessage="No back-book positions — every instrument in the book has a matching deal slip"
+          pageSize={20}
+        />
+      </SectionCard>
+
       <Modal isOpen={selected !== null} onClose={() => setSelectedId(null)} title={selected ? `Deal Slip ${selected.id}` : undefined} size="xl">
         {selected && <DealSlipDetail slip={selected} />}
       </Modal>
+
+      <ConfirmDialog
+        isOpen={confirmDeleteId !== null}
+        onCancel={() => setConfirmDeleteId(null)}
+        onConfirm={() => {
+          if (confirmDeleteId) removeDraft(confirmDeleteId);
+          setConfirmDeleteId(null);
+        }}
+        title="Delete draft deal slip?"
+        description={
+          confirmDeleteId
+            ? `${confirmDeleteId} — ${dealSlips.find((s) => s.id === confirmDeleteId)?.economics.instrumentName ?? ""} will be permanently deleted. This cannot be undone.`
+            : undefined
+        }
+        confirmLabel="Delete"
+      />
     </div>
   );
 }

@@ -4,6 +4,7 @@ import {
   fmtPct,
   fmtDate,
 } from "../../../features/portfolio/engine/book-compute";
+import { useIFRS9 } from "../../../features/ifrs9/store";
 import {
   DataTable,
   DataTableColumn,
@@ -102,19 +103,20 @@ export function ECLReports() {
     instruments: BOOK_INSTRUMENTS,
     valuations: BOOK_VALUATIONS,
   } = useBookComputed();
+  const ifrs9 = useIFRS9();
 
   const totals = BOOK_COMPUTED.totals;
 
   const ALL_ROWS: ECLRow[] = useMemo(
     () =>
       BOOK_INSTRUMENTS.map((inst, i) => {
+        const computed = ifrs9.resultByInstrumentId.get(inst.id);
+        if (!computed) return null; // no IFRS 9 stage/ECL applies (e.g. equities)
         const val = BOOK_VALUATIONS[i];
         const bsv = val?.balanceSheetValueNGN ?? 0;
-        const ecl = inst.eclProvision ?? 0;
-        const eclNGN = ecl * bsv;
-        const stageLabel = inst.impairmentStage ?? "Stage 1";
-        const stageNum =
-          stageLabel === "Stage 3" ? 3 : stageLabel === "Stage 2" ? 2 : 1;
+        const eclNGN = computed.ecl;
+        const stageNum = computed.finalStage;
+        const stageLabel = `Stage ${stageNum}`;
         return {
           id: inst.id,
           name: inst.name,
@@ -127,8 +129,10 @@ export function ECLReports() {
           eclPct: bsv > 0 ? eclNGN / bsv : 0,
           maturityDate: inst.maturityDate ?? "—",
         };
-      }).sort((a, b) => b.eclNGN - a.eclNGN),
-    [BOOK_INSTRUMENTS, BOOK_VALUATIONS],
+      })
+        .filter((r) => r !== null)
+        .sort((a, b) => b.eclNGN - a.eclNGN) as ECLRow[],
+    [BOOK_INSTRUMENTS, BOOK_VALUATIONS, ifrs9.resultByInstrumentId],
   );
 
   // Stage totals
@@ -204,17 +208,21 @@ export function ECLReports() {
         {[
           {
             label: "Total ECL Provision",
-            value: fmtCompact(totals.totalECLNGN),
+            value: fmtCompact(ifrs9.result.totals.impairmentLcy),
             sub: "₦ total",
           },
           {
             label: "ECL Coverage Ratio",
-            value: fmtPct(totals.totalECLNGN / totals.totalBSValueNGN),
+            value: fmtPct(
+              ifrs9.result.totals.impairmentLcy / totals.totalBSValueNGN,
+            ),
             sub: "provision / book value",
           },
           {
             label: "Net Book Value",
-            value: fmtCompact(totals.totalBSValueNGN - totals.totalECLNGN),
+            value: fmtCompact(
+              totals.totalBSValueNGN - ifrs9.result.totals.impairmentLcy,
+            ),
             sub: "after ECL deduction",
           },
           {

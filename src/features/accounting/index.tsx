@@ -13,6 +13,7 @@ import {
   ModuleShell,
   type ModuleNavItem,
 } from "../../components/shared/module-shell";
+import { IFRS9Provider } from "../ifrs9/store";
 import { Journals } from "./pages/journals";
 import { Accruals } from "./pages/accruals";
 import { FVAdjustments } from "./pages/fv-adjustments";
@@ -122,7 +123,9 @@ export function AccountingModule() {
       nav={NAV}
       groups={GROUPS}
     >
-      <PageBody page={page} />
+      <IFRS9Provider>
+        <PageBody page={page} />
+      </IFRS9Provider>
     </ModuleShell>
   );
 }

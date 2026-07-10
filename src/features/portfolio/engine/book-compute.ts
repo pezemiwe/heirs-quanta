@@ -10,6 +10,7 @@ import {
   DEFAULT_ASSUMPTIONS,
   DEFAULT_FGN_CURVE,
   DEFAULT_USD_CURVE,
+  DEFAULT_VALUATION_DATE,
 } from "../../valuation/engine/reference-data";
 import { BOOK_INSTRUMENTS } from "./instrument-book";
 import type {
@@ -19,7 +20,9 @@ import type {
 } from "../../valuation/engine/types";
 import { useInstrumentBook } from "../../../context/instrument-book";
 
-export const VALUATION_DATE = "2026-05-28";
+// Re-exported so every module anchors to one declaration of the book's
+// as-of date (see valuation/engine/reference-data.ts DEFAULT_VALUATION_DATE).
+export const VALUATION_DATE = DEFAULT_VALUATION_DATE;
 export const FX_USD = 1580;
 
 /** Pre-computed full portfolio result for all 204 instruments */

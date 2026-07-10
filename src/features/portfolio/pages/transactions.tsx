@@ -6,13 +6,12 @@ import {
   DataTableColumn,
 } from "../../../components/shared/data-table";
 import {
-  BOOK_INSTRUMENTS,
-  BOOK_VALUATIONS,
+  useBookComputed,
   fmtCompact,
   fmtDate,
 } from "../../../features/portfolio/engine/book-compute";
 
-// -- generate transaction log from 204 instruments ----------------------------
+// -- generate transaction log from the live instrument book ----------------
 type TxRow = {
   id: string;
   date: string;
@@ -27,79 +26,6 @@ type TxRow = {
 
 const VALUATION_MS = new Date("2026-05-28").getTime();
 const DAYS_90 = 90 * 86400000;
-
-const ALL_TXN: TxRow[] = [];
-
-BOOK_INSTRUMENTS.forEach((inst, i) => {
-  const val = BOOK_VALUATIONS[i];
-  const bsv = val?.balanceSheetValueNGN ?? 0;
-
-  // Purchase / Buy
-  ALL_TXN.push({
-    id: `TXN-${(1000 + i * 3).toString().padStart(5, "0")}`,
-    date: inst.purchaseDate,
-    type: "Buy",
-    instrument: inst.name,
-    issuer: inst.issuer,
-    currency: inst.currency,
-    amount: inst.faceValue * inst.purchasePrice,
-    amountFmt: fmtCompact(inst.faceValue * inst.purchasePrice),
-    status: "Settled",
-  });
-
-  // Coupon event — instruments with couponRate > 0
-  if (inst.couponRate > 0 && inst.couponFrequency !== "Zero") {
-    const freqMonths =
-      inst.couponFrequency === "Semi"
-        ? 6
-        : inst.couponFrequency === "Quarterly"
-          ? 3
-          : 12;
-    const annualIncome =
-      val?.annualEIRIncome ?? inst.faceValue * inst.couponRate;
-    const couponAmt = annualIncome / (12 / freqMonths);
-    // last coupon: 1 period ago from valuation date
-    const lastCouponDate = new Date(VALUATION_MS - freqMonths * 30 * 86400000);
-    ALL_TXN.push({
-      id: `TXN-${(1001 + i * 3).toString().padStart(5, "0")}`,
-      date: lastCouponDate.toISOString().slice(0, 10),
-      type: "Coupon",
-      instrument: inst.name,
-      issuer: inst.issuer,
-      currency: inst.currency,
-      amount: couponAmt,
-      amountFmt: fmtCompact(couponAmt),
-      status: "Settled",
-    });
-  }
-
-  // Maturity — instruments maturing within 90 days of valuation date
-  if (inst.maturityDate) {
-    const matMs = new Date(inst.maturityDate).getTime();
-    if (Math.abs(matMs - VALUATION_MS) < DAYS_90) {
-      const matStatus =
-        matMs < VALUATION_MS
-          ? "Settled"
-          : matMs - VALUATION_MS < 30 * 86400000
-            ? "Processing"
-            : "Pending";
-      ALL_TXN.push({
-        id: `TXN-${(1002 + i * 3).toString().padStart(5, "0")}`,
-        date: inst.maturityDate,
-        type: "Maturity",
-        instrument: inst.name,
-        issuer: inst.issuer,
-        currency: inst.currency,
-        amount: inst.faceValue,
-        amountFmt: fmtCompact(inst.faceValue),
-        status: matStatus,
-      });
-    }
-  }
-});
-
-// Sort by date desc
-ALL_TXN.sort((a, b) => b.date.localeCompare(a.date));
 
 const TYPE_COLORS: Record<string, string> = {
   Buy: "bg-blue-100 text-blue-700",
@@ -184,6 +110,84 @@ const COLUMNS: DataTableColumn<TxRow>[] = [
 export function PortfolioTransactions() {
   const [search, setSearch] = useState("");
   const [typeFilter, setTypeFilter] = useState("All");
+  const { instruments: BOOK_INSTRUMENTS, valuations: BOOK_VALUATIONS } =
+    useBookComputed();
+
+  const ALL_TXN: TxRow[] = useMemo(() => {
+    const txns: TxRow[] = [];
+
+    BOOK_INSTRUMENTS.forEach((inst, i) => {
+      const val = BOOK_VALUATIONS[i];
+
+      // Purchase / Buy
+      txns.push({
+        id: `TXN-${(1000 + i * 3).toString().padStart(5, "0")}`,
+        date: inst.purchaseDate,
+        type: "Buy",
+        instrument: inst.name,
+        issuer: inst.issuer,
+        currency: inst.currency,
+        amount: inst.faceValue * inst.purchasePrice,
+        amountFmt: fmtCompact(inst.faceValue * inst.purchasePrice),
+        status: "Settled",
+      });
+
+      // Coupon event — instruments with couponRate > 0
+      if (inst.couponRate > 0 && inst.couponFrequency !== "Zero") {
+        const freqMonths =
+          inst.couponFrequency === "Semi"
+            ? 6
+            : inst.couponFrequency === "Quarterly"
+              ? 3
+              : 12;
+        const annualIncome =
+          val?.annualEIRIncome ?? inst.faceValue * inst.couponRate;
+        const couponAmt = annualIncome / (12 / freqMonths);
+        // last coupon: 1 period ago from valuation date
+        const lastCouponDate = new Date(
+          VALUATION_MS - freqMonths * 30 * 86400000,
+        );
+        txns.push({
+          id: `TXN-${(1001 + i * 3).toString().padStart(5, "0")}`,
+          date: lastCouponDate.toISOString().slice(0, 10),
+          type: "Coupon",
+          instrument: inst.name,
+          issuer: inst.issuer,
+          currency: inst.currency,
+          amount: couponAmt,
+          amountFmt: fmtCompact(couponAmt),
+          status: "Settled",
+        });
+      }
+
+      // Maturity — instruments maturing within 90 days of valuation date
+      if (inst.maturityDate) {
+        const matMs = new Date(inst.maturityDate).getTime();
+        if (Math.abs(matMs - VALUATION_MS) < DAYS_90) {
+          const matStatus =
+            matMs < VALUATION_MS
+              ? "Settled"
+              : matMs - VALUATION_MS < 30 * 86400000
+                ? "Processing"
+                : "Pending";
+          txns.push({
+            id: `TXN-${(1002 + i * 3).toString().padStart(5, "0")}`,
+            date: inst.maturityDate,
+            type: "Maturity",
+            instrument: inst.name,
+            issuer: inst.issuer,
+            currency: inst.currency,
+            amount: inst.faceValue,
+            amountFmt: fmtCompact(inst.faceValue),
+            status: matStatus,
+          });
+        }
+      }
+    });
+
+    // Sort by date desc
+    return txns.sort((a, b) => b.date.localeCompare(a.date));
+  }, [BOOK_INSTRUMENTS, BOOK_VALUATIONS]);
 
   const filtered = useMemo(() => {
     let rows = ALL_TXN;
@@ -198,7 +202,7 @@ export function PortfolioTransactions() {
       );
     }
     return rows;
-  }, [search, typeFilter]);
+  }, [search, typeFilter, ALL_TXN]);
 
   const buys = ALL_TXN.filter((t) => t.type === "Buy").length;
   const coupons = ALL_TXN.filter((t) => t.type === "Coupon").length;
