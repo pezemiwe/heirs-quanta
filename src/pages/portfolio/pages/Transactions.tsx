@@ -34,7 +34,7 @@ BOOK_INSTRUMENTS.forEach((inst, i) => {
   const val = BOOK_VALUATIONS[i];
   const bsv = val?.balanceSheetValueNGN ?? 0;
 
-  // Purchase / Buy
+  // Purchase / Buy — face value (par/principal); never multiply by purchasePrice
   ALL_TXN.push({
     id: `TXN-${(1000 + i * 3).toString().padStart(5, "0")}`,
     date: inst.purchaseDate,
@@ -42,8 +42,8 @@ BOOK_INSTRUMENTS.forEach((inst, i) => {
     instrument: inst.name,
     issuer: inst.issuer,
     currency: inst.currency,
-    amount: inst.faceValue * inst.purchasePrice,
-    amountFmt: fmtCompact(inst.faceValue * inst.purchasePrice),
+    amount: inst.faceValue,
+    amountFmt: fmtCompact(inst.faceValue),
     status: "Settled",
   });
 
