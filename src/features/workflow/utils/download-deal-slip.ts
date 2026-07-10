@@ -3,144 +3,149 @@ import type { DealSlip } from "../types";
 import {
   approvedByName,
   dealNotional,
-  dealSlipLabel,
-  economicsFields,
-  slipVersion,
+  dealSlipTitle,
+  documentEconomicsFields,
+  fmtNotionalCurrency,
+  HEIRS_BRAND_RGB,
+  registerRef,
+  settlementDate,
+  slipVersionLabel,
   submittedDate,
 } from "../engine/slip-fields";
 
-const HEIRS_RED: [number, number, number] = [204, 0, 0];
-const GRAY: [number, number, number] = [100, 100, 100];
-
-function fmtMoney(n: number, currency: string): string {
-  return `${currency} ${n.toLocaleString("en-NG", { minimumFractionDigits: 0 })}`;
-}
-
+/**
+ * PDF export — follows the jsPDF layout pattern in ifrs9/pages/reports.tsx
+ * (portrait A4, brand-colour header bar, manual doc.text/doc.rect).
+ */
 export function downloadDealSlipPdf(slip: DealSlip): void {
   const e = slip.economics;
-  const doc = new jsPDF({ unit: "mm", format: "a4" });
-  const margin = 14;
-  const pageW = doc.internal.pageSize.getWidth();
-  let y = margin;
+  const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a4" });
+  const pageW = 210;
+  const margin = 20;
+  let y = 32;
 
-  doc.setFillColor(...HEIRS_RED);
-  doc.rect(0, 0, pageW, 8, "F");
-  y = 16;
-
+  // Header bar
+  doc.setFillColor(...HEIRS_BRAND_RGB);
+  doc.rect(0, 0, pageW, 18, "F");
+  doc.setTextColor(255, 255, 255);
   doc.setFont("helvetica", "bold");
-  doc.setFontSize(10);
-  doc.setTextColor(...GRAY);
-  doc.text("HEIRS QUANTA · INVESTMENT DEAL SLIP", margin, y);
-  y += 6;
-
-  doc.setFontSize(18);
-  doc.setTextColor(40, 40, 40);
-  doc.text(dealSlipLabel(e), margin, y);
-  y += 8;
-
   doc.setFontSize(11);
-  doc.setFont("helvetica", "bold");
-  doc.setTextColor(...HEIRS_RED);
-  doc.text(slip.id, margin, y);
+  doc.text("HEIRS QUANTA · INVESTMENT DEAL SLIP", margin, 12);
+  doc.setFontSize(8);
   doc.setFont("helvetica", "normal");
-  doc.setTextColor(...GRAY);
-  doc.text(`Status: ${slip.status}`, margin + 42, y);
-  y += 7;
+  doc.text(slipVersionLabel(slip), pageW - margin - 40, 12);
 
-  doc.setDrawColor(220, 220, 220);
-  doc.line(margin, y, pageW - margin, y);
-  y += 6;
-
-  const meta: [string, string][] = [
-    ["Portfolio book", e.portfolioBook],
-    ["Asset class", e.assetClass],
-    ["Created by", `${slip.createdBy.name} (${slip.createdBy.role})`],
-    ["Created", slip.createdAt.slice(0, 10)],
-    ["Version", `v${slipVersion(slip)}`],
-    ["Notional", fmtMoney(dealNotional(e), e.currency)],
-    ["Submitted", submittedDate(slip)],
-    ["Approved by", approvedByName(slip)],
-    ["Settlement", slip.settlement.status],
-    ["Register ref", slip.registerId ?? "—"],
-  ];
+  // Title block
+  doc.setTextColor(26, 26, 46);
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(14);
+  const titleLines = doc.splitTextToSize(dealSlipTitle(e), pageW - margin * 2) as string[];
+  doc.text(titleLines, margin, y);
+  y += titleLines.length * 6 + 2;
 
   doc.setFontSize(9);
-  for (const [label, value] of meta) {
-    doc.setFont("helvetica", "bold");
-    doc.setTextColor(...GRAY);
-    doc.text(label, margin, y);
-    doc.setFont("helvetica", "normal");
-    doc.setTextColor(50, 50, 50);
-    const lines = doc.splitTextToSize(value, pageW - margin - 52) as string[];
-    doc.text(lines, margin + 48, y);
-    y += Math.max(5, lines.length * 4.5);
-  }
+  doc.setFont("helvetica", "normal");
+  doc.setTextColor(100, 100, 120);
+  doc.text(`${slip.id}  ·  ${slip.status}  ·  ${e.portfolioBook}`, margin, y);
+  y += 8;
 
-  y += 4;
+  doc.setDrawColor(220, 220, 230);
+  doc.line(margin, y, pageW - margin, y);
+  y += 8;
+
+  // Notional callout box
+  doc.setFillColor(255, 245, 246);
+  doc.setDrawColor(200, 16, 46);
+  doc.roundedRect(margin, y, pageW - margin * 2, 16, 2, 2, "FD");
+  doc.setFont("helvetica", "bold");
+  doc.setFontSize(7);
+  doc.setTextColor(200, 16, 46);
+  doc.text("NOTIONAL AMOUNT", margin + 4, y + 5);
+  doc.setFontSize(13);
+  doc.setTextColor(26, 26, 46);
+  doc.text(fmtNotionalCurrency(dealNotional(e), e.currency), margin + 4, y + 12);
+  y += 22;
+
+  // Metadata grid (2 columns)
+  const meta: [string, string][] = [
+    ["Originator", slip.createdBy.name],
+    ["Desk", slip.createdBy.role],
+    ["Submitted", submittedDate(slip)],
+    ["Approved by", approvedByName(slip)],
+    ["Settlement", settlementDate(slip)],
+    ["Register ref", registerRef(slip)],
+  ];
+  const colW = (pageW - margin * 2 - 8) / 2;
+  doc.setFontSize(8);
+  meta.forEach(([label, value], idx) => {
+    const col = idx % 2;
+    const row = Math.floor(idx / 2);
+    const x = margin + col * (colW + 8);
+    const rowY = y + row * 11;
+    doc.setFont("helvetica", "bold");
+    doc.setTextColor(120, 120, 130);
+    doc.text(label.toUpperCase(), x, rowY);
+    doc.setFont("helvetica", "normal");
+    doc.setTextColor(40, 40, 50);
+    const valLines = doc.splitTextToSize(value, colW) as string[];
+    doc.text(valLines, x, rowY + 4);
+  });
+  y += Math.ceil(meta.length / 2) * 11 + 6;
+
+  doc.line(margin, y, pageW - margin, y);
+  y += 7;
+
+  // Economics & terms
   doc.setFont("helvetica", "bold");
   doc.setFontSize(10);
-  doc.setTextColor(40, 40, 40);
+  doc.setTextColor(26, 26, 46);
   doc.text("Economics & terms", margin, y);
-  y += 5;
+  y += 6;
 
-  const fields = economicsFields(e);
+  const fields = documentEconomicsFields(e);
   doc.setFontSize(8.5);
   for (const f of fields) {
-    if (y > 265) {
+    if (y > 268) {
       doc.addPage();
       y = margin;
     }
     doc.setFont("helvetica", "normal");
-    doc.setTextColor(...GRAY);
+    doc.setTextColor(100, 100, 110);
     doc.text(f.label, margin, y);
     doc.setFont("helvetica", "bold");
-    doc.setTextColor(30, 30, 30);
-    const valLines = doc.splitTextToSize(f.value, pageW - margin - 55) as string[];
+    doc.setTextColor(30, 30, 40);
+    const valLines = doc.splitTextToSize(f.value, pageW - margin - 58) as string[];
     doc.text(valLines, margin + 52, y);
-    y += Math.max(5, valLines.length * 4);
-    doc.setDrawColor(240, 240, 240);
+    y += Math.max(5.5, valLines.length * 4.2);
+    doc.setDrawColor(235, 235, 240);
     doc.line(margin, y - 1, pageW - margin, y - 1);
   }
 
   if (slip.documents.length > 0) {
-    y += 6;
+    y += 4;
     doc.setFont("helvetica", "bold");
     doc.setFontSize(9);
+    doc.setTextColor(26, 26, 46);
     doc.text("Attachments", margin, y);
-    y += 4;
+    y += 5;
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
+    doc.setTextColor(60, 60, 70);
     for (const d of slip.documents) {
       doc.text(`• ${d.name}`, margin, y);
       y += 4;
     }
   }
 
-  y += 8;
-  if (y > 250) {
-    doc.addPage();
-    y = margin;
-  }
-
   doc.setFont("helvetica", "italic");
   doc.setFontSize(7);
-  doc.setTextColor(...GRAY);
+  doc.setTextColor(140, 140, 150);
   doc.text(
-    "This deal slip is system-generated from Heirs Quanta. Official records are maintained in the investment register after approved settlement.",
+    "Generated by Heirs Quanta — Confidential. Official records are maintained in the investment register after approved settlement.",
     margin,
-    y,
+    285,
     { maxWidth: pageW - margin * 2 },
   );
-  y += 12;
-
-  const sigY = Math.min(y + 10, 270);
-  doc.setDrawColor(180, 180, 180);
-  doc.line(margin, sigY, margin + 55, sigY);
-  doc.line(margin + 75, sigY, margin + 130, sigY);
-  doc.setFont("helvetica", "normal");
-  doc.setFontSize(7);
-  doc.text("Trader / Originator", margin, sigY + 4);
-  doc.text("Authorised signatory", margin + 75, sigY + 4);
 
   doc.save(`${slip.id}-deal-slip.pdf`);
 }

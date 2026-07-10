@@ -5,7 +5,7 @@ import { GovernanceBar } from "../../../components/shared/governance-bar";
 import { useInstrumentBook } from "../../../context/instrument-book";
 import { ImportBookModal } from "../components/import-book-modal";
 import { DealSlipWorkspace } from "../../workflow/components/deal-slip-workspace";
-import { DealSlipPreview } from "../../workflow/components/deal-slip-preview";
+import { DealSlipDocumentView } from "../../workflow/components/deal-slip-document-view";
 import { ChecksPanel } from "../../workflow/components/checks-panel";
 import { StatusTimeline } from "../../workflow/components/status-timeline";
 import type { DealSlip } from "../../workflow/types";
@@ -48,7 +48,7 @@ export function NewBooking() {
           </div>
         </div>
 
-        <DealSlipPreview slip={justSubmitted} />
+        <DealSlipDocumentView slip={justSubmitted} embedded />
 
         <div className="grid grid-cols-1 gap-6 lg:grid-cols-2">
           <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">

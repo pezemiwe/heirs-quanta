@@ -14,6 +14,7 @@ import {
   Bookmark,
   BookmarkPlus,
   Trash2,
+  FileText,
 } from "lucide-react";
 import {
   DataTable,
@@ -29,7 +30,7 @@ import { useGovernance } from "../../../context/governance";
 import { useInstrumentBook } from "../../../context/instrument-book";
 import { useWorkflow } from "../../workflow/store";
 import { DealSlipWorkspace } from "../../workflow/components/deal-slip-workspace";
-import { DealSlipPreview } from "../../workflow/components/deal-slip-preview";
+import { DealSlipDocumentView } from "../../workflow/components/deal-slip-document-view";
 import { ChecksPanel } from "../../workflow/components/checks-panel";
 import { SettlementPanel } from "../../workflow/components/settlement-panel";
 import { StatusTimeline } from "../../workflow/components/status-timeline";
@@ -172,8 +173,6 @@ function DealSlipDetail({ slip }: { slip: DealSlip }) {
       )}
 
       <LimitAlerts slip={slip} />
-
-      <DealSlipPreview slip={slip} />
 
       {/* Workflow actions for the current status */}
       {slip.status === "Submitted" && (
@@ -326,6 +325,7 @@ export function DealBlotter() {
   const [sortBy, setSortBy] = useState<BlotterSortField>("purchaseDate");
   const [sortDir, setSortDir] = useState<SortDirection>("desc");
   const [selectedId, setSelectedId] = useState<string | null>(null);
+  const [documentSlipId, setDocumentSlipId] = useState<string | null>(null);
   const [viewName, setViewName] = useState("");
   const [showSaveView, setShowSaveView] = useState(false);
   const { views: savedViews, saveView, deleteView } = useSavedBlotterViews(persona.name);
@@ -333,6 +333,9 @@ export function DealBlotter() {
   // holding a stale snapshot — otherwise the modal wouldn't reflect a status
   // change (e.g. Begin Review) made from inside itself.
   const selected = selectedId ? (dealSlips.find((s) => s.id === selectedId) ?? null) : null;
+  const documentSlip = documentSlipId
+    ? (dealSlips.find((s) => s.id === documentSlipId) ?? null)
+    : null;
 
   const statuses: (DealSlipStatus | "All")[] = [
     "All",
@@ -473,6 +476,25 @@ export function DealBlotter() {
       ),
     },
     { key: "createdBy" as never, header: "Booked By", render: (r) => r.createdBy.name },
+    {
+      key: "viewDoc" as never,
+      header: "",
+      width: "130px",
+      render: (r) => (
+        <button
+          type="button"
+          onClick={(e) => {
+            e.stopPropagation();
+            setDocumentSlipId(r.id);
+          }}
+          className="inline-flex items-center gap-1 rounded-md border border-border bg-surface px-2 py-1 text-[11px] font-medium text-dark-gray hover:border-primary hover:text-primary"
+          title="View printable deal slip"
+        >
+          <FileText className="h-3 w-3" />
+          View Deal Slip
+        </button>
+      ),
+    },
     {
       key: "delete" as never,
       header: "",
@@ -684,6 +706,17 @@ export function DealBlotter() {
 
       <Modal isOpen={selected !== null} onClose={() => setSelectedId(null)} title={selected ? `Deal Slip ${selected.id}` : undefined} size="xl">
         {selected && <DealSlipDetail slip={selected} />}
+      </Modal>
+
+      <Modal
+        isOpen={documentSlip !== null}
+        onClose={() => setDocumentSlipId(null)}
+        title={documentSlip ? `Deal Slip Document — ${documentSlip.id}` : undefined}
+        size="lg"
+      >
+        {documentSlip && (
+          <DealSlipDocumentView slip={documentSlip} onClose={() => setDocumentSlipId(null)} />
+        )}
       </Modal>
 
       <ConfirmDialog

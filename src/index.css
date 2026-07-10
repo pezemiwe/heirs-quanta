@@ -159,3 +159,35 @@ label[for],
 .animate-pulse-glow {
   animation: pulse-glow 4s ease-in-out infinite;
 }
+
+/* ── Deal slip document print ─────────────────────────────────── */
+@media print {
+  body.deal-slip-print-active * {
+    visibility: hidden;
+  }
+
+  body.deal-slip-print-active .deal-slip-print-target,
+  body.deal-slip-print-active .deal-slip-print-target * {
+    visibility: visible;
+  }
+
+  body.deal-slip-print-active .deal-slip-print-target {
+    position: fixed;
+    inset: 0;
+    margin: 0;
+    padding: 12mm;
+    background: white !important;
+    border-radius: 0 !important;
+    box-shadow: none !important;
+    overflow: visible;
+  }
+
+  body.deal-slip-print-active .deal-slip-document {
+    box-shadow: none !important;
+    max-width: none !important;
+  }
+
+  body.deal-slip-print-active .deal-slip-toolbar {
+    display: none !important;
+  }
+}
