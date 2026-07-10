@@ -29,6 +29,7 @@ import { useGovernance } from "../../../context/governance";
 import { useInstrumentBook } from "../../../context/instrument-book";
 import { useWorkflow } from "../../workflow/store";
 import { DealSlipWorkspace } from "../../workflow/components/deal-slip-workspace";
+import { DealSlipPreview } from "../../workflow/components/deal-slip-preview";
 import { ChecksPanel } from "../../workflow/components/checks-panel";
 import { SettlementPanel } from "../../workflow/components/settlement-panel";
 import { StatusTimeline } from "../../workflow/components/status-timeline";
@@ -171,6 +172,8 @@ function DealSlipDetail({ slip }: { slip: DealSlip }) {
       )}
 
       <LimitAlerts slip={slip} />
+
+      <DealSlipPreview slip={slip} />
 
       {/* Workflow actions for the current status */}
       {slip.status === "Submitted" && (

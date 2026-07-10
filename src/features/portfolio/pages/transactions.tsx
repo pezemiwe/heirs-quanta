@@ -119,7 +119,10 @@ export function PortfolioTransactions() {
     BOOK_INSTRUMENTS.forEach((inst, i) => {
       const val = BOOK_VALUATIONS[i];
 
-      // Purchase / Buy
+      // Purchase / Buy — notional is par/principal (face value), same basis as
+      // the Maturity row and Holdings. Workbook imports store purchasePrice as an
+      // absolute local-currency amount too (~53M for placements), so multiplying
+      // faceValue × purchasePrice inflates Buy to trillions.
       txns.push({
         id: `TXN-${(1000 + i * 3).toString().padStart(5, "0")}`,
         date: inst.purchaseDate,
@@ -127,8 +130,8 @@ export function PortfolioTransactions() {
         instrument: inst.name,
         issuer: inst.issuer,
         currency: inst.currency,
-        amount: inst.faceValue * inst.purchasePrice,
-        amountFmt: fmtCompact(inst.faceValue * inst.purchasePrice),
+        amount: inst.faceValue,
+        amountFmt: fmtCompact(inst.faceValue),
         status: "Settled",
       });
 
