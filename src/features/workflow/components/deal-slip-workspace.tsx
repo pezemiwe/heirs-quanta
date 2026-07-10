@@ -1,14 +1,16 @@
 import { useMemo, useState } from "react";
-import { Save, Send, RotateCcw, Paperclip, X, Info, Loader2, ShieldAlert, Trash2 } from "lucide-react";
+import { Save, Send, RotateCcw, Paperclip, X, Info, Loader2, ShieldAlert, Trash2, FileText } from "lucide-react";
 import { usePersona } from "../../../context/persona";
 import { useGovernance } from "../../../context/governance";
 import { useInstrumentBook } from "../../../context/instrument-book";
 import { usePortfolioRegistry } from "../../portfolio/portfolio-registry";
 import { ConfirmDialog } from "../../../components/shared/confirm-dialog";
+import { Modal } from "../../../components/shared/modal";
 import { useWorkflow } from "../store";
 import { isEditable } from "../engine/transitions";
 import { runLimitCheck } from "../engine/checks";
 import { LimitAlertsFromChecks } from "./limit-alerts";
+import { DealSlipDocumentView } from "./deal-slip-document-view";
 import type { AssetClass, DealDocument, DealEconomics, DealSlip } from "../types";
 
 const ASSET_CLASSES: AssetClass[] = [
@@ -168,6 +170,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
   const [busy, setBusy] = useState<"draft" | "submit" | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
+  const [showDocument, setShowDocument] = useState(false);
 
   const set = <K extends keyof DealEconomics>(field: K) => (v: DealEconomics[K]) =>
     setForm((f) => ({ ...f, [field]: v }));
@@ -183,8 +186,21 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
   if (slip && !editable) {
     // Read-only summary once the slip has moved past Draft / Returned for Amendment.
     return (
-      <div className="space-y-4">
-        <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">
+      <>
+        <div className="space-y-4">
+          {slip.status !== "Draft" && (
+            <div className="flex justify-end">
+              <button
+                type="button"
+                onClick={() => setShowDocument(true)}
+                className="inline-flex items-center gap-2 rounded-lg border border-border bg-surface px-3 py-2 text-xs font-semibold text-dark-gray hover:border-primary hover:text-primary"
+              >
+                <FileText className="h-3.5 w-3.5" />
+                View as Document
+              </button>
+            </div>
+          )}
+          <dl className="grid grid-cols-1 gap-x-6 gap-y-4 sm:grid-cols-3">
           {[
             ["Asset Class", form.assetClass],
             ["Instrument", form.instrumentName],
@@ -209,7 +225,17 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
           This deal slip is locked for editing while in status "{slip.status}". Only Draft or Returned for
           Amendment slips can be changed by the trader.
         </p>
-      </div>
+        </div>
+
+        <Modal
+          isOpen={showDocument}
+          onClose={() => setShowDocument(false)}
+          title={`Deal Slip Document — ${slip.id}`}
+          size="lg"
+        >
+          <DealSlipDocumentView slip={slip} onClose={() => setShowDocument(false)} />
+        </Modal>
+      </>
     );
   }
 
