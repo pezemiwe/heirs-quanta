@@ -156,6 +156,84 @@ function runSyntheticTests() {
     console.log("✓ zero-row parse warning:", sheet.warnings[0]);
   }
 
+  // 4. Timezone-safe date parsing — calendar dates must not shift under UTC+ timezones
+  {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet([
+        ["FGN BONDS"],
+        [
+          "S/No",
+          "Identifier",
+          "Dealer",
+          "Portfolio",
+          "IDENTIFIER/DEAL ID",
+          "DESCRIPTION",
+          "VALUE DATE",
+          "MATURITY DATE",
+          "COUPON RATE",
+          "YIELD AT PURCHASE",
+          "UNITS",
+          "COST AT PAR",
+          "FACE VALUE",
+        ],
+        [
+          1,
+          "FGN-2036",
+          "Dealer",
+          "FGN Bond Book",
+          "DEAL-2036",
+          "12.40% FGN BOND MAR 2036",
+          "28-Jul-21",
+          "18-Mar-36",
+          "12.40%",
+          "14%",
+          1,
+          53_000_000,
+          53_000_000,
+        ],
+      ]),
+      "FGN BONDS",
+    );
+    const inst = parseWorkbook(toBuffer(wb)).instruments[0];
+    assert(inst, "expected FGN instrument");
+    assert(
+      inst.purchaseDate === "2021-07-28",
+      `value date shifted: expected 2021-07-28, got ${inst.purchaseDate}`,
+    );
+    assert(
+      inst.maturityDate === "2036-03-18",
+      `maturity date shifted: expected 2036-03-18, got ${inst.maturityDate}`,
+    );
+    console.log("✓ timezone-safe date parsing:", {
+      purchaseDate: inst.purchaseDate,
+      maturityDate: inst.maturityDate,
+    });
+  }
+
+  // 5. dd/mm/yyyy branch — same timezone safety
+  {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet([
+        ["PLACEMENTS LESS THAN 90DAYS"],
+        ["S/No", "Identifier", "Institution", "Principal", "Rate", "Value date", "Maturity date"],
+        [1, "PLC-1", "Union Bank", 10_000_000, "15%", "18/03/2026", "18/06/2026"],
+      ]),
+      "PLACEMENTS LESS THAN 90DAYS",
+    );
+    const inst = parseWorkbook(toBuffer(wb)).instruments[0];
+    assert(inst, "expected placement instrument");
+    assert(inst.purchaseDate === "2026-03-18", `value date: got ${inst.purchaseDate}`);
+    assert(inst.maturityDate === "2026-06-18", `maturity date: got ${inst.maturityDate}`);
+    console.log("✓ dd/mm/yyyy parsing:", {
+      purchaseDate: inst.purchaseDate,
+      maturityDate: inst.maturityDate,
+    });
+  }
+
   console.log("All synthetic tests passed.\n");
 }
 

@@ -34,18 +34,18 @@ function splitCSVLine(line: string): string[] {
   return out.map((s) => s.trim());
 }
 
-/** Parse dd/MM/yyyy or yyyy-MM-dd dates */
+/** Parse dd/MM/yyyy or yyyy-MM-dd dates as UTC midnight (timezone-neutral). */
 function parseDate(s: string): Date {
   const t = s.trim();
   if (!t) return new Date(NaN);
   if (t.includes("/")) {
     const [d, m, y] = t.split("/").map(Number);
-    return new Date(y, (m || 1) - 1, d || 1);
+    return new Date(Date.UTC(y, (m || 1) - 1, d || 1));
   }
   if (t.includes("-") && t.length >= 8) {
     // ISO yyyy-MM-dd
     const [y, m, d] = t.split("-").map(Number);
-    return new Date(y, (m || 1) - 1, d || 1);
+    return new Date(Date.UTC(y, (m || 1) - 1, d || 1));
   }
   return new Date(t);
 }
