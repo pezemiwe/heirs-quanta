@@ -1,5 +1,4 @@
 import type { ReactNode } from "react";
-import { Construction } from "lucide-react";
 import { PageHeader } from "./page-header";
 import { SectionCard } from "./section-card";
 
@@ -46,18 +45,6 @@ export function PlaceholderPage({
           ))}
         </ul>
       </SectionCard>
-
-      <div className="flex items-center gap-3 rounded-xl border border-dashed border-amber-300 bg-amber-50/60 px-5 py-4 text-sm text-amber-900">
-        <Construction className="h-5 w-5 shrink-0" />
-        <p>
-          This page is part of a scaffolded module. Wire it to the canonical
-          portfolio book under{" "}
-          <code className="rounded bg-amber-100 px-1.5 py-0.5 text-xs">
-            features/portfolio/engine/instrument-book
-          </code>{" "}
-          when implementing.
-        </p>
-      </div>
     </div>
   );
 }

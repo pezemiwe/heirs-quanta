@@ -65,6 +65,13 @@ const MONTH: Record<string, number> = {
   jul: 6, aug: 7, sep: 8, oct: 9, nov: 10, dec: 11,
 };
 
+/** Format year/month/day as ISO yyyy-mm-dd without constructing a local-midnight Date. */
+function formatISODate(yr: number, mon: number, day: number): string {
+  const mm = String(mon + 1).padStart(2, "0");
+  const dd = String(day).padStart(2, "0");
+  return `${yr}-${mm}-${dd}`;
+}
+
 /** Parse any date string the Heirs workbook might contain → ISO yyyy-mm-dd */
 function parseDate(s: unknown): string {
   if (!s) return "";
@@ -90,7 +97,7 @@ function parseDate(s: unknown): string {
     // Always pivot 2-digit years to the 2000s — this book's bond maturities run
     // out to "50" (2050) and no legitimate 19XX date exists in this platform's data.
     if (yr < 100) yr += 2000;
-    return new Date(yr, mon, day).toISOString().slice(0, 10);
+    return formatISODate(yr, mon, day);
   }
 
   // dd/mm/yyyy
@@ -99,7 +106,7 @@ function parseDate(s: unknown): string {
     const day = parseInt(dmy[1]);
     const mon = parseInt(dmy[2]) - 1;
     const yr = parseInt(dmy[3]);
-    return new Date(yr, mon, day).toISOString().slice(0, 10);
+    return formatISODate(yr, mon, day);
   }
 
   // Already ISO
