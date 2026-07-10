@@ -12,6 +12,7 @@ import {
   fmtPct,
   useBookComputed,
 } from "../../portfolio/engine/book-compute";
+import { useIFRS9 } from "../../ifrs9/store";
 
 interface ImpairmentRow {
   id: string;
@@ -29,21 +30,25 @@ type Row = ImpairmentRow & Record<string, unknown>;
 export function Impairment() {
   const { computed: BOOK_COMPUTED, instruments: BOOK_INSTRUMENTS } =
     useBookComputed();
+  const ifrs9 = useIFRS9();
   const [selected, setSelected] = useState<Row | null>(null);
   const { stage1, stage2, stage3, totalECL, totalExposure } = useMemo(() => {
     const valMap = new Map(
       BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
     );
 
-    const toRow = (i: (typeof BOOK_INSTRUMENTS)[number]): ImpairmentRow => {
+    const toRow = (
+      i: (typeof BOOK_INSTRUMENTS)[number],
+      computed: ReturnType<typeof ifrs9.resultByInstrumentId.get>,
+    ): ImpairmentRow => {
       const val = valMap.get(i.id);
-      const ecl = val?.instrument.eclProvision ?? 0;
+      const ecl = computed?.ecl ?? 0;
       const bsValue = val?.balanceSheetValueNGN ?? i.purchasePrice;
       return {
         id: i.id,
         name: i.name,
         type: i.instrumentType,
-        stage: i.impairmentStage ?? "N/A",
+        stage: computed ? `Stage ${computed.finalStage}` : "N/A",
         faceValue: i.faceValue,
         bsValue,
         ecl,
@@ -51,20 +56,25 @@ export function Impairment() {
       };
     };
 
+    const rows = BOOK_INSTRUMENTS.map((i) => ({
+      inst: i,
+      computed: ifrs9.resultByInstrumentId.get(i.id),
+    }));
+
     return {
-      stage1: BOOK_INSTRUMENTS.filter(
-        (i) => i.impairmentStage === "Stage 1",
-      ).map(toRow) as Row[],
-      stage2: BOOK_INSTRUMENTS.filter(
-        (i) => i.impairmentStage === "Stage 2",
-      ).map(toRow) as Row[],
-      stage3: BOOK_INSTRUMENTS.filter(
-        (i) => i.impairmentStage === "Stage 3",
-      ).map(toRow) as Row[],
-      totalECL: BOOK_COMPUTED.totals.totalECLNGN,
+      stage1: rows
+        .filter((r) => r.computed?.finalStage === 1)
+        .map((r) => toRow(r.inst, r.computed)) as Row[],
+      stage2: rows
+        .filter((r) => r.computed?.finalStage === 2)
+        .map((r) => toRow(r.inst, r.computed)) as Row[],
+      stage3: rows
+        .filter((r) => r.computed?.finalStage === 3)
+        .map((r) => toRow(r.inst, r.computed)) as Row[],
+      totalECL: ifrs9.result.totals.impairmentLcy,
       totalExposure: BOOK_COMPUTED.totals.totalBSValueNGN,
     };
-  }, [BOOK_COMPUTED, BOOK_INSTRUMENTS]);
+  }, [BOOK_COMPUTED, BOOK_INSTRUMENTS, ifrs9.resultByInstrumentId, ifrs9.result.totals.impairmentLcy]);
 
   const cols: DataTableColumn<Row>[] = [
     { key: "id", header: "ID", width: "90px" },

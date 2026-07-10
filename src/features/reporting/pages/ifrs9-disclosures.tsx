@@ -11,6 +11,7 @@ import {
   fmtCompact,
   fmtPct,
 } from "../../portfolio/engine/book-compute";
+import { useIFRS9 } from "../../ifrs9/store";
 
 interface StagingRow {
   stage: string;
@@ -41,6 +42,7 @@ export function IFRS9Disclosures() {
     computed: BOOK_COMPUTED,
     instruments: BOOK_INSTRUMENTS,
   } = useBookComputed();
+  const ifrs9 = useIFRS9();
 
   const {
     stagingRows,
@@ -68,16 +70,16 @@ export function IFRS9Disclosures() {
     const instRows: InstrumentRow[] = [];
 
     for (const inst of BOOK_INSTRUMENTS) {
-      const stage = inst.impairmentStage ?? "Stage 1";
+      const computed = ifrs9.resultByInstrumentId.get(inst.id);
+      if (!computed) continue; // no IFRS 9 stage/ECL applies (e.g. equities)
+      const stage = `Stage ${computed.finalStage}`;
       const val = valMap.get(inst.id);
-      const ecl = val?.instrument.eclProvision ?? 0;
+      const ecl = computed.ecl;
       const bsValue = val?.balanceSheetValueNGN ?? inst.purchasePrice;
-      if (agg[stage]) {
-        agg[stage].count++;
-        agg[stage].faceValue += inst.faceValue;
-        agg[stage].bsValue += bsValue;
-        agg[stage].ecl += ecl;
-      }
+      agg[stage].count++;
+      agg[stage].faceValue += inst.faceValue;
+      agg[stage].bsValue += bsValue;
+      agg[stage].ecl += ecl;
       if (stage !== "Stage 1") {
         instRows.push({
           id: inst.id,
@@ -108,13 +110,18 @@ export function IFRS9Disclosures() {
     return {
       stagingRows: staging as StagRow[],
       stage23rows: instRows.sort((a, b) => b.ecl - a.ecl) as InstRow[],
-      totalECL: BOOK_COMPUTED.totals.totalECLNGN,
+      totalECL: ifrs9.result.totals.impairmentLcy,
       totalExposure: totalBS,
       stage1Count: agg["Stage 1"].count,
       stage2Count: agg["Stage 2"].count,
       stage3Count: agg["Stage 3"].count,
     };
-  }, [BOOK_COMPUTED, BOOK_INSTRUMENTS]);
+  }, [
+    BOOK_COMPUTED,
+    BOOK_INSTRUMENTS,
+    ifrs9.resultByInstrumentId,
+    ifrs9.result.totals.impairmentLcy,
+  ]);
 
   const stageCols: DataTableColumn<StagRow>[] = [
     {

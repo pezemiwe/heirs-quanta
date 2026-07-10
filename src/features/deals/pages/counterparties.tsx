@@ -7,8 +7,7 @@ import {
 import { SectionCard } from "../../../components/shared/section-card";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import {
-  BOOK_INSTRUMENTS,
-  BOOK_COMPUTED,
+  useBookComputed,
   fmtCompact,
   fmtPct,
 } from "../../portfolio/engine/book-compute";
@@ -27,6 +26,9 @@ interface CounterpartyRow {
 type Row = CounterpartyRow & Record<string, unknown>;
 
 export function Counterparties() {
+  const { instruments: BOOK_INSTRUMENTS, computed: BOOK_COMPUTED } =
+    useBookComputed();
+
   const { rows, totalBS } = useMemo(() => {
     const valMap = new Map(
       BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
@@ -68,7 +70,7 @@ export function Counterparties() {
       rows: sorted as Row[],
       totalBS: grandTotal,
     };
-  }, []);
+  }, [BOOK_INSTRUMENTS, BOOK_COMPUTED]);
 
   const topFive = rows.slice(0, 5).reduce((s, r) => s + r.bsValue, 0);
 

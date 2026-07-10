@@ -1,9 +1,10 @@
 import { useMemo, useState } from "react";
-import { Save, Send, RotateCcw, Paperclip, X, Info, Loader2, ShieldAlert } from "lucide-react";
+import { Save, Send, RotateCcw, Paperclip, X, Info, Loader2, ShieldAlert, Trash2 } from "lucide-react";
 import { usePersona } from "../../../context/persona";
 import { useGovernance } from "../../../context/governance";
 import { useInstrumentBook } from "../../../context/instrument-book";
 import { usePortfolioRegistry } from "../../portfolio/portfolio-registry";
+import { ConfirmDialog } from "../../../components/shared/confirm-dialog";
 import { useWorkflow } from "../store";
 import { isEditable } from "../engine/transitions";
 import { runLimitCheck } from "../engine/checks";
@@ -155,7 +156,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
   const { persona } = usePersona();
   const { hasPermission } = useGovernance();
   const { getPortfolioNames } = usePortfolioRegistry();
-  const { createDealSlip, updateEconomics, submitDealSlip, getDealSlip } = useWorkflow();
+  const { createDealSlip, updateEconomics, submitDealSlip, getDealSlip, removeDraft } = useWorkflow();
   const instrumentBook = useInstrumentBook();
 
   const canCreate = hasPermission(persona.role, "deal.create");
@@ -166,6 +167,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
   const [attachments, setAttachments] = useState<DealDocument[]>(slip?.documents ?? []);
   const [busy, setBusy] = useState<"draft" | "submit" | null>(null);
   const [error, setError] = useState<string | null>(null);
+  const [confirmDelete, setConfirmDelete] = useState(false);
 
   const set = <K extends keyof DealEconomics>(field: K) => (v: DealEconomics[K]) =>
     setForm((f) => ({ ...f, [field]: v }));
@@ -422,32 +424,60 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
         />
       </div>
 
-      <div className="flex items-center justify-end gap-3">
-        <button
-          type="button"
-          onClick={() => setForm(slip?.economics ?? EMPTY_ECONOMICS)}
-          className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-gray-500 hover:bg-pale-red hover:text-primary"
-        >
-          <RotateCcw className="h-4 w-4" /> Reset
-        </button>
-        <button
-          type="button"
-          disabled={busy !== null || !canCreate}
-          onClick={() => save("draft")}
-          className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-dark-gray hover:bg-pale-red hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {busy === "draft" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save as Draft
-        </button>
-        <button
-          type="button"
-          disabled={busy !== null || !canCreate}
-          onClick={() => save("submit")}
-          title={!canCreate ? `${persona.role} does not have deal.create permission` : undefined}
-          className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
-        >
-          {busy === "submit" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Submit for Approval
-        </button>
+      <div className="flex items-center justify-between gap-3">
+        {slip && slip.status === "Draft" ? (
+          <button
+            type="button"
+            onClick={() => setConfirmDelete(true)}
+            className="flex items-center gap-2 rounded-lg border border-red-200 px-4 py-2 text-sm font-medium text-danger hover:bg-red-50"
+          >
+            <Trash2 className="h-4 w-4" /> Delete Draft
+          </button>
+        ) : (
+          <span />
+        )}
+
+        <div className="flex items-center gap-3">
+          <button
+            type="button"
+            onClick={() => setForm(slip?.economics ?? EMPTY_ECONOMICS)}
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm text-gray-500 hover:bg-pale-red hover:text-primary"
+          >
+            <RotateCcw className="h-4 w-4" /> Reset
+          </button>
+          <button
+            type="button"
+            disabled={busy !== null || !canCreate}
+            onClick={() => save("draft")}
+            className="flex items-center gap-2 rounded-lg border border-border px-4 py-2 text-sm font-medium text-dark-gray hover:bg-pale-red hover:text-primary disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy === "draft" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Save className="h-4 w-4" />} Save as Draft
+          </button>
+          <button
+            type="button"
+            disabled={busy !== null || !canCreate}
+            onClick={() => save("submit")}
+            title={!canCreate ? `${persona.role} does not have deal.create permission` : undefined}
+            className="flex items-center gap-2 rounded-lg bg-primary px-5 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary/90 disabled:cursor-not-allowed disabled:opacity-50"
+          >
+            {busy === "submit" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Send className="h-4 w-4" />} Submit for Approval
+          </button>
+        </div>
       </div>
+
+      {slip && (
+        <ConfirmDialog
+          isOpen={confirmDelete}
+          onCancel={() => setConfirmDelete(false)}
+          onConfirm={() => {
+            removeDraft(slip.id);
+            setConfirmDelete(false);
+          }}
+          title="Delete draft deal slip?"
+          description={`${slip.id} — ${slip.economics.instrumentName} will be permanently deleted. This cannot be undone.`}
+          confirmLabel="Delete"
+        />
+      )}
     </div>
   );
 }

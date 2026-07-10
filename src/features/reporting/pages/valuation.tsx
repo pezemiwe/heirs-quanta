@@ -61,7 +61,10 @@ export function ValuationReport() {
     const byTypeLevel = new Map<string, AggRow>();
 
     for (const inst of BOOK_INSTRUMENTS) {
-      const levelKey = String(inst.ifrs13Level);
+      // inst.ifrs13Level is "L1" | "L2" | "L3" — strip the "L" prefix so the
+      // grouped label ("Level 1") matches the "Level 1"/"Level 2"/"Level 3"
+      // strings the l1/l2/l3 filters below compare against.
+      const levelKey = String(inst.ifrs13Level).replace("L", "");
       const key = `${levelKey}|${inst.instrumentType}`;
       const val = valMap.get(inst.id);
       const fv = val?.cleanFairValue ?? inst.purchasePrice;

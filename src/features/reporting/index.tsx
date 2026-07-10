@@ -15,6 +15,7 @@ import {
   type ModuleNavItem,
 } from "../../components/shared/module-shell";
 import { PlaceholderPage } from "../../components/shared/placeholder-page";
+import { IFRS9Provider } from "../ifrs9/store";
 import { ReportingDashboard } from "./pages/dashboard";
 import { ValuationReport } from "./pages/valuation";
 import { IFRS9Disclosures } from "./pages/ifrs9-disclosures";
@@ -126,7 +127,9 @@ export function ReportingModule() {
       nav={NAV}
       groups={GROUPS}
     >
-      <PageBody page={page} />
+      <IFRS9Provider>
+        <PageBody page={page} />
+      </IFRS9Provider>
     </ModuleShell>
   );
 }

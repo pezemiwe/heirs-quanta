@@ -32,7 +32,7 @@ const ALL_FULL: RoleMatrix = {
   "duration-risk": "full",
   accounting: "full",
   reporting: "full",
-  governance: "none",
+  governance: "read-only",
 };
 
 const ALL_READ: RoleMatrix = {

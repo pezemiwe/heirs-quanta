@@ -4,6 +4,7 @@ import {
   fmtCompact,
   fmtPct,
 } from "../../../features/portfolio/engine/book-compute";
+import { useIFRS9 } from "../../../features/ifrs9/store";
 import {
   DataTable,
   DataTableColumn,
@@ -50,33 +51,43 @@ export function IFRS7Disclosures() {
     instruments: BOOK_INSTRUMENTS,
     valuations: BOOK_VALUATIONS,
   } = useBookComputed();
+  const ifrs9 = useIFRS9();
 
   const totals = BOOK_COMPUTED.totals;
   const bySector = BOOK_COMPUTED.bySector;
   const matProfile = BOOK_COMPUTED.maturityProfile;
 
-  // IFRS 7 credit risk: by stage
+  // IFRS 7 credit risk: by stage (live IFRS 9 engine output, not the static
+  // instrument.impairmentStage field set at import time)
   const stage1Insts = useMemo(
-    () => BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === "Stage 1"),
-    [BOOK_INSTRUMENTS],
+    () =>
+      BOOK_INSTRUMENTS.filter(
+        (i) => ifrs9.resultByInstrumentId.get(i.id)?.finalStage === 1,
+      ),
+    [BOOK_INSTRUMENTS, ifrs9.resultByInstrumentId],
   );
   const stage2Insts = useMemo(
-    () => BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === "Stage 2"),
-    [BOOK_INSTRUMENTS],
+    () =>
+      BOOK_INSTRUMENTS.filter(
+        (i) => ifrs9.resultByInstrumentId.get(i.id)?.finalStage === 2,
+      ),
+    [BOOK_INSTRUMENTS, ifrs9.resultByInstrumentId],
   );
   const stage3Insts = useMemo(
-    () => BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === "Stage 3"),
-    [BOOK_INSTRUMENTS],
+    () =>
+      BOOK_INSTRUMENTS.filter(
+        (i) => ifrs9.resultByInstrumentId.get(i.id)?.finalStage === 3,
+      ),
+    [BOOK_INSTRUMENTS, ifrs9.resultByInstrumentId],
   );
 
-  const bsvByStage = (stage: string) =>
-    BOOK_INSTRUMENTS.filter((i) => i.impairmentStage === stage).reduce(
-      (s, inst) => {
-        const idx = BOOK_INSTRUMENTS.indexOf(inst);
-        return s + (BOOK_VALUATIONS[idx]?.balanceSheetValueNGN ?? 0);
-      },
-      0,
-    );
+  const bsvByStage = (stage: 1 | 2 | 3) =>
+    BOOK_INSTRUMENTS.filter(
+      (i) => ifrs9.resultByInstrumentId.get(i.id)?.finalStage === stage,
+    ).reduce((s, inst) => {
+      const idx = BOOK_INSTRUMENTS.indexOf(inst);
+      return s + (BOOK_VALUATIONS[idx]?.balanceSheetValueNGN ?? 0);
+    }, 0);
 
   // market risk: IFRS 7 sensitivity
   const totalDV01 = useMemo(
@@ -134,19 +145,19 @@ export function IFRS7Disclosures() {
             {
               stage: "Stage 1 — Performing",
               count: stage1Insts.length,
-              bsv: bsvByStage("Stage 1"),
+              bsv: bsvByStage(1),
               color: "text-success",
             },
             {
               stage: "Stage 2 — Underperforming",
               count: stage2Insts.length,
-              bsv: bsvByStage("Stage 2"),
+              bsv: bsvByStage(2),
               color: "text-yellow-600",
             },
             {
               stage: "Stage 3 — Non-Performing",
               count: stage3Insts.length,
-              bsv: bsvByStage("Stage 3"),
+              bsv: bsvByStage(3),
               color: "text-danger",
             },
           ].map((s) => (
@@ -171,15 +182,19 @@ export function IFRS7Disclosures() {
           {[
             {
               label: "Total ECL Provision",
-              value: fmtCompact(totals.totalECLNGN),
+              value: fmtCompact(ifrs9.result.totals.impairmentLcy),
             },
             {
               label: "ECL / Book Value",
-              value: fmtPct(totals.totalECLNGN / totals.totalBSValueNGN),
+              value: fmtPct(
+                ifrs9.result.totals.impairmentLcy / totals.totalBSValueNGN,
+              ),
             },
             {
               label: "Net Book Value (after ECL)",
-              value: fmtCompact(totals.totalBSValueNGN - totals.totalECLNGN),
+              value: fmtCompact(
+                totals.totalBSValueNGN - ifrs9.result.totals.impairmentLcy,
+              ),
             },
           ].map((k) => (
             <div

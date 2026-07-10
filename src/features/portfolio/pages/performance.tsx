@@ -11,133 +11,134 @@ import {
   Legend,
 } from "recharts";
 import {
-  BOOK_COMPUTED,
+  useBookComputed,
   fmtCompact,
   fmtPct,
   fmtN,
 } from "../../../features/portfolio/engine/book-compute";
 
-const vals = BOOK_COMPUTED.valuations;
-const totals = BOOK_COMPUTED.totals;
-
-// Weighted avg EIR
-const wEIR = (() => {
-  let ws = 0,
-    wt = 0;
-  for (const v of vals) {
-    if (v.eir > 0) {
-      ws += v.eir * v.balanceSheetValueNGN;
-      wt += v.balanceSheetValueNGN;
-    }
-  }
-  return wt > 0 ? ws / wt : 0;
-})();
-// Weighted avg market yield
-const wYield = (() => {
-  let ws = 0,
-    wt = 0;
-  for (const v of vals) {
-    if (v.marketYieldUsed > 0) {
-      ws += v.marketYieldUsed * v.balanceSheetValueNGN;
-      wt += v.balanceSheetValueNGN;
-    }
-  }
-  return wt > 0 ? ws / wt : 0;
-})();
-// Portfolio duration (weighted)
-const wDur = (() => {
-  let ws = 0,
-    wt = 0;
-  for (const v of vals) {
-    if (v.risk.modifiedDuration > 0) {
-      ws += v.risk.modifiedDuration * v.balanceSheetValueNGN;
-      wt += v.balanceSheetValueNGN;
-    }
-  }
-  return wt > 0 ? ws / wt : 0;
-})();
-const totalDV01 = vals.reduce((s, v) => s + v.risk.dv01, 0);
-const totalAnnualIncome = vals.reduce((s, v) => s + v.annualEIRIncome, 0);
-const totalOCI = totals.totalOCIReserveNGN;
-const totalFVTPL = totals.totalFVTPLUnrealisedGLNGN;
-
-// Income by classification
-const incomeByClass = [
-  { name: "AC", income: BOOK_COMPUTED.income.ac.totalAccruedInterestNGN },
-  {
-    name: "FVOCI",
-    income: BOOK_COMPUTED.income.fvoci.totalACCarryingValueNGN * wEIR,
-  },
-  { name: "FVTPL", income: Math.abs(totalFVTPL) },
-];
-
-// Sector income chart
-const sectorIncome = BOOK_COMPUTED.bySector
-  .slice(0, 8)
-  .map((s) => {
-    const sVals = vals.filter((v) => v.instrument.sector === s.sector);
-    return {
-      sector: s.sector.length > 12 ? s.sector.slice(0, 12) + "…" : s.sector,
-      income: sVals.reduce((a, v) => a + v.annualEIRIncome, 0),
-    };
-  })
-  .sort((a, b) => b.income - a.income);
-
-const METRICS = [
-  {
-    label: "Weighted Avg EIR",
-    value: fmtPct(wEIR),
-    note: "Effective Interest Rate across book",
-    positive: true,
-  },
-  {
-    label: "Weighted Avg Market Yield",
-    value: fmtPct(wYield),
-    note: "Current market yield",
-    positive: true,
-  },
-  {
-    label: "EIR—Yield Spread",
-    value: `${((wEIR - wYield) * 100).toFixed(0)} bps`,
-    note: "Carry vs current market",
-    positive: wEIR > wYield,
-  },
-  {
-    label: "Portfolio Duration (Mod.)",
-    value: `${wDur.toFixed(2)} yrs`,
-    note: "Weighted modified duration",
-    positive: true,
-  },
-  {
-    label: "DV01 (Interest Rate Sens.)",
-    value: fmtCompact(Math.abs(totalDV01)),
-    note: "+1bp â†’ P&L change",
-    positive: false,
-  },
-  {
-    label: "Annual Income (EIR)",
-    value: fmtCompact(totalAnnualIncome),
-    note: "Projected income run rate",
-    positive: true,
-  },
-  {
-    label: "OCI Reserve (FVOCI)",
-    value: fmtCompact(totalOCI),
-    note: "Unrealised in equity",
-    positive: totalOCI >= 0,
-  },
-  {
-    label: "FVTPL Unrealised P&L",
-    value: fmtCompact(totalFVTPL),
-    note: "Through P&L",
-    positive: totalFVTPL >= 0,
-  },
-];
-
 const PERIODS = ["1M", "3M", "6M", "YTD", "1Y", "3Y", "Inception"];
 
 export function PortfolioPerformance() {
   const [period, setPeriod] = useState("YTD");
+  const { computed: BOOK_COMPUTED } = useBookComputed();
+
+  const vals = BOOK_COMPUTED.valuations;
+  const totals = BOOK_COMPUTED.totals;
+
+  // Weighted avg EIR
+  const wEIR = (() => {
+    let ws = 0,
+      wt = 0;
+    for (const v of vals) {
+      if (v.eir > 0) {
+        ws += v.eir * v.balanceSheetValueNGN;
+        wt += v.balanceSheetValueNGN;
+      }
+    }
+    return wt > 0 ? ws / wt : 0;
+  })();
+  // Weighted avg market yield
+  const wYield = (() => {
+    let ws = 0,
+      wt = 0;
+    for (const v of vals) {
+      if (v.marketYieldUsed > 0) {
+        ws += v.marketYieldUsed * v.balanceSheetValueNGN;
+        wt += v.balanceSheetValueNGN;
+      }
+    }
+    return wt > 0 ? ws / wt : 0;
+  })();
+  // Portfolio duration (weighted)
+  const wDur = (() => {
+    let ws = 0,
+      wt = 0;
+    for (const v of vals) {
+      if (v.risk.modifiedDuration > 0) {
+        ws += v.risk.modifiedDuration * v.balanceSheetValueNGN;
+        wt += v.balanceSheetValueNGN;
+      }
+    }
+    return wt > 0 ? ws / wt : 0;
+  })();
+  const totalDV01 = vals.reduce((s, v) => s + v.risk.dv01, 0);
+  const totalAnnualIncome = vals.reduce((s, v) => s + v.annualEIRIncome, 0);
+  const totalOCI = totals.totalOCIReserveNGN;
+  const totalFVTPL = totals.totalFVTPLUnrealisedGLNGN;
+
+  // Income by classification
+  const incomeByClass = [
+    { name: "AC", income: BOOK_COMPUTED.income.ac.totalAccruedInterestNGN },
+    {
+      name: "FVOCI",
+      income: BOOK_COMPUTED.income.fvoci.totalACCarryingValueNGN * wEIR,
+    },
+    { name: "FVTPL", income: Math.abs(totalFVTPL) },
+  ];
+
+  // Sector income chart
+  const sectorIncome = BOOK_COMPUTED.bySector
+    .slice(0, 8)
+    .map((s) => {
+      const sVals = vals.filter((v) => v.instrument.sector === s.sector);
+      return {
+        sector: s.sector.length > 12 ? s.sector.slice(0, 12) + "ï¿½" : s.sector,
+        income: sVals.reduce((a, v) => a + v.annualEIRIncome, 0),
+      };
+    })
+    .sort((a, b) => b.income - a.income);
+
+  const METRICS = [
+    {
+      label: "Weighted Avg EIR",
+      value: fmtPct(wEIR),
+      note: "Effective Interest Rate across book",
+      positive: true,
+    },
+    {
+      label: "Weighted Avg Market Yield",
+      value: fmtPct(wYield),
+      note: "Current market yield",
+      positive: true,
+    },
+    {
+      label: "EIRï¿½Yield Spread",
+      value: `${((wEIR - wYield) * 100).toFixed(0)} bps`,
+      note: "Carry vs current market",
+      positive: wEIR > wYield,
+    },
+    {
+      label: "Portfolio Duration (Mod.)",
+      value: `${wDur.toFixed(2)} yrs`,
+      note: "Weighted modified duration",
+      positive: true,
+    },
+    {
+      label: "DV01 (Interest Rate Sens.)",
+      value: fmtCompact(Math.abs(totalDV01)),
+      note: "+1bp â†’ P&L change",
+      positive: false,
+    },
+    {
+      label: "Annual Income (EIR)",
+      value: fmtCompact(totalAnnualIncome),
+      note: "Projected income run rate",
+      positive: true,
+    },
+    {
+      label: "OCI Reserve (FVOCI)",
+      value: fmtCompact(totalOCI),
+      note: "Unrealised in equity",
+      positive: totalOCI >= 0,
+    },
+    {
+      label: "FVTPL Unrealised P&L",
+      value: fmtCompact(totalFVTPL),
+      note: "Through P&L",
+      positive: totalFVTPL >= 0,
+    },
+  ];
 
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">

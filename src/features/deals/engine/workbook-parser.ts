@@ -568,7 +568,7 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
   const cId = col("IDENTIFIER", ["identifier"], 2);
   const cPortfolio = col("PORTFOLIO", ["portfolio"], 3);
   const cPrincipalUSD = col("PRINCIPAL USD ($)", ["principalusd"], 6);
-  const cFxRate = col("EXCHANGE RATE @ PURCHASE", ["exchangerateatpurchase", "exchangerate"], 7);
+  const cFxRate = col("EXCHANGE RATE @ PURCHASE", ["exchangeratepurchase", "exchangerateatpurchase", "exchangerate"], 7);
   const cRate = col("RATE", ["rate"], 9);
   const cValueDate = col("VALUE DATE", ["valuedate"], 10);
   const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 11);

@@ -1,4 +1,11 @@
 import type { Security, Assumptions } from "./types";
+// Same as-of date the uploaded workbook's data represents, exported as
+// VALUATION_DATE from portfolio/engine/book-compute.ts (Portfolio, Valuation,
+// Duration Risk, Accounting, Performance all anchor to this same constant).
+// Importing directly from the upstream valuation engine here (rather than
+// from book-compute.ts) avoids a circular import: book-compute.ts pulls in
+// BOOK_INSTRUMENTS -> instrument-book.ts -> this file's SAMPLE_SECURITIES.
+import { DEFAULT_VALUATION_DATE } from "../../valuation/engine/reference-data";
 
 /* ──────────────────────────────────────────────────────────────
    MOODY'S CORPORATE PD — cumulative %, by Moody rating × horizon (years 1..20)
@@ -498,7 +505,14 @@ const buildOverlay = (start: number): number[] =>
   });
 
 export const DEFAULT_ASSUMPTIONS: Assumptions = {
-  reportingDate: new Date(), // today — TTM and staging should run as-at now, not a stale fixed date
+  // Anchored to the book's own as-of date (VALUATION_DATE in
+  // portfolio/engine/book-compute.ts), not today — otherwise instruments that
+  // matured between the workbook's date and today get misclassified as
+  // Stage 3 even though they were performing as of the book's reporting date.
+  // If VALUATION_DATE becomes dynamic later (e.g. derived from the latest
+  // instrument purchase/maturity date in an uploaded book), this should
+  // switch to reading that same dynamic value rather than a fixed constant.
+  reportingDate: new Date(DEFAULT_VALUATION_DATE + "T00:00:00Z"),
   sovereignRecoveryRate: 0.53,
   baseline: buildOverlay(1.0), // multiplier of 1× through horizon
   bestCase: buildOverlay(0.85), // starts 15% lower, rises to 1

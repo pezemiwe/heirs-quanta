@@ -8,7 +8,7 @@ import { SectionCard } from "../../../components/shared/section-card";
 import { Badge } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import {
-  BOOK_INSTRUMENTS,
+  useBookComputed,
   fmtCompact,
   fmtPct,
   fmtDate,
@@ -59,10 +59,12 @@ function freqMonths(freq: string): number {
 type Row = CouponRow & Record<string, unknown>;
 
 export function CouponSchedules() {
+  const { instruments: BOOK_INSTRUMENTS } = useBookComputed();
+
   const rows = useMemo<Row[]>(() => {
     const result: CouponRow[] = [];
     for (const inst of BOOK_INSTRUMENTS) {
-      if (!inst.couponRate || inst.couponRate === 0) continue;
+      if (inst.couponRate <= 0 || inst.couponFrequency === "Zero") continue;
       if (!inst.maturityDate) continue;
       const fm = freqMonths(inst.couponFrequency);
       if (fm === 0) continue;
@@ -85,7 +87,7 @@ export function CouponSchedules() {
       });
     }
     return result.sort((a, b) => a.daysToNext - b.daysToNext) as Row[];
-  }, []);
+  }, [BOOK_INSTRUMENTS]);
 
   const totalNextPeriod = rows.reduce((s, r) => s + r.periodCoupon, 0);
   const within30 = rows.filter((r) => r.daysToNext <= 30).length;

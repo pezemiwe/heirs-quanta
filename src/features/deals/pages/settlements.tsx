@@ -1,173 +1,121 @@
 import { useMemo, useState } from "react";
-import { ArrowLeftRight, CheckCircle } from "lucide-react";
+import { ArrowLeftRight, CheckCircle2, Clock, XCircle } from "lucide-react";
 import {
   DataTable,
   type DataTableColumn,
 } from "../../../components/shared/data-table";
 import { SectionCard } from "../../../components/shared/section-card";
-import { Badge } from "../../../components/shared/badge";
+import { Badge, type BadgeVariant } from "../../../components/shared/badge";
 import { StatCard, StatCardGrid } from "../../../components/shared/stat-card";
 import { RowDetailModal } from "../../../components/shared/row-detail-modal";
-import {
-  BOOK_INSTRUMENTS,
-  BOOK_COMPUTED,
-  fmtCompact,
-  fmtDate,
-  daysBetween,
-} from "../../portfolio/engine/book-compute";
+import { useWorkflow } from "../../workflow/store";
+import type { SettlementStatus } from "../../workflow/types";
+import { fmtDate } from "../../portfolio/engine/book-compute";
 
-const VALUATION_DATE = "2026-05-28";
+/* ─────────────────────────────────────────────────────────────
+   Settlements — settlement-instruction status for every deal slip
+   that has reached Approved or later. Pure read/aggregation over
+   the workflow store (dealSlips): no separate data source, no
+   fictional "mark settled" action — raising and confirming a
+   settlement instruction happens on the deal slip itself (Trade
+   Blotter → Settlement panel), this page is the audit view.
+   ───────────────────────────────────────────────────────────── */
+
+const SETTLEMENT_BADGE: Record<SettlementStatus, BadgeVariant> = {
+  "Not Raised": "neutral",
+  "Instruction Raised": "info",
+  Confirmed: "success",
+  Failed: "danger",
+};
 
 interface SettlementRow {
   id: string;
+  dealSlipId: string;
   name: string;
-  type: string;
   issuer: string;
+  counterparty: string;
+  custodian: string;
   faceValue: number;
-  bsValue: number;
-  maturityDate: string;
-  daysToMaturity: number;
-  classification: string;
   currency: string;
+  settlementDate: string;
+  settlementStatus: SettlementStatus;
+  raisedBy: string;
+  confirmedBy: string;
+  failReason: string;
 }
 
 type Row = SettlementRow & Record<string, unknown>;
 
 export function Settlements() {
+  const { dealSlips } = useWorkflow();
   const [selected, setSelected] = useState<Row | null>(null);
-  const [settled, setSettled] = useState<Set<string>>(new Set());
 
-  const markSettled = (id: string) =>
-    setSettled((prev) => new Set([...prev, id]));
-
-  const { rows, totalFace, totalBS } = useMemo(() => {
-    const valMap = new Map(
-      BOOK_COMPUTED.valuations.map((v) => [v.instrument.id, v]),
-    );
-
-    const result: SettlementRow[] = BOOK_INSTRUMENTS.filter(
-      (i) => i.maturityDate !== null && i.status === "Active",
-    )
-      .map((i) => {
-        const days = daysBetween(VALUATION_DATE, i.maturityDate!);
-        const val = valMap.get(i.id);
-        return {
-          id: i.id,
-          name: i.name,
-          type: i.instrumentType,
-          issuer: i.issuer,
-          faceValue: i.faceValue,
-          bsValue: val?.balanceSheetValueNGN ?? i.purchasePrice,
-          maturityDate: i.maturityDate!,
-          daysToMaturity: days,
-          classification: i.classification,
-          currency: i.currency,
-        };
-      })
-      .filter((r) => r.daysToMaturity >= 0 && r.daysToMaturity <= 365)
-      .sort((a, b) => a.daysToMaturity - b.daysToMaturity);
+  const { rows, totalFace, awaiting, confirmed, failed } = useMemo(() => {
+    const result: SettlementRow[] = dealSlips
+      .filter((s) =>
+        ["Approved", "Pending Settlement", "Settled", "Active"].includes(
+          s.status,
+        ),
+      )
+      .map((s) => ({
+        id: s.id,
+        dealSlipId: s.id,
+        name: s.economics.instrumentName,
+        issuer: s.economics.issuer,
+        counterparty: s.settlement.counterparty ?? s.economics.counterparty,
+        custodian: s.settlement.custodian ?? s.economics.custodian ?? "—",
+        faceValue: s.economics.faceValue,
+        currency: s.economics.currency,
+        settlementDate: s.settlement.settlementDate,
+        settlementStatus: s.settlement.status,
+        raisedBy: s.settlement.raisedBy?.name ?? "—",
+        confirmedBy: s.settlement.confirmedBy?.name ?? "—",
+        failReason: s.settlement.failReason ?? "",
+      }))
+      .sort((a, b) => a.settlementDate.localeCompare(b.settlementDate));
 
     return {
       rows: result as Row[],
       totalFace: result.reduce((s, r) => s + r.faceValue, 0),
-      totalBS: result.reduce((s, r) => s + r.bsValue, 0),
+      awaiting: result.filter(
+        (r) =>
+          r.settlementStatus === "Not Raised" ||
+          r.settlementStatus === "Instruction Raised",
+      ).length,
+      confirmed: result.filter((r) => r.settlementStatus === "Confirmed")
+        .length,
+      failed: result.filter((r) => r.settlementStatus === "Failed").length,
     };
-  }, []);
-
-  const within30 = rows.filter((r) => r.daysToMaturity <= 30).length;
-  const within90 = rows.filter((r) => r.daysToMaturity <= 90).length;
+  }, [dealSlips]);
 
   const cols: DataTableColumn<Row>[] = [
-    { key: "id", header: "ID", width: "90px" },
+    { key: "id", header: "Deal Slip", width: "110px", render: (r) => <span className="font-mono text-xs">{r.id}</span> },
     { key: "name", header: "Instrument" },
-    {
-      key: "type",
-      header: "Type",
-      render: (r) => (
-        <Badge variant="neutral" size="sm">
-          {r.type}
-        </Badge>
-      ),
-    },
-    { key: "issuer", header: "Issuer" },
+    { key: "counterparty", header: "Counterparty" },
+    { key: "custodian", header: "Custodian" },
     { key: "currency", header: "CCY", width: "60px" },
     {
       key: "faceValue",
       header: "Face Value",
       align: "right",
-      render: (r) => fmtCompact(r.faceValue),
+      render: (r) => r.faceValue.toLocaleString(),
     },
     {
-      key: "bsValue",
-      header: "Book Value (NGN)",
-      align: "right",
+      key: "settlementDate",
+      header: "Settlement Date",
+      render: (r) => fmtDate(r.settlementDate),
+    },
+    {
+      key: "settlementStatus",
+      header: "Status",
       render: (r) => (
-        <span className="font-medium text-dark-gray">
-          {fmtCompact(r.bsValue)}
-        </span>
-      ),
-    },
-    {
-      key: "maturityDate",
-      header: "Maturity Date",
-      render: (r) => fmtDate(r.maturityDate),
-    },
-    {
-      key: "daysToMaturity",
-      header: "Days to Mat.",
-      align: "right",
-      render: (r) => {
-        const cls =
-          r.daysToMaturity <= 30
-            ? "font-bold text-primary"
-            : r.daysToMaturity <= 90
-              ? "font-semibold text-amber-600"
-              : "text-dark-gray/70";
-        return <span className={cls}>{r.daysToMaturity}</span>;
-      },
-    },
-    {
-      key: "classification",
-      header: "Class",
-      render: (r) => (
-        <Badge
-          variant={
-            r.classification === "AC"
-              ? "info"
-              : r.classification === "FVOCI"
-                ? "success"
-                : "warning"
-          }
-          size="sm"
-        >
-          {r.classification}
+        <Badge variant={SETTLEMENT_BADGE[r.settlementStatus]} size="sm">
+          {r.settlementStatus}
         </Badge>
       ),
     },
-    {
-      key: "_actions" as never,
-      header: "",
-      width: "130px",
-      render: (r) => {
-        if (settled.has(String(r.id)))
-          return (
-            <span className="inline-flex items-center gap-1 text-xs font-medium text-green-600">
-              <CheckCircle className="h-3.5 w-3.5" />
-              Settled
-            </span>
-          );
-        return (
-          <div onClick={(e) => e.stopPropagation()}>
-            <button
-              onClick={() => markSettled(String(r.id))}
-              className="rounded px-2 py-1 text-xs font-medium bg-green-50 text-green-700 hover:bg-green-100"
-            >
-              Mark Settled
-            </button>
-          </div>
-        );
-      },
-    },
+    { key: "raisedBy", header: "Raised By" },
+    { key: "confirmedBy", header: "Confirmed By" },
   ];
 
   return (
@@ -175,50 +123,53 @@ export function Settlements() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray flex items-center gap-2">
           <ArrowLeftRight className="h-6 w-6 text-primary" />
-          Settlements — Maturing Instruments
+          Settlements — Settlement Instructions
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          Active instruments maturing within the next 12 months · Reference date
-          28 May 2026
+          Settlement instruction status for every deal slip that has reached Approved or later — raise and confirm
+          settlement instructions from the deal slip's Settlement panel in the Trade Blotter
         </p>
       </div>
 
       <StatCardGrid>
         <StatCard
-          title="Instruments Maturing ≤ 1Y"
-          value={String(rows.length)}
-          subtitle="In next 365 days"
+          title="Awaiting Settlement"
+          value={String(awaiting)}
+          subtitle="Instruction not yet raised or awaiting confirmation"
+          variant={awaiting > 0 ? "warning" : "default"}
+          icon={<Clock className="h-4 w-4" />}
+        />
+        <StatCard
+          title="Confirmed"
+          value={String(confirmed)}
+          subtitle="Settlement instruction confirmed"
           variant="highlight"
+          icon={<CheckCircle2 className="h-4 w-4" />}
         />
         <StatCard
-          title="Due Within 30 Days"
-          value={String(within30)}
-          subtitle="Immediate settlement"
-          variant="danger"
+          title="Failed"
+          value={String(failed)}
+          subtitle="Settlement instruction failed"
+          variant={failed > 0 ? "danger" : "default"}
+          icon={<XCircle className="h-4 w-4" />}
         />
         <StatCard
-          title="Due Within 90 Days"
-          value={String(within90)}
-          subtitle="Near-term settlement"
-          variant="warning"
-        />
-        <StatCard
-          title="Total Face to Settle"
-          value={fmtCompact(totalFace)}
-          subtitle="Face value rolling off"
+          title="Total Face Value"
+          value={totalFace.toLocaleString()}
+          subtitle="Across all settlement-relevant deal slips"
           variant="default"
         />
       </StatCardGrid>
 
       <SectionCard
         title="Settlement Schedule"
-        description="Instruments sorted by days to maturity"
+        description="Deal slips Approved or later, sorted by settlement date"
       >
         <DataTable<Row>
           columns={cols}
-          data={rows.filter((r) => !settled.has(String(r.id)))}
+          data={rows}
           keyExtractor={(r) => r.id}
-          emptyMessage="No instruments maturing in this window"
+          emptyMessage="No deal slips have reached Approved yet — settlement instructions can only be raised once a deal slip is approved"
           pageSize={20}
           onRowClick={setSelected}
         />
@@ -228,51 +179,30 @@ export function Settlements() {
         isOpen={selected !== null}
         onClose={() => setSelected(null)}
         title={selected?.name ?? "Settlement Detail"}
-        subtitle={selected?.id}
+        subtitle={selected?.dealSlipId}
         fields={
           selected
             ? [
-                { label: "ID", value: selected.id },
-                {
-                  label: "Type",
-                  value: (
-                    <Badge variant="neutral" size="sm">
-                      {selected.type}
-                    </Badge>
-                  ),
-                },
+                { label: "Deal Slip", value: selected.dealSlipId },
                 { label: "Issuer", value: selected.issuer },
+                { label: "Counterparty", value: selected.counterparty },
+                { label: "Custodian", value: selected.custodian },
                 { label: "Currency", value: selected.currency },
+                { label: "Face Value", value: selected.faceValue.toLocaleString() },
+                { label: "Settlement Date", value: fmtDate(selected.settlementDate) },
                 {
-                  label: "Classification",
+                  label: "Status",
                   value: (
-                    <Badge
-                      variant={
-                        selected.classification === "AC"
-                          ? "info"
-                          : selected.classification === "FVOCI"
-                            ? "success"
-                            : "warning"
-                      }
-                      size="sm"
-                    >
-                      {selected.classification}
+                    <Badge variant={SETTLEMENT_BADGE[selected.settlementStatus]} size="sm">
+                      {selected.settlementStatus}
                     </Badge>
                   ),
                 },
-                { label: "Face Value", value: fmtCompact(selected.faceValue) },
-                {
-                  label: "Book Value (NGN)",
-                  value: fmtCompact(selected.bsValue),
-                },
-                {
-                  label: "Maturity Date",
-                  value: fmtDate(selected.maturityDate),
-                },
-                {
-                  label: "Days to Maturity",
-                  value: String(selected.daysToMaturity),
-                },
+                { label: "Raised By", value: selected.raisedBy },
+                { label: "Confirmed By", value: selected.confirmedBy },
+                ...(selected.failReason
+                  ? [{ label: "Fail Reason", value: selected.failReason }]
+                  : []),
               ]
             : []
         }
