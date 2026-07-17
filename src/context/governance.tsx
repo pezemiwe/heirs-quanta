@@ -39,7 +39,10 @@ export type RoleKey =
   | "Portfolio Analyst"
   | "Risk Manager"
   | "Compliance Officer"
-  | "Internal Auditor";
+  | "Internal Auditor"
+  | "Junior Trader"
+  | "Senior Trader"
+  | "Chief Trader";
 
 export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
   "Chief Financial Officer": [
@@ -141,6 +144,23 @@ export const ROLE_PERMISSIONS: Record<RoleKey, Permission[]> = {
     "compliance.view",
     "portfolio.view",
   ],
+  "Junior Trader": [
+    "deal.view",
+    "deal.create",
+    "portfolio.view",
+  ],
+  "Senior Trader": [
+    "deal.view",
+    "deal.create",
+    "portfolio.view",
+  ],
+  "Chief Trader": [
+    "deal.view",
+    "deal.review",
+    "deal.approve",
+    "deal.reject",
+    "portfolio.view",
+  ],
 };
 
 /* Role tiers for UI labelling */
@@ -154,6 +174,9 @@ export const ROLE_TIER: Record<
   "Risk Manager": "checker",
   "Compliance Officer": "viewer",
   "Internal Auditor": "viewer",
+  "Junior Trader": "maker",
+  "Senior Trader": "maker",
+  "Chief Trader": "checker",
 };
 
 /* ── Audit trail ──────────────────────────────────────────────── */

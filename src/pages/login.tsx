@@ -24,6 +24,32 @@ export const PERSONAS = [
     access: "Full platform access",
   },
   {
+    name: "Kwame Mensah",
+    role: "Chief Trader",
+    avatar: "KM",
+    email: "k.mensah@heirsholdings.com",
+    password: "CT#Heirs2026",
+    access: "Deal Approval & Oversight",
+  },
+  {
+    name: "Sarah Ibrahim",
+    role: "Senior Trader",
+    avatar: "SI",
+    email: "s.ibrahim@heirsholdings.com",
+    password: "ST#Heirs2026",
+    access: "Deal Execution (₦500M Limit)",
+    tradingLimit: 500_000_000,
+  },
+  {
+    name: "David Adeleke",
+    role: "Junior Trader",
+    avatar: "DA",
+    email: "d.adeleke@heirsholdings.com",
+    password: "JT#Heirs2026",
+    access: "Deal Execution (₦100M Limit)",
+    tradingLimit: 100_000_000,
+  },
+  {
     name: "Emeka Nwosu",
     role: "Chief Risk Officer",
     avatar: "EN",
@@ -77,7 +103,7 @@ export const PERSONAS = [
 export function LoginPage() {
   const { setPersona } = usePersona();
   const navigate = useNavigate();
-  const onLogin = (p: { name: string; role: string; avatar: string }) => {
+  const onLogin = (p: { name: string; role: string; avatar: string; tradingLimit?: number }) => {
     setPersona(p);
     navigate("/modules");
   };
@@ -113,7 +139,7 @@ export function LoginPage() {
       const p = PERSONAS.find((p) => p.role === selectedPersona);
       onLogin(
         p
-          ? { name: p.name, role: p.role, avatar: p.avatar }
+          ? { name: p.name, role: p.role, avatar: p.avatar, tradingLimit: p.tradingLimit }
           : {
               name: email.split("@")[0],
               role: "User",

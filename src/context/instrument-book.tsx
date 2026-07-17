@@ -42,6 +42,7 @@ export type ImportPhase =
   | "reading"
   | "parsing"
   | "validating"
+  | "conflict"
   | "done"
   | "error";
 
@@ -54,10 +55,17 @@ export interface ImportState {
   summary: SheetSummary[];
   unrecognizedSheets: UnrecognizedSheet[];
   error: string | null;
+  conflictData?: {
+    parsedInstruments: Instrument[];
+    sheets: SheetSummary[];
+    unrecognizedSheets: UnrecognizedSheet[];
+    overlappingBatches: Set<string>;
+    overlapCount: number;
+  };
 }
 
 export type BookSource = "uploaded" | "captured" | "empty";
-export type ImportMode = "append";
+export type ImportMode = "append" | "replace";
 
 export interface ImportBatch {
   id: string;
@@ -85,6 +93,7 @@ interface InstrumentBookValue {
 
   /* Actions */
   importWorkbook: (file: File) => Promise<void>;
+  resolveImportConflict: (mode: "append" | "replace") => void;
   addManualInstrument: (instrument: Instrument) => void;
   clear: () => void;
   removeBatch: (batchId: string) => void;
@@ -239,52 +248,42 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
       tick("validating", 92, "Applying data to platform…");
       await sleep(100);
 
-      // ── Phase 4: Commit ───────────────────────────────────
-      const importedAt = new Date().toISOString();
-      const batchId = `batch-${Date.now()}`;
-      const batchLabel = `Batch ${new Date(importedAt).toLocaleString()}`;
-      const taggedInstruments = result.instruments.map((instrument) => ({
-        ...instrument,
-        sourceFileName: file.name,
-        importBatchId: batchId,
-        importBatchLabel: batchLabel,
-      }));
-      const nextInstruments = [...instruments, ...taggedInstruments];
-      const nextBatch: ImportBatch = {
-        id: batchId,
-        label: batchLabel,
-        fileName: file.name,
-        importedAt,
-        mode,
-        instrumentsAdded: taggedInstruments.length,
-        totalInstrumentsAfter: nextInstruments.length,
-        summary: result.sheets,
-        unrecognizedSheets: result.unrecognizedSheets,
-      };
+      // ── Phase 4: Check for conflicts ───────────────────────
+      const overlappingInstruments = result.instruments.filter((parsed) =>
+        instruments.some((existing) => existing.id === parsed.id),
+      );
 
-      const nextBatches = [...batches, nextBatch];
+      if (overlappingInstruments.length > 0) {
+        const overlappingBatches = new Set(
+          overlappingInstruments
+            .map((i) => instruments.find((e) => e.id === i.id)?.importBatchId)
+            .filter((id): id is string => id !== undefined),
+        );
 
-      setInstruments(nextInstruments);
-      setBatches(nextBatches);
-      setSource("uploaded");
+        setImportState((s) => ({
+          ...s,
+          phase: "conflict",
+          progress: 95,
+          currentStep: "Conflict detected",
+          conflictData: {
+            parsedInstruments: result.instruments,
+            sheets: result.sheets,
+            unrecognizedSheets: result.unrecognizedSheets,
+            overlappingBatches,
+            overlapCount: overlappingInstruments.length,
+          },
+        }));
+        return;
+      }
 
-      saveToStorage({
-        instruments: nextInstruments,
-        fileName: file.name,
-        importedAt,
-        batches: nextBatches,
-      });
-
-      setImportState({
-        phase: "done",
-        progress: 100,
-        currentStep: "Complete",
-        fileName: file.name,
-        importedAt,
-        summary: result.sheets,
-        unrecognizedSheets: result.unrecognizedSheets,
-        error: null,
-      });
+      // ── Phase 5: Commit (No Conflict) ─────────────────────
+      commitImport(
+        result.instruments,
+        result.sheets,
+        result.unrecognizedSheets,
+        file.name,
+        "append",
+      );
     } catch (err) {
       setImportState((s) => ({
         ...s,
@@ -293,7 +292,96 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
         error: `Import failed: ${(err as Error).message}`,
       }));
     }
-  }, [batches, instruments]);
+  }, [instruments]);
+
+  const commitImport = useCallback(
+    (
+      parsedInstruments: Instrument[],
+      sheets: SheetSummary[],
+      unrecognizedSheets: UnrecognizedSheet[],
+      fileName: string,
+      mode: "append" | "replace",
+      batchesToRemove?: Set<string>,
+    ) => {
+      const importedAt = new Date().toISOString();
+      const batchId = `batch-${Date.now()}`;
+      const batchLabel = `Batch ${new Date(importedAt).toLocaleString()}`;
+      const taggedInstruments = parsedInstruments.map((instrument) => ({
+        ...instrument,
+        sourceFileName: fileName,
+        importBatchId: batchId,
+        importBatchLabel: batchLabel,
+      }));
+
+      // If replacing, filter out instruments from the overlapping batches
+      let baseInstruments = instruments;
+      let baseBatches = batches;
+
+      if (mode === "replace" && batchesToRemove && batchesToRemove.size > 0) {
+        baseInstruments = baseInstruments.filter(
+          (inst) => inst.importBatchId && !batchesToRemove.has(inst.importBatchId),
+        );
+        baseBatches = baseBatches.filter(
+          (batch) => !batchesToRemove.has(batch.id),
+        );
+      }
+
+      const nextInstruments = [...baseInstruments, ...taggedInstruments];
+      const nextBatch: ImportBatch = {
+        id: batchId,
+        label: batchLabel,
+        fileName,
+        importedAt,
+        mode,
+        instrumentsAdded: taggedInstruments.length,
+        totalInstrumentsAfter: nextInstruments.length,
+        summary: sheets,
+        unrecognizedSheets,
+      };
+
+      const nextBatches = [...baseBatches, nextBatch];
+
+      setInstruments(nextInstruments);
+      setBatches(nextBatches);
+      setSource("uploaded");
+
+      saveToStorage({
+        instruments: nextInstruments,
+        fileName,
+        importedAt,
+        batches: nextBatches,
+      });
+
+      setImportState({
+        phase: "done",
+        progress: 100,
+        currentStep: "Complete",
+        fileName,
+        importedAt,
+        summary: sheets,
+        unrecognizedSheets,
+        error: null,
+      });
+    },
+    [batches, instruments],
+  );
+
+  const resolveImportConflict = useCallback(
+    (mode: "append" | "replace") => {
+      if (importState.phase !== "conflict" || !importState.conflictData || !importState.fileName) {
+        return;
+      }
+      commitImport(
+        importState.conflictData.parsedInstruments,
+        importState.conflictData.sheets,
+        importState.conflictData.unrecognizedSheets,
+        importState.fileName,
+        mode,
+        importState.conflictData.overlappingBatches,
+      );
+    },
+    [importState, commitImport],
+  );
 
   /* ── Clear ────────────────────────────────────────────────── */
   const addManualInstrument = useCallback(
@@ -427,6 +515,7 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
     batches,
     hasData: instruments.length > 0,
     importWorkbook,
+    resolveImportConflict,
     addManualInstrument,
     clear,
     removeBatch,
