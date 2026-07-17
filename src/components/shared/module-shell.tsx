@@ -1,10 +1,96 @@
-import { useState, useEffect, type ReactNode } from "react";
+import { useState, useEffect, useMemo, type ReactNode } from "react";
 import { useNavigate } from "react-router-dom";
-import { Menu, X } from "lucide-react";
+import { Menu, X, Search } from "lucide-react";
 import { Logo } from "./logo";
 import { UserMenu } from "./user-menu";
 import { NotificationBell } from "./notification-bell";
 import { usePersona } from "../../context/persona";
+import { useInstrumentBook } from "../../context/instrument-book";
+
+function GlobalSearch() {
+  const { instruments } = useInstrumentBook();
+  const navigate = useNavigate();
+  const [query, setQuery] = useState("");
+  const [open, setOpen] = useState(false);
+  const [selectedIndex, setSelectedIndex] = useState(0);
+
+  const results = useMemo(() => {
+    if (query.trim().length < 2) return [];
+    const q = query.toLowerCase();
+    return instruments.filter(
+      (inst) =>
+        inst.id.toLowerCase().includes(q) ||
+        inst.name.toLowerCase().includes(q) ||
+        inst.issuer.toLowerCase().includes(q)
+    ).slice(0, 5);
+  }, [query, instruments]);
+
+  useEffect(() => {
+    setSelectedIndex(0);
+  }, [results]);
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (!open) return;
+      if (e.key === "ArrowDown") {
+        e.preventDefault();
+        setSelectedIndex((i) => (i < results.length - 1 ? i + 1 : i));
+      } else if (e.key === "ArrowUp") {
+        e.preventDefault();
+        setSelectedIndex((i) => (i > 0 ? i - 1 : 0));
+      } else if (e.key === "Enter" && results[selectedIndex]) {
+        e.preventDefault();
+        navigate(`/valuation/asset/${results[selectedIndex].id}`);
+        setOpen(false);
+        setQuery("");
+      } else if (e.key === "Escape") {
+        setOpen(false);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [open, results, selectedIndex, navigate]);
+
+  return (
+    <div className="relative mr-2 hidden sm:block">
+      <div className="relative flex items-center">
+        <Search className="absolute left-2.5 h-4 w-4 text-dark-gray/40" />
+        <input
+          type="text"
+          placeholder="Search instruments..."
+          value={query}
+          onChange={(e) => {
+            setQuery(e.target.value);
+            setOpen(true);
+          }}
+          onFocus={() => setOpen(true)}
+          onBlur={() => setTimeout(() => setOpen(false), 200)}
+          className="h-8 w-64 rounded-md border border-border bg-surface-muted pl-9 pr-3 text-xs text-dark-gray outline-none placeholder:text-dark-gray/40 focus:border-primary/50 focus:ring-1 focus:ring-primary/20"
+        />
+      </div>
+      {open && results.length > 0 && (
+        <div className="absolute top-full left-0 mt-1 w-full rounded-md border border-border bg-surface py-1 shadow-lg z-50">
+          {results.map((inst, i) => (
+            <button
+              key={inst.id}
+              onClick={() => {
+                navigate(`/valuation/asset/${inst.id}`);
+                setOpen(false);
+                setQuery("");
+              }}
+              className={`flex w-full flex-col items-start px-3 py-1.5 text-left text-xs transition-colors ${
+                i === selectedIndex ? "bg-pale-red text-primary" : "text-dark-gray hover:bg-gray-50"
+              }`}
+            >
+              <span className="font-semibold">{inst.id}</span>
+              <span className="truncate text-[11px] opacity-70">{inst.name}</span>
+            </button>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
 
 export interface ModuleNavItem {
   id: string;
@@ -120,6 +206,7 @@ export function ModuleShell({
           )}
         </div>
         <div className="flex items-center gap-2">
+          <GlobalSearch />
           <NotificationBell />
           <UserMenu
             persona={persona}

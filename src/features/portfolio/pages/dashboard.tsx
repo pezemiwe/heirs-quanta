@@ -164,7 +164,11 @@ export function PortfolioDashboard({ persona }: Props) {
                 </thead>
                 <tbody>
                   {computed!.top5.map((val, i) => (
-                    <tr key={val.instrument.id} className="border-b border-border/40 last:border-0 hover:bg-pale-red/20">
+                    <tr 
+                      key={val.instrument.id} 
+                      className="border-b border-border/40 last:border-0 hover:bg-pale-red/20 cursor-pointer"
+                      onClick={() => navigate(`/valuation/asset/${val.instrument.id}`)}
+                    >
                       <td className="px-4 py-3 text-xs font-medium text-dark-gray">
                         <span className="mr-1.5 text-dark-gray/30 font-mono text-[11px]">{i + 1}.</span>{val.instrument.name}
                       </td>

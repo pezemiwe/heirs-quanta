@@ -70,7 +70,7 @@ export function ApprovalsWorkflow() {
         decision === "approved"
           ? `${item.type.toUpperCase()} Approved`
           : `${item.type.toUpperCase()} Rejected`,
-      detail: `${item.title} - ₦${fmtCompact(item.amount)} - decision: ${decision}`,
+      detail: `${item.title} - ${fmtCompact(item.amount)} - decision: ${decision}`,
       status: decision === "approved" ? "success" : "warning",
       ip: "10.0.1.xx",
     });
@@ -230,7 +230,7 @@ export function ApprovalsWorkflow() {
                         <span>
                           Amount:{" "}
                           <span className="font-medium text-dark-gray">
-                            ₦{fmtCompact(item.amount)}
+                            {fmtCompact(item.amount)}
                           </span>
                         </span>
                       )}

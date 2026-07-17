@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import {
   AlertTriangle,
   CheckCircle,
@@ -54,13 +54,107 @@ export function InvestmentLimits() {
   };
 
   const totalBSV = BOOK_COMPUTED.totals.totalBSValueNGN;
-  const okCount = INVESTMENT_LIMITS.filter((l) => l.status === "ok").length;
-  const warnCount = INVESTMENT_LIMITS.filter(
-    (l) => l.status === "warning",
-  ).length;
-  const breachCount = INVESTMENT_LIMITS.filter(
-    (l) => l.status === "breach",
-  ).length;
+
+  const liveLimits = useMemo(() => {
+    const vals = BOOK_COMPUTED.valuations;
+    const baseBSV = totalBSV || 1;
+
+    let fgnValue = 0;
+    let equityValue = 0;
+    let corpValue = 0;
+    let stateValue = 0;
+    let fxValue = 0;
+    let unquotedValue = 0;
+    let mutualFundValue = 0;
+    let infraValue = 0;
+    let mmValue = 0;
+
+    const issuerMap = new Map<string, number>();
+
+    vals.forEach((v) => {
+      const inst = v.instrument;
+      const val = v.balanceSheetValueNGN;
+
+      issuerMap.set(inst.issuer, (issuerMap.get(inst.issuer) || 0) + val);
+
+      if (inst.currency !== "NGN") fxValue += val;
+
+      switch (inst.instrumentType) {
+        case "FGN Bond":
+        case "T-Bill":
+          fgnValue += val;
+          break;
+        case "Equity":
+          equityValue += val;
+          break;
+        case "Corporate Bond":
+        case "Eurobond":
+          corpValue += val;
+          break;
+        case "State Bond":
+          stateValue += val;
+          break;
+        case "Mutual Fund":
+          mutualFundValue += val;
+          break;
+        case "Commercial Paper":
+        case "Bank Placement":
+        case "Fixed Deposit":
+          mmValue += val;
+          break;
+        case "Promissory Note":
+          unquotedValue += val;
+          break;
+      }
+      
+      if (inst.sector === "Infrastructure") {
+        infraValue += val;
+      }
+    });
+
+    let maxIssuerValue = 0;
+    for (const v of issuerMap.values()) {
+      if (v > maxIssuerValue) maxIssuerValue = v;
+    }
+
+    return INVESTMENT_LIMITS.map((lim) => {
+      let currentNGN = 0;
+      switch (lim.id) {
+        case "lim001": currentNGN = fgnValue; break; // Federal Government Securities
+        case "lim002": currentNGN = equityValue; break; // Equities
+        case "lim003": currentNGN = corpValue; break; // Corporate Bonds
+        case "lim004": currentNGN = stateValue; break; // State Bonds
+        case "lim005": currentNGN = fxValue; break; // Foreign Investments
+        case "lim006": currentNGN = unquotedValue; break; // Unquoted / Private
+        case "lim007": currentNGN = maxIssuerValue; break; // Single Issuer Concentration
+        case "lim008": currentNGN = mutualFundValue; break; // Mutual Funds
+        case "lim009": currentNGN = infraValue; break; // Infrastructure Bonds
+        case "lim010": currentNGN = mmValue; break; // Money Market
+        default: currentNGN = lim.currentNGN; break;
+      }
+
+      const currentPct = (currentNGN / baseBSV) * 100;
+      let status = "ok";
+      if (lim.direction === "max") {
+        if (currentPct > lim.limitPct) status = "breach";
+        else if (currentPct > lim.limitPct * 0.8) status = "warning";
+      } else {
+        if (currentPct < lim.limitPct) status = "breach";
+        else if (currentPct < lim.limitPct * 1.2) status = "warning";
+      }
+
+      return {
+        ...lim,
+        currentNGN,
+        currentPct,
+        status: status as "ok" | "warning" | "breach",
+      };
+    });
+  }, [BOOK_COMPUTED, totalBSV]);
+
+  const okCount = liveLimits.filter((l) => l.status === "ok").length;
+  const warnCount = liveLimits.filter((l) => l.status === "warning").length;
+  const breachCount = liveLimits.filter((l) => l.status === "breach").length;
 
   return (
     <div className="space-y-6 p-3 sm:p-4 md:p-6">
@@ -69,7 +163,7 @@ export function InvestmentLimits() {
           Investment Limit Controls
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          NAICOM / CBN investment guidelines compliance · Total portfolio: ₦
+          NAICOM / CBN investment guidelines compliance · Total portfolio:{" "}
           {fmtCompact(totalBSV)}
         </p>
       </div>
@@ -77,7 +171,7 @@ export function InvestmentLimits() {
       <StatCardGrid>
         <StatCard
           title="Total Portfolio Value"
-          value={`₦${fmtCompact(totalBSV)}`}
+          value={fmtCompact(totalBSV)}
           subtitle="Book value (NGN)"
           variant="highlight"
         />
@@ -106,7 +200,7 @@ export function InvestmentLimits() {
         description="Per NAICOM Investment Guidelines and CBN Prudential Guidelines for Insurance Companies"
       >
         <div className="space-y-3">
-          {INVESTMENT_LIMITS.map((lim) => {
+          {liveLimits.map((lim) => {
             const meta = STATUS_META[lim.status];
             const StatusIcon = meta.icon;
             const isWaived = waived.includes(lim.id);
@@ -167,7 +261,7 @@ export function InvestmentLimits() {
                               Value (NGN)
                             </p>
                             <p className="text-sm font-medium text-dark-gray">
-                              ₦{fmtCompact(lim.currentNGN)}
+                              {fmtCompact(lim.currentNGN)}
                             </p>
                           </div>
                         )}

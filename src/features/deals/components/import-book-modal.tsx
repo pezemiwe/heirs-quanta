@@ -19,7 +19,7 @@ export function ImportBookModal({
   isOpen: boolean;
   onClose: () => void;
 }) {
-  const { importWorkbook, clear, removeBatch, importState, batches } =
+  const { importWorkbook, resolveImportConflict, clear, removeBatch, importState, batches } =
     useInstrumentBook();
   const fileRef = useRef<HTMLInputElement>(null);
   const [dragging, setDragging] = useState(false);
@@ -29,6 +29,7 @@ export function ImportBookModal({
     phase === "reading" || phase === "parsing" || phase === "validating";
   const isDone = phase === "done";
   const isError = phase === "error";
+  const isConflict = phase === "conflict";
 
   const handlePick = useCallback(
     (file: File | null | undefined) => {
@@ -149,6 +150,37 @@ export function ImportBookModal({
               tone={isError ? "error" : isDone ? "success" : "neutral"}
               className="mx-auto max-w-sm"
             />
+          </div>
+        )}
+
+        {isConflict && importState.conflictData && (
+          <div className="space-y-4 py-4">
+            <div className="flex items-start gap-3 rounded-lg border border-amber-300 bg-amber-50 p-4">
+              <AlertTriangle className="mt-0.5 h-5 w-5 shrink-0 text-amber-600" />
+              <div>
+                <p className="text-sm font-semibold text-amber-800">
+                  Duplicate Instruments Detected
+                </p>
+                <p className="mt-1 text-sm text-amber-700">
+                  {importState.conflictData.overlapCount} of {totalParsed} instruments in this file already exist in the book. Uploading will add duplicates.
+                </p>
+              </div>
+            </div>
+            
+            <div className="flex flex-col gap-3 pt-2">
+              <button
+                onClick={() => resolveImportConflict("replace")}
+                className="flex w-full items-center justify-center gap-2 rounded-lg bg-primary px-4 py-2.5 text-sm font-medium text-white hover:bg-mid-red"
+              >
+                Replace matching batch
+              </button>
+              <button
+                onClick={() => resolveImportConflict("append")}
+                className="flex w-full items-center justify-center gap-2 rounded-lg border border-border bg-surface px-4 py-2.5 text-sm font-medium text-dark-gray hover:border-primary hover:text-primary"
+              >
+                Import anyway (append)
+              </button>
+            </div>
           </div>
         )}
 
