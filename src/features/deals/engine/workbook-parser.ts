@@ -271,7 +271,7 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue; // skip sub-header rows
 
-    const id = str(r[cId]) || str(r[cDealId]) || `FGN-${i}`;
+    const id = generateId(str(r[cId]) || str(r[cDealId]), "FGN");
     const name = str(r[cDescription]) || `FGN Bond ${id}`;
     const purchaseDate = parseDate(r[cValueDate]);
     const maturityDate = parseDate(r[cMaturityDate]);
@@ -348,7 +348,7 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[cId]) || `SG-${i}`;
+    const id = generateId(str(r[cId]), "SG");
     const name = str(r[cBondName]) || `State Bond ${id}`;
     const purchaseDate = parseDate(r[cValueDate]);
     const maturityDate = parseDate(r[cMaturityDate]);
@@ -430,7 +430,7 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[cId]) || `COR-${i}`;
+    const id = generateId(str(r[cId]), "COR");
     const name = str(r[cBondName]) || `Corporate Bond ${id}`;
     const purchaseDate = parseDate(r[cValueDate]);
     const maturityDate = parseDate(r[cMaturityDate]);
@@ -519,7 +519,7 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[cId]) || `TB-${i}`;
+    const id = generateId(str(r[cId]), "TB");
     const name = str(r[cDescription]) || `Treasury Bill ${id}`;
     const purchasePrice = parseNum(r[cPurchaseCost]);
     const purchaseDate = parseDate(r[cValueDate]);
@@ -587,7 +587,7 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[cId]) || `PUSD-${i}`;
+    const id = generateId(str(r[cId]), "PUSD");
     const dealer = str(r[cDealer]);
     const principalUSD = parseNum(r[cPrincipalUSD]);
     const fxRate = parseNum(r[cFxRate]);
@@ -650,7 +650,7 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue;
 
-    const id = str(r[cId]) || `PLC-${i}`;
+    const id = generateId(str(r[cId]), "PLC");
     const institution = str(r[cInstitution]);
     const principal = parseNum(r[cPrincipal]);
     const couponRate = parseRate(r[cRate]);
@@ -719,7 +719,7 @@ function parseQuotedEquity(
     const sno = parseNum(r[0]);
     if (isNaN(sno) || sno === 0) continue; // skip sub-header/unit rows
 
-    const id = str(r[cId]) || `EQ-${i}`;
+    const id = generateId(str(r[cId]), "EQ");
     const company = str(r[cCompany]) || `Equity ${id}`;
     const purchaseDate = parseDate(r[cPurchaseDate]);
     const quantity = parseNum(r[cHoldings]);
@@ -931,6 +931,18 @@ export function instrumentToHolding(inst: Instrument): Holding {
 /* ─────────────────────────────────────────────────────────────
    Main entry point
    ───────────────────────────────────────────────────────────── */
+
+/**
+ * Generate a robust unique ID if the provided one is blank or a generic template string
+ */
+function generateId(provided: string | undefined, prefix: string): string {
+  const p = (provided || "").trim();
+  if (!p || /^(PLACEMENT|TB|TBILL|COR|SG|FGN|EQ|PUSD|INV)\s*\d*$/i.test(p)) {
+    const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+    return `HQ-${prefix}-${rand}`;
+  }
+  return p;
+}
 
 export function parseWorkbook(buffer: ArrayBuffer): ParsedWorkbook {
   const wb = XLSX.read(buffer, { type: "array", cellDates: false });
