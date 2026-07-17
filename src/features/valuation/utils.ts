@@ -20,7 +20,7 @@ export function fmtMoney(
   currency: Currency = "NGN",
   decimals = 2,
 ): string {
-  if (amount == null || isNaN(amount)) return "—";
+  if (amount == null || isNaN(amount)) return "-";
   const sym = CCY_SYMBOL[currency];
   const sign = amount < 0 ? "-" : "";
   const abs = Math.abs(amount);
@@ -34,7 +34,7 @@ export function fmtMoneyCompact(
   amount: number,
   currency: Currency = "NGN",
 ): string {
-  if (amount == null || isNaN(amount)) return "—";
+  if (amount == null || isNaN(amount)) return "-";
   const sym = CCY_SYMBOL[currency];
   const abs = Math.abs(amount);
   const sign = amount < 0 ? "-" : "";
@@ -46,12 +46,12 @@ export function fmtMoneyCompact(
 }
 
 export function fmtPct(v: number, decimals = 4): string {
-  if (v == null || isNaN(v)) return "—";
+  if (v == null || isNaN(v)) return "-";
   return `${(v * 100).toFixed(decimals)}%`;
 }
 
 export function fmtNumber(v: number, decimals = 0): string {
-  if (v == null || isNaN(v)) return "—";
+  if (v == null || isNaN(v)) return "-";
   return v.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -59,7 +59,7 @@ export function fmtNumber(v: number, decimals = 0): string {
 }
 
 export function fmtDate(iso: string): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   return iso;
 }
 

@@ -4,7 +4,7 @@ import { FileText, Download } from "lucide-react";
 const REPORTS = [
   {
     id: "RPT-001",
-    title: "Monthly Portfolio Summary — May 2026",
+    title: "Monthly Portfolio Summary - May 2026",
     type: "Management Report",
     frequency: "Monthly",
     lastGenerated: "25 May 2026",
@@ -22,7 +22,7 @@ const REPORTS = [
   },
   {
     id: "RPT-003",
-    title: "Risk & Compliance Report — May 2026",
+    title: "Risk & Compliance Report - May 2026",
     type: "Regulatory",
     frequency: "Monthly",
     lastGenerated: "24 May 2026",
@@ -31,7 +31,7 @@ const REPORTS = [
   },
   {
     id: "RPT-004",
-    title: "Asset Allocation Attribution — May 2026",
+    title: "Asset Allocation Attribution - May 2026",
     type: "Analytics Report",
     frequency: "Monthly",
     lastGenerated: "25 May 2026",
@@ -40,7 +40,7 @@ const REPORTS = [
   },
   {
     id: "RPT-005",
-    title: "CBN Regulatory Filing — Q1 2026",
+    title: "CBN Regulatory Filing - Q1 2026",
     type: "Regulatory",
     frequency: "Quarterly",
     lastGenerated: "01 Apr 2026",
@@ -49,7 +49,7 @@ const REPORTS = [
   },
   {
     id: "RPT-006",
-    title: "Stress Test Results — Scenario Analysis",
+    title: "Stress Test Results - Scenario Analysis",
     type: "Risk Report",
     frequency: "Ad hoc",
     lastGenerated: "20 May 2026",

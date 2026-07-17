@@ -27,7 +27,7 @@ export function NewBooking() {
             <p className="text-lg font-bold text-dark-gray">Deal Slip Submitted for Review</p>
             <p className="mt-1 text-sm text-gray-400">
               {justSubmitted.economics.instrumentName} is now in the maker-checker queue. Reference:{" "}
-              <span className="font-mono font-semibold">{justSubmitted.id}</span> — it will not appear in the
+              <span className="font-mono font-semibold">{justSubmitted.id}</span> - it will not appear in the
               investment register, Valuation, Duration Risk, or Accounting until it has been reviewed, approved,
               and settled.
             </p>
@@ -79,7 +79,7 @@ export function NewBooking() {
             <p className="text-xs font-semibold uppercase tracking-wider text-primary">Deal Capture</p>
             <h1 className="mt-1 text-2xl font-bold text-dark-gray">Deal Capture</h1>
             <p className="mt-1 text-sm text-gray-500">
-              No investment transaction exists outside a deal slip. Capture the deal below — it enters the
+              No investment transaction exists outside a deal slip. Capture the deal below - it enters the
               maker-checker workflow and only reaches the investment register once fully approved and settled.
             </p>
           </div>
@@ -98,7 +98,7 @@ export function NewBooking() {
           <Layers className="h-4 w-4 text-primary" /> Bulk workbook upload is separate from deal capture
         </div>
         <p className="mt-2 text-sm text-dark-gray/60">
-          Use "Import Portfolio Book" only to load an existing back-book of historical holdings — those instruments
+          Use "Import Portfolio Book" only to load an existing back-book of historical holdings - those instruments
           bypass the deal slip workflow because they were not new transactions executed today.
           {book.hasData && (
             <> The shared book currently holds {book.instruments.length} instrument{book.instruments.length === 1 ? "" : "s"} in total.</>

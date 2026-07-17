@@ -52,7 +52,8 @@
       "Bash(node blotter-backbook-verify.cjs)",
       "Bash(node delete-draft-verify.cjs)",
       "Bash(curl -s -o /dev/null -w \"%{http_code}\\\\n\" http://localhost:5186)",
-      "Bash(node book-wiring-verify.cjs)"
+      "Bash(node book-wiring-verify.cjs)",
+      "Bash(xargs -0 -I{} sed -i 's/—/-/g' \"{}\")"
     ]
   }
 }

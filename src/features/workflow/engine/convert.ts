@@ -1,5 +1,5 @@
 /**
- * Heirs Quanta — Deal Slip → Instrument conversion
+ * Heirs Quanta - Deal Slip → Instrument conversion
  *
  * The ONLY place a settled deal slip becomes an Instrument in the shared
  * instrument book. Called exactly once, at the moment a deal slip's
@@ -28,7 +28,7 @@ export function dealSlipToInstrument(slip: DealSlip): Instrument {
   const isEquity = e.assetClass === "Equity";
   // purchasePriceDecimal is a clean-price fraction of par (e.g. 0.985);
   // Instrument.purchasePrice is an absolute local-currency amount, same
-  // scale as faceValue — matches every other producer of Instrument records
+  // scale as faceValue - matches every other producer of Instrument records
   // (workbook-parser.ts, deal capture) in this codebase.
   const purchasePrice = e.purchasePriceDecimal * e.faceValue;
 

@@ -1,5 +1,5 @@
 /**
- * Saved blotter views — persisted filter/sort presets per user.
+ * Saved blotter views - persisted filter/sort presets per user.
  *
  * Kept separate from the deal-slip/register workflow store on purpose: this
  * is view/UI preference state, not deal or position data, so it doesn't

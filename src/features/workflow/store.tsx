@@ -1,9 +1,9 @@
 /**
- * Heirs Quanta — Deal Slip Workflow Store
+ * Heirs Quanta - Deal Slip Workflow Store
  *
  * dealSlips[] holds every deal ever captured, at whatever status it's
  * currently in. register[] is the single source of truth for active
- * positions — an entry is only ever added when a deal slip reaches
+ * positions - an entry is only ever added when a deal slip reaches
  * "Settled" (at which point the underlying Instrument is also pushed into
  * the shared instrument book, so Valuation / Duration Risk / IFRS 9 /
  * Accounting pick it up). Nothing else in this store, or anywhere else in
@@ -88,7 +88,7 @@ function saveState(state: PersistedState) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(state));
   } catch {
-    // Quota exceeded or private mode — ignore silently
+    // Quota exceeded or private mode - ignore silently
   }
 }
 
@@ -117,7 +117,7 @@ function mkTx(
 /**
  * Auto-raises an Open "check-breach" exception for any breaching check that
  * doesn't already have an open exception tracking it (keyed by check TYPE,
- * not check id — a fresh check-run produces new check ids every time, but
+ * not check id - a fresh check-run produces new check ids every time, but
  * there's only ever one check per CheckType per deal slip). Idempotent
  * across repeated calls (submit, re-run checks).
  */
@@ -143,7 +143,7 @@ function syncCheckBreachExceptions(
         type: "check-breach",
         dealSlipId,
         sourceRef: check.type,
-        title: `${check.label} — breach`,
+        title: `${check.label} - breach`,
         detail: check.detail,
         raisedAt: now,
         raisedBy: SYSTEM_ACTOR,
@@ -209,7 +209,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
   // Mirrors `state` synchronously (updated inside the setState updater itself,
   // which React runs immediately when commit() is called). Action functions
   // that create-then-immediately-act-on a slip in the same call stack (e.g.
-  // create a Draft then submit it) need this — reading the `state` closure
+  // create a Draft then submit it) need this - reading the `state` closure
   // directly would see last render's value, since the re-render triggered by
   // setState hasn't happened yet.
   const stateRef = useRef<PersistedState>(state);
@@ -240,7 +240,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
 
   const commit = useCallback((updater: (prev: PersistedState) => PersistedState) => {
     // Always derive from stateRef (not React's `prev`) and update it
-    // synchronously here — relying on the setState updater callback itself
+    // synchronously here - relying on the setState updater callback itself
     // running synchronously is a React internals implementation detail we
     // shouldn't depend on. This guarantees a create-then-immediately-submit
     // sequence (two commit() calls in one synchronous handler) always sees
@@ -345,7 +345,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
     (id: string) => {
       const slip = getSlipOrThrow(id);
       if (slip.status !== "Draft") {
-        throw new Error("Only a Draft deal slip can be removed — submitted slips are part of the audit trail.");
+        throw new Error("Only a Draft deal slip can be removed - submitted slips are part of the audit trail.");
       }
       commit((prev) => ({ ...prev, dealSlips: prev.dealSlips.filter((s) => s.id !== id) }));
     },
@@ -374,7 +374,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         role: actor.role,
         module: "Deals",
         action: "Deal Slip Submitted",
-        detail: `${slip.economics.instrumentName} — ${slip.id} submitted for review.`,
+        detail: `${slip.economics.instrumentName} - ${slip.id} submitted for review.`,
         status: "success",
         ip: "10.0.1.xx",
       });
@@ -439,7 +439,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         role: actor.role,
         module: "Deals",
         action: "Deal Slip Approved",
-        detail: `${slip.economics.instrumentName} — ${slip.id} approved and awaiting settlement.`,
+        detail: `${slip.economics.instrumentName} - ${slip.id} approved and awaiting settlement.`,
         status: "success",
         ip: "10.0.1.xx",
       });
@@ -476,7 +476,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         role: actor.role,
         module: "Deals",
         action: "Deal Slip Rejected",
-        detail: `${slip.economics.instrumentName} — ${slip.id} rejected: ${reason}`,
+        detail: `${slip.economics.instrumentName} - ${slip.id} rejected: ${reason}`,
         status: "blocked",
         ip: "10.0.1.xx",
       });
@@ -519,7 +519,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         role: actor.role,
         module: "Deals",
         action: "Deal Slip Returned for Amendment",
-        detail: `${slip.economics.instrumentName} — ${slip.id} returned to trader: ${reason}`,
+        detail: `${slip.economics.instrumentName} - ${slip.id} returned to trader: ${reason}`,
         status: "warning",
         ip: "10.0.1.xx",
       });
@@ -534,7 +534,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       requirePermission("settlement.raise");
       const slip = getSlipOrThrow(id);
       // A retry after a failed settlement doesn't change the deal slip's
-      // overall status (it's been "Pending Settlement" the whole time) — only
+      // overall status (it's been "Pending Settlement" the whole time) - only
       // the settlement sub-record resets, so this doesn't go through the
       // Approved -> Pending Settlement graph edge a second time.
       const isRetry = slip.status === "Pending Settlement" && slip.settlement.status === "Failed";
@@ -579,7 +579,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         role: actor.role,
         module: "Deals",
         action: isRetry ? "Settlement Instruction Re-raised" : "Settlement Instruction Raised",
-        detail: `${slip.economics.instrumentName} — ${slip.id} settlement instruction ${isRetry ? "re-raised after failure" : "raised"}, awaiting a different user to confirm.`,
+        detail: `${slip.economics.instrumentName} - ${slip.id} settlement instruction ${isRetry ? "re-raised after failure" : "raised"}, awaiting a different user to confirm.`,
         status: "success",
         ip: "10.0.1.xx",
       });
@@ -597,7 +597,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       }
       if (slip.settlement.raisedBy.name === actor.name) {
         throw new Error(
-          "The person who raised this settlement instruction cannot also confirm it — maker and checker must be different users.",
+          "The person who raised this settlement instruction cannot also confirm it - maker and checker must be different users.",
         );
       }
       const now = nowIso();
@@ -642,15 +642,15 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       }));
 
       // The ONLY call site in the whole app that pushes a deal into the
-      // shared instrument book — gated entirely behind settlement confirmation.
+      // shared instrument book - gated entirely behind settlement confirmation.
       instrumentBook.addManualInstrument(instrument);
 
       logAction({
         user: actor.name,
         role: actor.role,
         module: "Deals",
-        action: "Settlement Confirmed — Position Active",
-        detail: `${slip.economics.instrumentName} — ${slip.id} settled and posted to the investment register. Ref: ${registerId}`,
+        action: "Settlement Confirmed - Position Active",
+        detail: `${slip.economics.instrumentName} - ${slip.id} settled and posted to the investment register. Ref: ${registerId}`,
         status: "success",
         ip: "10.0.1.xx",
       });
@@ -696,7 +696,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
         role: actor.role,
         module: "Deals",
         action: "Settlement Failed",
-        detail: `${slip.economics.instrumentName} — ${slip.id} settlement failed: ${reason}`,
+        detail: `${slip.economics.instrumentName} - ${slip.id} settlement failed: ${reason}`,
         status: "blocked",
         ip: "10.0.1.xx",
       });
@@ -727,7 +727,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
               }
             : s,
         );
-        // Clearing a check is itself an exception — the "override" — and it
+        // Clearing a check is itself an exception - the "override" - and it
         // does NOT close on its own; it still needs a formal closure comment
         // from whoever reviews it (compliance/audit). If a breach was already
         // being tracked for this check, evolve it into the override record
@@ -740,7 +740,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
           if (existingIdx >= 0) {
             exceptions = exceptions.map((e, i) =>
               i === existingIdx
-                ? { ...e, type: "check-override" as const, title: `${check.label} — override`, detail: `Override: ${reason}`, raisedBy: actor }
+                ? { ...e, type: "check-override" as const, title: `${check.label} - override`, detail: `Override: ${reason}`, raisedBy: actor }
                 : e,
             );
           } else {
@@ -751,7 +751,7 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
                 type: "check-override",
                 dealSlipId,
                 sourceRef: check.type,
-                title: `${check.label} — override`,
+                title: `${check.label} - override`,
                 detail: `Override: ${reason}`,
                 raisedAt: now,
                 raisedBy: actor,

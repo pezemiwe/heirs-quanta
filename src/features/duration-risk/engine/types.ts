@@ -1,5 +1,5 @@
 /* ───────────────────────────────────────────────────────────
-   Duration & Risk Engine — Types
+   Duration & Risk Engine - Types
    Interest rate sensitivity, stress testing, ALM gap.
    ─────────────────────────────────────────────────────────── */
 

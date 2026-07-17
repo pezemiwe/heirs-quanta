@@ -101,7 +101,7 @@ const COLUMNS: DataTableColumn<EIRRow>[] = [
     header: "Maturity",
     render: (r) => (
       <span className="text-xs text-gray-400">
-        {r.maturityDate !== "—" ? fmtDate(r.maturityDate) : "—"}
+        {r.maturityDate !== "-" ? fmtDate(r.maturityDate) : "-"}
       </span>
     ),
   },
@@ -122,7 +122,7 @@ export function EIRAmortisation() {
         name: inst.name,
         classification: inst.classification,
         purchaseDate: inst.purchaseDate,
-        maturityDate: inst.maturityDate ?? "—",
+        maturityDate: inst.maturityDate ?? "-",
         faceValue: inst.faceValue,
         purchasePrice: inst.purchasePrice,
         eir: val?.eir ?? inst.couponRate,

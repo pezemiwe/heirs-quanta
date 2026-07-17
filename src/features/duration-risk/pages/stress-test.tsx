@@ -162,11 +162,11 @@ export function DurationRiskStressTest() {
         <div className="mt-2 flex items-center gap-4 text-xs text-gray-500">
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-[#2ecc71]" />
-            Rate Cut — Portfolio Gain
+            Rate Cut - Portfolio Gain
           </span>
           <span className="flex items-center gap-1.5">
             <span className="h-2.5 w-2.5 rounded-sm bg-[#e74c3c]" />
-            Rate Hike — Portfolio Loss
+            Rate Hike - Portfolio Loss
           </span>
         </div>
       </SectionCard>
@@ -220,7 +220,7 @@ export function DurationRiskStressTest() {
                       {fmtCompactNGN(total)}
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-xs">
-                      {totalBase > 0 ? fmtPct(total / totalBase, 2) : "—"}
+                      {totalBase > 0 ? fmtPct(total / totalBase, 2) : "-"}
                     </td>
                     <td className="px-4 py-2.5 text-right font-mono text-xs">
                       {fmtCompactNGN(ac)}
@@ -241,7 +241,7 @@ export function DurationRiskStressTest() {
 
       {/* heatmap */}
       <SectionCard
-        title="Stress Test Heatmap: Top 30 Instruments — Rate Scenarios"
+        title="Stress Test Heatmap: Top 30 Instruments - Rate Scenarios"
         description="P&L impact in NGN. Green = gain, red = loss. Colour intensity scales with absolute impact."
         noPadding
       >

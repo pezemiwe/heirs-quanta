@@ -149,7 +149,7 @@ export function Benchmarks() {
           Benchmark Comparison
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Portfolio yield vs FGN curve benchmark — as at 28 May 2026
+          Portfolio yield vs FGN curve benchmark - as at 28 May 2026
         </p>
       </div>
 

@@ -100,7 +100,7 @@ export function Income() {
         r.eir > 0 ? (
           <span className="text-primary font-medium">{fmtPct(r.eir)}</span>
         ) : (
-          <span className="text-dark-gray/40">—</span>
+          <span className="text-dark-gray/40">-</span>
         ),
     },
     {
@@ -131,7 +131,7 @@ export function Income() {
     <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
-          Income — Coupon &amp; EIR
+          Income - Coupon &amp; EIR
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
           Annual and monthly EIR income for all income-generating instruments ·
@@ -161,7 +161,7 @@ export function Income() {
         <StatCard
           title="Top Income Instrument"
           value={fmtCompact(rows[0]?.annualEIRIncome ?? 0)}
-          subtitle={rows[0]?.name ?? "—"}
+          subtitle={rows[0]?.name ?? "-"}
           variant="default"
         />
       </StatCardGrid>

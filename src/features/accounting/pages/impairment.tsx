@@ -149,13 +149,13 @@ export function Impairment() {
         <StatCard
           title="Stage 2 Instruments"
           value={String(stage2.length)}
-          subtitle="Lifetime ECL — SICR"
+          subtitle="Lifetime ECL - SICR"
           variant="warning"
         />
         <StatCard
           title="Stage 3 Instruments"
           value={String(stage3.length)}
-          subtitle="Lifetime ECL — Credit-impaired"
+          subtitle="Lifetime ECL - Credit-impaired"
           variant="danger"
         />
       </StatCardGrid>
@@ -163,7 +163,7 @@ export function Impairment() {
       {stageSummary.map(({ label, items, variant }) => (
         <SectionCard
           key={label}
-          title={`${label} — ECL Provisions`}
+          title={`${label} - ECL Provisions`}
           description={`${items.length} instruments · Total ECL: ${fmtCompact(
             items.reduce((s, r) => s + r.ecl, 0),
           )}`}

@@ -41,7 +41,7 @@ export function ProtectedModule({
       {access === "read-only" && (
         <div className="sticky top-0 z-40 flex items-center justify-center gap-2 bg-amber-50 border-b border-amber-200 px-4 py-2 text-xs font-medium text-amber-800">
           <Eye className="h-3.5 w-3.5 shrink-0" />
-          Read-Only Access — Your role ({persona.role}) has view-only
+          Read-Only Access - Your role ({persona.role}) has view-only
           permissions for this module. No changes can be saved.
         </div>
       )}

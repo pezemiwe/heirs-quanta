@@ -1,9 +1,9 @@
 /**
  * Role-based access control for all Heirs Quanta modules.
  * AccessLevel:
- *   "full"      — read + write + all CRUD actions
- *   "read-only" — can view all data, no mutations
- *   "none"      — module hidden/locked; direct URL navigated to /modules
+ *   "full"      - read + write + all CRUD actions
+ *   "read-only" - can view all data, no mutations
+ *   "none"      - module hidden/locked; direct URL navigated to /modules
  */
 
 export type ModuleId =
@@ -53,11 +53,11 @@ const ALL_READ: RoleMatrix = {
  * Roles match exactly those defined in login.tsx PERSONAS.
  */
 export const ROLE_ACCESS: Record<string, RoleMatrix> = {
-  /** CFO — unrestricted across the full platform */
+  /** CFO - unrestricted across the full platform */
   "Chief Financial Officer": ALL_FULL,
 
   /**
-   * CRO — risk, credit loss, valuation and market data. Also acts as a deal
+   * CRO - risk, credit loss, valuation and market data. Also acts as a deal
    * slip reviewer/approver and settlement checker in the maker-checker
    * workflow, so deal-capture is a write module for this role even though
    * the CRO never originates a booking. No access to accounting GL.
@@ -76,7 +76,7 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
   },
 
   /**
-   * Portfolio Analyst — owns portfolio, deals, market data and performance.
+   * Portfolio Analyst - owns portfolio, deals, market data and performance.
    * No access to credit risk (IFRS9), duration risk or accounting GL.
    */
   "Portfolio Analyst": {
@@ -93,7 +93,7 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
   },
 
   /**
-   * Risk Manager — IFRS 9, valuation and duration risk are primary domains.
+   * Risk Manager - IFRS 9, valuation and duration risk are primary domains.
    * Portfolio and performance are read-only reference views. Also reviews /
    * approves deal slips and can act as settlement checker, so deal-capture
    * is a write module. No accounting access.
@@ -112,7 +112,7 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
   },
 
   /**
-   * Compliance Officer — broad read access for oversight & regulatory review.
+   * Compliance Officer - broad read access for oversight & regulatory review.
    * Full write access only in the Reporting hub.
    */
   "Compliance Officer": {
@@ -129,13 +129,13 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
   },
 
   /**
-   * Internal Auditor — read-only access to every module for audit trail review.
+   * Internal Auditor - read-only access to every module for audit trail review.
    * No write operations permitted anywhere.
    */
   "Internal Auditor": ALL_READ,
 
   /**
-   * System Admin — exclusive access to Governance & Controls only.
+   * System Admin - exclusive access to Governance & Controls only.
    * No access to financial analysis modules.
    */
   "System Admin": {

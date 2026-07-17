@@ -133,7 +133,7 @@ export function DurationRiskDataManager() {
               <FileText className="h-3.5 w-3.5" /> Last source
             </div>
             <p className="mt-2 text-sm font-medium text-dark-gray truncate">
-              {v.lastUploadedFile || "—"}
+              {v.lastUploadedFile || "-"}
             </p>
           </div>
           <div className="rounded-lg border border-border bg-surface p-4">

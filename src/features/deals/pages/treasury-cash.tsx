@@ -13,7 +13,7 @@ import type { Currency } from "../../valuation/engine/types";
 import { fmtDate, daysBetween } from "../../portfolio/engine/book-compute";
 
 /* ─────────────────────────────────────────────────────────────
-   Multi-currency formatting — this book holds NGN, USD, GBP and EUR
+   Multi-currency formatting - this book holds NGN, USD, GBP and EUR
    instruments side by side with no clean FX rate to blend them, so
    every total on this page is kept per-currency rather than summed
    into a single fabricated number.
@@ -29,7 +29,7 @@ const CCY_SYMBOLS: Record<Currency, string> = {
 const CURRENCY_ORDER: Currency[] = ["NGN", "USD", "GBP", "EUR"];
 
 function fmtCcy(n: number, ccy: string): string {
-  if (!isFinite(n)) return "—";
+  if (!isFinite(n)) return "-";
   const sym = CCY_SYMBOLS[ccy as Currency] ?? `${ccy} `;
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
@@ -46,7 +46,7 @@ function sumByCcy(rows: { currency: Currency; cashAmount: number }[]): Map<Curre
   return map;
 }
 
-/** Joins per-currency totals into a single display string, e.g. "₦1.40B · $2.10M" — never blends across currencies. */
+/** Joins per-currency totals into a single display string, e.g. "₦1.40B · $2.10M" - never blends across currencies. */
 function fmtMultiCcy(map: Map<Currency, number>): string {
   const entries = CURRENCY_ORDER.filter((c) => (map.get(c) ?? 0) !== 0).map((c) => [c, map.get(c)!] as const);
   if (entries.length === 0) return "₦0";
@@ -91,7 +91,7 @@ interface DeployedRow {
 type DRow = DeployedRow & Record<string, unknown>;
 
 /* ─────────────────────────────────────────────────────────────
-   Currency breakdown mini-table — reused for both sections
+   Currency breakdown mini-table - reused for both sections
    ───────────────────────────────────────────────────────────── */
 
 function CurrencyBreakdown({ byCcy, emptyMessage }: { byCcy: Map<Currency, number>; emptyMessage: string }) {
@@ -112,7 +112,7 @@ function CurrencyBreakdown({ byCcy, emptyMessage }: { byCcy: Map<Currency, numbe
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Treasury — Cash Position & Settlement Funding
+   Treasury - Cash Position & Settlement Funding
    Pure read/aggregation over the workflow store: no new state.
    ───────────────────────────────────────────────────────────── */
 
@@ -126,7 +126,7 @@ export function TreasuryCash() {
         id: s.id,
         instrumentName: s.economics.instrumentName,
         counterparty: s.economics.counterparty,
-        custodian: s.economics.custodian ?? "—",
+        custodian: s.economics.custodian ?? "-",
         settlementDate: s.economics.settlementDate,
         daysToSettlement: daysBetween(TODAY, s.economics.settlementDate),
         cashAmount: s.economics.faceValue * s.economics.purchasePriceDecimal,
@@ -223,7 +223,7 @@ export function TreasuryCash() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray flex items-center gap-2">
           <Landmark className="h-6 w-6 text-primary" />
-          Treasury — Cash Position &amp; Settlement Funding
+          Treasury - Cash Position &amp; Settlement Funding
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
           Cash that will move soon (Approved / Pending Settlement deal slips) alongside capital already deployed to
@@ -233,13 +233,13 @@ export function TreasuryCash() {
 
       <StatCardGrid>
         <StatCard
-          title="Funding Required — Next 7 Days"
+          title="Funding Required - Next 7 Days"
           value={fmtMultiCcy(within7ByCcy)}
           subtitle={`${within7.length} deal slip${within7.length === 1 ? "" : "s"} settling`}
           variant={within7.length > 0 ? "danger" : "default"}
         />
         <StatCard
-          title="Funding Required — Next 30 Days"
+          title="Funding Required - Next 30 Days"
           value={fmtMultiCcy(within30ByCcy)}
           subtitle={`${within30.length} deal slip${within30.length === 1 ? "" : "s"} settling`}
           variant={within30.length > 0 ? "warning" : "default"}
@@ -260,30 +260,30 @@ export function TreasuryCash() {
 
       <SectionCard
         title="Settlement Funding Calendar"
-        description="Approved and Pending Settlement deal slips, sorted by settlement date — rows settling within 7 days need urgent funding"
+        description="Approved and Pending Settlement deal slips, sorted by settlement date - rows settling within 7 days need urgent funding"
       >
         <DataTable<FRow>
           columns={fundingCols}
           data={fundingRows}
           keyExtractor={(r) => r.id}
-          emptyMessage="No deal slips are Approved or Pending Settlement — no cash movement upcoming"
+          emptyMessage="No deal slips are Approved or Pending Settlement - no cash movement upcoming"
           pageSize={15}
           rowClassName={(r) =>
             r.daysToSettlement < 0 ? "bg-red-50/70" : r.daysToSettlement <= 7 ? "bg-amber-50/70" : ""
           }
         />
-        <CurrencyBreakdown byCcy={fundingByCcy} emptyMessage="No currency exposure — nothing awaiting funding" />
+        <CurrencyBreakdown byCcy={fundingByCcy} emptyMessage="No currency exposure - nothing awaiting funding" />
       </SectionCard>
 
       <SectionCard
-        title="Deployed Capital — Active Register Positions"
+        title="Deployed Capital - Active Register Positions"
         description="Cash already moved: active positions in the investment register, joined back to their deal slip's economics for the actual consideration paid"
       >
         <DataTable<DRow>
           columns={deployedCols}
           data={deployedRows}
           keyExtractor={(r) => r.id}
-          emptyMessage="No active positions yet — the register only fills once a deal slip is Settled"
+          emptyMessage="No active positions yet - the register only fills once a deal slip is Settled"
           pageSize={15}
         />
         <CurrencyBreakdown byCcy={deployedByCcy} emptyMessage="No deployed capital yet" />

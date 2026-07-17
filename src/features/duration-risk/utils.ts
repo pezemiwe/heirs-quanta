@@ -33,7 +33,7 @@ export function colorForShock(bps: number): string {
 const NAIRA_SYMBOL = "\u20A6";
 
 export function fmtCompactNGN(amount: number): string {
-  if (amount == null || isNaN(amount)) return "—";
+  if (amount == null || isNaN(amount)) return "-";
   const sign = amount < 0 ? "-" : "";
   const abs = Math.abs(amount);
   if (abs >= 1e12) return `${sign}${NAIRA_SYMBOL}${(abs / 1e12).toFixed(2)}T`;
@@ -49,6 +49,6 @@ export function fmtBps(bps: number): string {
 }
 
 export function fmtYears(v: number, decimals = 2): string {
-  if (v == null || isNaN(v)) return "—";
+  if (v == null || isNaN(v)) return "-";
   return `${v.toFixed(decimals)} yrs`;
 }

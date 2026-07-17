@@ -43,8 +43,8 @@ export function ModuleSettings() {
               Base Currency
             </label>
             <select className="w-full rounded-lg border border-border bg-surface px-3 py-2 text-sm outline-none focus:border-primary">
-              <option>NGN — Nigerian Naira</option>
-              <option>USD — US Dollar</option>
+              <option>NGN - Nigerian Naira</option>
+              <option>USD - US Dollar</option>
             </select>
           </div>
           <div>

@@ -1,5 +1,5 @@
 /**
- * Heirs Quanta — Instrument Book Context
+ * Heirs Quanta - Instrument Book Context
  *
  * The single source of truth for all investment instruments on the platform.
  * Every module (IFRS9, Valuation, Duration Risk, Portfolio, Accounting) reads
@@ -118,7 +118,7 @@ function saveToStorage(data: PersistedBook) {
   try {
     localStorage.setItem(LS_KEY, JSON.stringify(data));
   } catch {
-    // Quota exceeded or private mode — ignore silently
+    // Quota exceeded or private mode - ignore silently
   }
 }
 
@@ -205,7 +205,7 @@ export function InstrumentBookProvider({ children }: { children: ReactNode }) {
     try {
       // ── Phase 1: Read file bytes ──────────────────────────
       const buffer = await file.arrayBuffer();
-      tick("reading", 25, "File loaded — detecting sheets…");
+      tick("reading", 25, "File loaded - detecting sheets…");
       await sleep(120);
 
       // ── Phase 2: Parse workbook ───────────────────────────

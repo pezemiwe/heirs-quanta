@@ -35,8 +35,8 @@ interface ApprovalRow {
 type Row = ApprovalRow & Record<string, unknown>;
 
 const STAGE_REASON: Record<string, string> = {
-  "Stage 2": "Significant increase in credit risk — management review required",
-  "Stage 3": "Credit-impaired — impairment committee approval required",
+  "Stage 2": "Significant increase in credit risk - management review required",
+  "Stage 3": "Credit-impaired - impairment committee approval required",
 };
 
 export function Approvals() {
@@ -58,7 +58,7 @@ export function Approvals() {
       module: "Deals",
       action:
         decision === "approved" ? "ECL Stage Approved" : "ECL Stage Rejected",
-      detail: `IFRS 9 staging approval decision: ${id} — ${decision}`,
+      detail: `IFRS 9 staging approval decision: ${id} - ${decision}`,
       status: decision === "approved" ? "success" : "warning",
       ip: "10.0.1.xx",
     });
@@ -71,7 +71,7 @@ export function Approvals() {
 
     // Stage/ECL come from the live IFRS 9 engine (ifrs9.resultByInstrumentId),
     // not the static instrument.impairmentStage/eclProvision fields set once
-    // at import time — otherwise this page would never agree with the IFRS 9
+    // at import time - otherwise this page would never agree with the IFRS 9
     // module's own numbers.
     const rows: ApprovalRow[] = BOOK_INSTRUMENTS.map((i) => {
       const computed = ifrs9.resultByInstrumentId.get(i.id);
@@ -227,13 +227,13 @@ export function Approvals() {
         <StatCard
           title="Stage 3 Instruments"
           value={String(stage3.length)}
-          subtitle="Credit-impaired — committee required"
+          subtitle="Credit-impaired - committee required"
           variant="danger"
         />
         <StatCard
           title="Stage 2 Instruments"
           value={String(stage2.length)}
-          subtitle="Elevated risk — management review"
+          subtitle="Elevated risk - management review"
           variant="warning"
         />
         <StatCard
@@ -252,7 +252,7 @@ export function Approvals() {
 
       {stage3.length > 0 && (
         <SectionCard
-          title="Stage 3 — Credit-Impaired"
+          title="Stage 3 - Credit-Impaired"
           description="Impairment committee approval required before any new activity"
         >
           <DataTable<Row>
@@ -265,7 +265,7 @@ export function Approvals() {
       )}
 
       <SectionCard
-        title="Stage 2 — Significant Credit Risk Increase"
+        title="Stage 2 - Significant Credit Risk Increase"
         description="Management review and sign-off required"
       >
         <DataTable<Row>

@@ -69,7 +69,7 @@ export function MarketDataSources() {
                   </p>
                   <p className="text-xs text-gray-500">
                     {bloombergConnected
-                      ? "Session active — fetching live quotes"
+                      ? "Session active - fetching live quotes"
                       : "Connect to your local BLPAPI session"}
                   </p>
                 </div>

@@ -102,7 +102,7 @@ const MODULES = [
     id: "ifrs9",
     live: true,
     icon: Calculator,
-    title: "IFRS 9 — Expected Credit Loss",
+    title: "IFRS 9 - Expected Credit Loss",
     subtitle: "Automated ECL computation aligned to CBN guidelines",
     description:
       "Automate the full IFRS 9 impairment lifecycle from SICR detection and stage allocation through PD/LGD/EAD parameterisation to ECL charge computation aligned with CBN prudential guidelines.",
@@ -141,7 +141,7 @@ const MODULES = [
     title: "Accounting & GL Integration",
     subtitle: "Automated journal entries & general ledger sync",
     description:
-      "Generate IFRS-compliant accounting entries for all investment transactions purchases, disposals, accruals, fair value adjustments, and impairment charges — and sync directly to the general ledger.",
+      "Generate IFRS-compliant accounting entries for all investment transactions purchases, disposals, accruals, fair value adjustments, and impairment charges - and sync directly to the general ledger.",
     features: [
       { icon: FileText, label: "IFRS-compliant journal entry generation" },
       { icon: Calculator, label: "Fair value & amortised cost accounting" },

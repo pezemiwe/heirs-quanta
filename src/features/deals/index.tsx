@@ -46,7 +46,7 @@ export type DealsPage =
   | "counterparty-exposure";
 
 /** Pages driven purely by the deal-slip workflow store rather than the
- * shared instrument book — gated on "any deal slip exists" instead of
+ * shared instrument book - gated on "any deal slip exists" instead of
  * "the instrument book has data" (see PageBody below). */
 const WORKFLOW_DRIVEN_PAGES: DealsPage[] = [
   "blotter",
@@ -145,7 +145,7 @@ function PageBody({ page }: { page: DealsPage }) {
   // Reconciliation is the odd one out: its whole point is to catch instrument
   // book entries that have NO deal slip (e.g. a bulk import), so it must stay
   // visible whenever there's a book to reconcile against, even with zero deal
-  // slips — gating it on "a deal slip must exist first" would hide exactly
+  // slips - gating it on "a deal slip must exist first" would hide exactly
   // the break it's meant to surface.
   const gated =
     page === "reconciliation"
@@ -161,7 +161,7 @@ function PageBody({ page }: { page: DealsPage }) {
         title={isWorkflowDriven ? "No Deal Slips Yet" : "Load A Portfolio Book First"}
         description={
           isWorkflowDriven
-            ? "This view is derived entirely from the deal-slip pipeline — capture your first deal in Deal Capture to populate it."
+            ? "This view is derived entirely from the deal-slip pipeline - capture your first deal in Deal Capture to populate it."
             : "These lifecycle and control pages remain empty until you book a deal manually or upload a workbook in Deal Capture."
         }
         bullets={

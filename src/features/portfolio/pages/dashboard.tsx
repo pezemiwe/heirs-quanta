@@ -115,7 +115,7 @@ export function PortfolioDashboard({ persona }: Props) {
 
           <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
             <div className="lg:col-span-2 rounded-xl border border-border bg-surface p-5 shadow-sm">
-              <h2 className="mb-4 text-sm font-semibold text-dark-gray">Maturity Profile — Face Value by Bucket</h2>
+              <h2 className="mb-4 text-sm font-semibold text-dark-gray">Maturity Profile - Face Value by Bucket</h2>
               <ResponsiveContainer width="100%" height={180}>
                 <ReBarChart data={computed!.maturityProfile} margin={{ left: 0, right: 4 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />

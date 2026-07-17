@@ -175,7 +175,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
   const set = <K extends keyof DealEconomics>(field: K) => (v: DealEconomics[K]) =>
     setForm((f) => ({ ...f, [field]: v }));
 
-  // Live preview of the single-issuer concentration check — recomputed as the
+  // Live preview of the single-issuer concentration check - recomputed as the
   // trader types, so a limit issue is visible before they ever submit, not
   // just after the real check run. Same rule the store uses on submit.
   const livePreviewCheck = useMemo(() => {
@@ -212,7 +212,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
             ["Coupon Rate", `${(form.couponRate * 100).toFixed(3)}%`],
             ["Purchase Date", form.purchaseDate],
             ["Maturity Date", form.maturityDate],
-            ["Counterparty", form.counterparty || "—"],
+            ["Counterparty", form.counterparty || "-"],
             ["Portfolio Book", form.portfolioBook],
           ].map(([label, value]) => (
             <div key={label}>
@@ -230,7 +230,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
         <Modal
           isOpen={showDocument}
           onClose={() => setShowDocument(false)}
-          title={`Deal Slip Document — ${slip.id}`}
+          title={`Deal Slip Document - ${slip.id}`}
           size="lg"
         >
           <DealSlipDocumentView slip={slip} onClose={() => setShowDocument(false)} />
@@ -261,7 +261,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
         updateEconomics(slip.id, form);
         if (mode === "submit") {
           submitDealSlip(slip.id);
-          // Re-fetch — submitDealSlip runs the control checks and updates
+          // Re-fetch - submitDealSlip runs the control checks and updates
           // status, neither of which `slip` (captured before submit) reflects.
           onSubmitted?.(getDealSlip(slip.id) ?? slip);
         } else {
@@ -356,7 +356,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
             <TextInput value={String(form.faceValue || "")} onChange={(v) => set("faceValue")(toNum(v))} placeholder="e.g. 100000000" />
           </div>
           <div>
-            <FieldLabel tip="Clean price as a fraction of par — 0.985 = 98.5%">Purchase Price (decimal) *</FieldLabel>
+            <FieldLabel tip="Clean price as a fraction of par - 0.985 = 98.5%">Purchase Price (decimal) *</FieldLabel>
             <TextInput value={String(form.purchasePriceDecimal ?? "")} onChange={(v) => set("purchasePriceDecimal")(toNum(v, 1))} placeholder="e.g. 0.9850" />
           </div>
           <div>
@@ -500,7 +500,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
             setConfirmDelete(false);
           }}
           title="Delete draft deal slip?"
-          description={`${slip.id} — ${slip.economics.instrumentName} will be permanently deleted. This cannot be undone.`}
+          description={`${slip.id} - ${slip.economics.instrumentName} will be permanently deleted. This cannot be undone.`}
           confirmLabel="Delete"
         />
       )}

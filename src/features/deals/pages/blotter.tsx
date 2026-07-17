@@ -58,7 +58,7 @@ const STATUS_BADGE: Record<DealSlipStatus, BadgeVariant> = {
 };
 
 const fmtCompact = (n: number): string => {
-  if (!isFinite(n)) return "—";
+  if (!isFinite(n)) return "-";
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
   if (abs >= 1e9) return `${sign}₦${(abs / 1e9).toFixed(2)}B`;
@@ -68,7 +68,7 @@ const fmtCompact = (n: number): string => {
 };
 
 const fmtCompactCcy = (n: number, symbol: string): string => {
-  if (!isFinite(n)) return "—";
+  if (!isFinite(n)) return "-";
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
   if (abs >= 1e9) return `${sign}${symbol}${(abs / 1e9).toFixed(2)}B`;
@@ -78,7 +78,7 @@ const fmtCompactCcy = (n: number, symbol: string): string => {
 };
 
 const fmtDate = (iso: string) => {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso + "T00:00:00Z");
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
@@ -123,7 +123,7 @@ const registerCols: DataTableColumn<RegisterEntry & Record<string, unknown>>[] =
 ];
 
 /* ─────────────────────────────────────────────────────────────
-   Deal slip detail — composes workspace / checks / settlement / timeline
+   Deal slip detail - composes workspace / checks / settlement / timeline
    and the persona-and-status-gated workflow actions.
    ───────────────────────────────────────────────────────────── */
 function DealSlipDetail({ slip }: { slip: DealSlip }) {
@@ -192,7 +192,7 @@ function DealSlipDetail({ slip }: { slip: DealSlip }) {
 
       {slip.status === "Under Review" && (
         <div className="rounded-lg border border-amber-200 bg-amber-50 px-4 py-3">
-          <p className="mb-3 text-sm text-amber-800">Reviewer decision — approval requires all control checks to pass or be cleared.</p>
+          <p className="mb-3 text-sm text-amber-800">Reviewer decision - approval requires all control checks to pass or be cleared.</p>
           <div className="flex flex-wrap items-center gap-2">
             <button
               type="button"
@@ -311,7 +311,7 @@ function DealSlipDetail({ slip }: { slip: DealSlip }) {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Trade Blotter — the full deal slip pipeline + investment register
+   Trade Blotter - the full deal slip pipeline + investment register
    ───────────────────────────────────────────────────────────── */
 
 export function DealBlotter() {
@@ -330,7 +330,7 @@ export function DealBlotter() {
   const [showSaveView, setShowSaveView] = useState(false);
   const { views: savedViews, saveView, deleteView } = useSavedBlotterViews(persona.name);
   // Derive the selected slip live from the store on every render, rather than
-  // holding a stale snapshot — otherwise the modal wouldn't reflect a status
+  // holding a stale snapshot - otherwise the modal wouldn't reflect a status
   // change (e.g. Begin Review) made from inside itself.
   const selected = selectedId ? (dealSlips.find((s) => s.id === selectedId) ?? null) : null;
   const documentSlip = documentSlipId
@@ -400,7 +400,7 @@ export function DealBlotter() {
   const registerFaceValue = register.filter((r) => r.status === "Active").reduce((s, r) => s + r.faceValue, 0);
 
   // Instruments in the shared instrument book with no corresponding active
-  // register entry — these bypassed the deal-slip workflow entirely
+  // register entry - these bypassed the deal-slip workflow entirely
   // (typically a bulk workbook upload of historical opening balances).
   // Same computation pattern as reconciliation.tsx's `withoutSlip`.
   const withoutSlip = useMemo<Instrument[]>(() => {
@@ -520,7 +520,7 @@ export function DealBlotter() {
     <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
-          <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">Trade Blotter — Deal Slip Pipeline</h1>
+          <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">Trade Blotter - Deal Slip Pipeline</h1>
           <p className="mt-1 text-sm text-dark-gray/60">
             {rows.length} of {dealSlips.length} deal slips · every transaction here started life as a deal slip
           </p>
@@ -542,7 +542,7 @@ export function DealBlotter() {
             <ArrowRight className="h-5 w-5 text-primary" />
           </div>
           <div>
-            <p className="text-sm font-semibold text-primary">No deal slips yet — capture your first deal</p>
+            <p className="text-sm font-semibold text-primary">No deal slips yet - capture your first deal</p>
             <p className="text-xs text-dark-gray/50">
               Every position in the investment register starts as a deal slip that walks through review, approval, and settlement.
             </p>
@@ -556,7 +556,7 @@ export function DealBlotter() {
       <StatCardGrid>
         <StatCard title="Total Deal Slips" value={String(dealSlips.length)} subtitle="All statuses" variant="highlight" />
         <StatCard title="In Workflow" value={String(inWorkflow)} subtitle="Not yet settled, rejected, or closed" variant="default" />
-        <StatCard title="Active Positions" value={String(activePositions)} subtitle="Investment register — settled deals only" variant="default" />
+        <StatCard title="Active Positions" value={String(activePositions)} subtitle="Investment register - settled deals only" variant="default" />
         <StatCard title="Register Face Value" value={fmtCompact(registerFaceValue)} subtitle="Sum of active positions" variant="default" />
       </StatCardGrid>
 
@@ -607,7 +607,7 @@ export function DealBlotter() {
           </div>
         </div>
 
-        {/* Saved views — persisted filter/sort presets per user */}
+        {/* Saved views - persisted filter/sort presets per user */}
         <div className="mb-4 flex flex-wrap items-center gap-2 border-t border-border/60 pt-3">
           <Bookmark className="h-3.5 w-3.5 text-gray-400" />
           <span className="text-xs font-medium text-dark-gray/50">Saved views:</span>
@@ -677,12 +677,12 @@ export function DealBlotter() {
         />
       </SectionCard>
 
-      <SectionCard title="Investment Register" description="Single source of truth for active positions — only ever gains an entry when a deal slip reaches Settled">
+      <SectionCard title="Investment Register" description="Single source of truth for active positions - only ever gains an entry when a deal slip reaches Settled">
         <DataTable<RegisterEntry & Record<string, unknown>>
           columns={registerCols}
           data={register as (RegisterEntry & Record<string, unknown>)[]}
           keyExtractor={(r) => r.id}
-          emptyMessage="No settled positions yet — the register only fills once a deal slip is Settled"
+          emptyMessage="No settled positions yet - the register only fills once a deal slip is Settled"
           pageSize={10}
         />
       </SectionCard>
@@ -693,13 +693,13 @@ export function DealBlotter() {
       >
         <p className="mb-3 text-xs text-dark-gray/50">
           These positions were loaded as opening balances from an uploaded workbook and are not subject to
-          deal-slip review — new trades booked from today forward go through Deal Capture and full approval.
+          deal-slip review - new trades booked from today forward go through Deal Capture and full approval.
         </p>
         <DataTable<BackBookTableRow>
           columns={backBookCols}
           data={backBookRows}
           keyExtractor={(r) => r.id}
-          emptyMessage="No back-book positions — every instrument in the book has a matching deal slip"
+          emptyMessage="No back-book positions - every instrument in the book has a matching deal slip"
           pageSize={20}
         />
       </SectionCard>
@@ -711,7 +711,7 @@ export function DealBlotter() {
       <Modal
         isOpen={documentSlip !== null}
         onClose={() => setDocumentSlipId(null)}
-        title={documentSlip ? `Deal Slip Document — ${documentSlip.id}` : undefined}
+        title={documentSlip ? `Deal Slip Document - ${documentSlip.id}` : undefined}
         size="lg"
       >
         {documentSlip && (
@@ -729,7 +729,7 @@ export function DealBlotter() {
         title="Delete draft deal slip?"
         description={
           confirmDeleteId
-            ? `${confirmDeleteId} — ${dealSlips.find((s) => s.id === confirmDeleteId)?.economics.instrumentName ?? ""} will be permanently deleted. This cannot be undone.`
+            ? `${confirmDeleteId} - ${dealSlips.find((s) => s.id === confirmDeleteId)?.economics.instrumentName ?? ""} will be permanently deleted. This cannot be undone.`
             : undefined
         }
         confirmLabel="Delete"

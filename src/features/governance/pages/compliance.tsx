@@ -42,7 +42,7 @@ const COMPLIANCE_ITEMS: ComplianceItem[] = [
     regulation: "NAICOM Prudential §7.2",
     status: "exception",
     detail:
-      "FGN sovereign exposure at 62.4% — exceeds 10% single issuer cap. NAICOM exempts FGN bonds from concentration limit.",
+      "FGN sovereign exposure at 62.4% - exceeds 10% single issuer cap. NAICOM exempts FGN bonds from concentration limit.",
     dueDate: "2026-06-30",
     owner: "Ngozi Adeyemi",
   },
@@ -87,7 +87,7 @@ const COMPLIANCE_ITEMS: ComplianceItem[] = [
   {
     id: "c007",
     category: "Risk Management",
-    check: "Stress Test — Quarterly Interest Rate Shock",
+    check: "Stress Test - Quarterly Interest Rate Shock",
     regulation: "CBN Risk Management Framework",
     status: "compliant",
     detail:
@@ -97,7 +97,7 @@ const COMPLIANCE_ITEMS: ComplianceItem[] = [
   {
     id: "c008",
     category: "Audit & Controls",
-    check: "Segregation of Duties — Maker-Checker",
+    check: "Segregation of Duties - Maker-Checker",
     regulation: "NAICOM Internal Controls §8",
     status: "compliant",
     detail:
@@ -132,7 +132,7 @@ const COMPLIANCE_ITEMS: ComplianceItem[] = [
     regulation: "IFRS 13",
     status: "compliant",
     detail:
-      "94.7% Level 1/2 assets. Level 3 at 5.3% — below 20% threshold requiring additional disclosure.",
+      "94.7% Level 1/2 assets. Level 3 at 5.3% - below 20% threshold requiring additional disclosure.",
     owner: "Chidi Okafor",
   },
   {
@@ -149,7 +149,7 @@ const COMPLIANCE_ITEMS: ComplianceItem[] = [
   {
     id: "c013",
     category: "AML / KYC",
-    check: "Transaction Monitoring — Unusual Patterns",
+    check: "Transaction Monitoring - Unusual Patterns",
     regulation: "NFIU/CBN Guidelines",
     status: "compliant",
     detail:

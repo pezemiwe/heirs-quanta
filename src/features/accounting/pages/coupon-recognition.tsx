@@ -135,7 +135,7 @@ export function CouponRecognition() {
         nextCouponDate: new Date(nextMs).toISOString().slice(0, 10),
         wtax,
         netCoupon: periodCoupon - wtax,
-        maturityDate: inst.maturityDate ?? "—",
+        maturityDate: inst.maturityDate ?? "-",
       };
     });
 

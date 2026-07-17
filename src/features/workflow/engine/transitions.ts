@@ -1,9 +1,9 @@
 /**
- * Heirs Quanta — Deal Slip State Machine
+ * Heirs Quanta - Deal Slip State Machine
  *
  * The single authority on which status a deal slip may move to next, and
  * which persona tier is permitted to drive that edge. Every mutation in
- * store.tsx must go through assertTransition() before it touches state —
+ * store.tsx must go through assertTransition() before it touches state -
  * nothing else in the codebase should special-case a status change.
  */
 
@@ -12,7 +12,7 @@ import type { DealSlipStatus } from "../types";
 /** Role tiers as already established by context/governance.ts's ROLE_TIER map. */
 export type RoleTier = "maker" | "checker" | "viewer" | "admin";
 
-/** Non-viewer tiers — anyone who can actually act on a deal slip. */
+/** Non-viewer tiers - anyone who can actually act on a deal slip. */
 const ACTOR_TIERS: RoleTier[] = ["maker", "checker", "admin"];
 /** Tiers that can create/edit/submit a deal slip (front office). */
 const TRADER_TIERS: RoleTier[] = ["maker", "admin"];
@@ -21,7 +21,7 @@ const REVIEWER_TIERS: RoleTier[] = ["checker", "admin"];
 
 /**
  * The transition graph: from status -> allowed next statuses.
- * This is the ONLY place the graph is defined — no other file should encode
+ * This is the ONLY place the graph is defined - no other file should encode
  * "can X become Y" logic.
  */
 export const TRANSITIONS: Record<DealSlipStatus, DealSlipStatus[]> = {
@@ -67,7 +67,7 @@ const EDGE_TIER: Record<string, RoleTier[]> = {
   "Approved->Pending Settlement": ACTOR_TIERS,
   "Pending Settlement->Settled": ACTOR_TIERS,
   // Settled -> Active fires automatically the instant settlement is
-  // confirmed — no separate human actor drives this edge.
+  // confirmed - no separate human actor drives this edge.
   "Settled->Active": [...ACTOR_TIERS, "viewer"],
   "Active->Matured/Sold/Rolled Over": ACTOR_TIERS,
 };
@@ -80,7 +80,7 @@ export interface TransitionCheckResult {
 /**
  * Validates both state-graph legality AND actor-tier legality for a
  * proposed transition. Does not know about settlement-specific identity
- * rules (raiser != confirmer) — that's a store-layer concern since it needs
+ * rules (raiser != confirmer) - that's a store-layer concern since it needs
  * the actual persona name, not just their tier.
  */
 export function checkTransition(
@@ -92,7 +92,7 @@ export function checkTransition(
     return {
       ok: false,
       reason: `"${from}" cannot move directly to "${to}". Valid next statuses: ${
-        TRANSITIONS[from].length ? TRANSITIONS[from].join(", ") : "none — this is a terminal status"
+        TRANSITIONS[from].length ? TRANSITIONS[from].join(", ") : "none - this is a terminal status"
       }.`,
     };
   }
@@ -106,7 +106,7 @@ export function checkTransition(
   return { ok: true };
 }
 
-/** Throws if the transition is not allowed — used by store.tsx mutations. */
+/** Throws if the transition is not allowed - used by store.tsx mutations. */
 export function assertTransition(
   from: DealSlipStatus,
   to: DealSlipStatus,
@@ -116,7 +116,7 @@ export function assertTransition(
   if (!result.ok) throw new Error(result.reason);
 }
 
-/** All statuses reachable in one hop from the given status — drives UI action buttons. */
+/** All statuses reachable in one hop from the given status - drives UI action buttons. */
 export function nextStatuses(status: DealSlipStatus): DealSlipStatus[] {
   return TRANSITIONS[status];
 }

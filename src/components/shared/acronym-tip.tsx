@@ -8,7 +8,7 @@ export const GLOSSARY: Record<string, string> = {
   FVTPL: "Fair Value through Profit & Loss",
   OCI: "Other Comprehensive Income",
   EIR: "Effective Interest Rate",
-  DV01: "Dollar Value of 1 Basis Point — ₦ change per 1bp yield move",
+  DV01: "Dollar Value of 1 Basis Point - ₦ change per 1bp yield move",
   PV01: "Price Value of 1 Basis Point",
   ECL: "Expected Credit Loss",
   "P&L": "Profit & Loss",
@@ -38,7 +38,7 @@ type AcronymTipProps = {
   term: string;
   /** Override the tooltip text (bypasses GLOSSARY lookup). */
   full?: string;
-  /** Optional children — wraps them in the tooltip instead of rendering term text. */
+  /** Optional children - wraps them in the tooltip instead of rendering term text. */
   children?: ReactNode;
 };
 

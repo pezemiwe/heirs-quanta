@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────
-   Portfolio — Canonical Instrument Book
+   Portfolio - Canonical Instrument Book
    ───────────────────────────────────────────────────────── */
 /* Single source of truth for the deal-level instrument records
    consumed by downstream modules (IFRS 9, Valuation, Duration &

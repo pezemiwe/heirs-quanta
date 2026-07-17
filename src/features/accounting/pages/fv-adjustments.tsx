@@ -179,7 +179,7 @@ export function FVAdjustments() {
       </StatCardGrid>
 
       <SectionCard
-        title="Fair Value through OCI — Reserve Movements"
+        title="Fair Value through OCI - Reserve Movements"
         description="Dr / Cr: FVOCI Investment Account / OCI Equity Reserve (recycled to P&L on disposal)"
       >
         <DataTable<Row>
@@ -198,7 +198,7 @@ export function FVAdjustments() {
       </SectionCard>
 
       <SectionCard
-        title="Fair Value through P&L — Unrealised Gains / Losses"
+        title="Fair Value through P&L - Unrealised Gains / Losses"
         description="Dr / Cr: FVTPL Investment Account / Unrealised Gain or Loss (recognised in Profit & Loss)"
       >
         <DataTable<Row>

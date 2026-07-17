@@ -8,7 +8,7 @@ import type { Security, Assumptions } from "./types";
 import { DEFAULT_VALUATION_DATE } from "../../valuation/engine/reference-data";
 
 /* ──────────────────────────────────────────────────────────────
-   MOODY'S CORPORATE PD — cumulative %, by Moody rating × horizon (years 1..20)
+   MOODY'S CORPORATE PD - cumulative %, by Moody rating × horizon (years 1..20)
    Source: moody-cor-pd.csv supplied by user
    ────────────────────────────────────────────────────────────── */
 export const MOODY_PD_CUM: Record<string, number[]> = {
@@ -87,7 +87,7 @@ export const MOODY_PD_CUM: Record<string, number[]> = {
 };
 
 /* ──────────────────────────────────────────────────────────────
-   MOODY'S RECOVERY RATE — by collapsed rating bucket × horizon year (1..5), %
+   MOODY'S RECOVERY RATE - by collapsed rating bucket × horizon year (1..5), %
    ────────────────────────────────────────────────────────────── */
 export const MOODY_RR: Record<string, number[]> = {
   Aaa: [0.0, 3.3, 3.3, 61.9, 69.6],
@@ -103,7 +103,7 @@ export const MOODY_RR: Record<string, number[]> = {
 };
 
 /* ──────────────────────────────────────────────────────────────
-   S&P SOVEREIGN FOREIGN-CURRENCY PD — cumulative %, by S&P rating × horizon (years 1..15)
+   S&P SOVEREIGN FOREIGN-CURRENCY PD - cumulative %, by S&P rating × horizon (years 1..15)
    ────────────────────────────────────────────────────────────── */
 export const SP_SOV_FCY_PD_CUM: Record<string, number[]> = {
   AAA: [
@@ -175,12 +175,12 @@ export const SP_SOV_FCY_PD_CUM: Record<string, number[]> = {
 };
 
 /* ──────────────────────────────────────────────────────────────
-   S&P SOVEREIGN LCY PD — same shape, separate scale (using provided table)
+   S&P SOVEREIGN LCY PD - same shape, separate scale (using provided table)
    ────────────────────────────────────────────────────────────── */
 export const SP_SOV_LCY_PD_CUM: Record<string, number[]> = SP_SOV_FCY_PD_CUM;
 
 /* ──────────────────────────────────────────────────────────────
-   RATING SCALE — index = canonical rank
+   RATING SCALE - index = canonical rank
    Each rating string maps to an index (1 = best, 33 = default)
    Used to translate any agency rating → Moody or S&P equivalent
    ────────────────────────────────────────────────────────────── */
@@ -506,7 +506,7 @@ const buildOverlay = (start: number): number[] =>
 
 export const DEFAULT_ASSUMPTIONS: Assumptions = {
   // Anchored to the book's own as-of date (VALUATION_DATE in
-  // portfolio/engine/book-compute.ts), not today — otherwise instruments that
+  // portfolio/engine/book-compute.ts), not today - otherwise instruments that
   // matured between the workbook's date and today get misclassified as
   // Stage 3 even though they were performing as of the book's reporting date.
   // If VALUATION_DATE becomes dynamic later (e.g. derived from the latest
@@ -525,7 +525,7 @@ export const DEFAULT_ASSUMPTIONS: Assumptions = {
 };
 
 /* ──────────────────────────────────────────────────────────────
-   SAMPLE PORTFOLIO — the 24-row demo from data.csv
+   SAMPLE PORTFOLIO - the 24-row demo from data.csv
    ────────────────────────────────────────────────────────────── */
 const d = (s: string): Date => {
   // dd/mm/yyyy → Date

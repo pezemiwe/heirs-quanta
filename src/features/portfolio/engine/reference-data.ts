@@ -6,7 +6,7 @@ import type {
 } from "./types";
 
 /* ─────────────────────────────────────────────────────────
-   Heirs Holdings Group — Portfolio Reference Data
+   Heirs Holdings Group - Portfolio Reference Data
    All monetary values in NGN millions.
    Market values sourced from Heirs Quanta Valuation Engine (26 May 2026).
    ───────────────────────────────────────────────────────── */
@@ -385,7 +385,7 @@ export const TRANSACTIONS: Transaction[] = [
     assetName: "Transcorp Plc",
     amount: 420,
     status: "Settled",
-    notes: "Final FY2025 dividend — ₦0.051/share",
+    notes: "Final FY2025 dividend - ₦0.051/share",
   },
   {
     id: "TXN-0237",
@@ -417,7 +417,7 @@ export const TRANSACTIONS: Transaction[] = [
     assetName: "T-Bills 91-Day",
     amount: 5_200,
     status: "Settled",
-    notes: "Principal redemption — proceeds rolled into 182-day",
+    notes: "Principal redemption - proceeds rolled into 182-day",
   },
   {
     id: "TXN-0234",
@@ -448,7 +448,7 @@ export const TRANSACTIONS: Transaction[] = [
     assetName: "Africa Growth Fund III",
     amount: -3_280,
     status: "Settled",
-    notes: "Capital call #3 — co-investment in Lagos data centre",
+    notes: "Capital call #3 - co-investment in Lagos data centre",
   },
   {
     id: "TXN-0231",

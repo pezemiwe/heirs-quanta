@@ -1,5 +1,5 @@
 /**
- * Heirs Quanta — Deal Slip Workflow Types
+ * Heirs Quanta - Deal Slip Workflow Types
  *
  * No investment transaction exists outside a deal slip, and no settlement
  * confirmation means no active holding. Every instrument that ends up in the
@@ -132,7 +132,7 @@ export interface DealDocument {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Economics — the deal terms captured at booking
+   Economics - the deal terms captured at booking
    ───────────────────────────────────────────────────────────── */
 
 export interface DealEconomics {
@@ -222,10 +222,10 @@ export interface DealSlip {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Exceptions — every control breach, override, or failed settlement is
+   Exceptions - every control breach, override, or failed settlement is
    tracked here until formally closed. Nothing is silently dismissed:
    clearing a check or retrying a failed settlement does not close the
-   exception it created — only a closure comment does.
+   exception it created - only a closure comment does.
    ───────────────────────────────────────────────────────────── */
 
 export type ExceptionType = "check-breach" | "check-override" | "settlement-failure";
@@ -235,7 +235,7 @@ export interface ExceptionRecord {
   id: string;
   type: ExceptionType;
   dealSlipId: string;
-  /** Stable key within a deal slip — a CheckType for check-related exceptions, "settlement" otherwise */
+  /** Stable key within a deal slip - a CheckType for check-related exceptions, "settlement" otherwise */
   sourceRef: string;
   title: string;
   detail: string;
@@ -250,7 +250,7 @@ export interface ExceptionRecord {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Investment register — single source of truth for active positions.
+   Investment register - single source of truth for active positions.
    Only ever gains an entry when a deal slip reaches "Settled".
    ───────────────────────────────────────────────────────────── */
 

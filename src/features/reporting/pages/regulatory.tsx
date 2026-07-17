@@ -215,7 +215,7 @@ export function RegulatoryLimits() {
           Regulatory Investment Limit Monitoring
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Concentration and investment limits — as at 28 May 2026
+          Concentration and investment limits - as at 28 May 2026
         </p>
       </div>
 

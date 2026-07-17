@@ -38,14 +38,14 @@ const STATUS_BADGE: Record<ExceptionStatus, BadgeVariant> = {
 };
 
 const fmtDate = (iso: string | null | undefined) => {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleDateString("en-GB", { day: "2-digit", month: "short", year: "numeric" });
 };
 
 const fmtDateTime = (iso: string | null | undefined) => {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleString("en-GB", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
@@ -104,7 +104,7 @@ function ExceptionDetail({ record }: { record: ExceptionRecord }) {
             <p className="mt-0.5 text-xs text-dark-gray/50">
               {meta.label} · Deal slip{" "}
               <span className="font-mono">{record.dealSlipId}</span>
-              {slip && <> — {slip.economics.instrumentName}</>}
+              {slip && <> - {slip.economics.instrumentName}</>}
             </p>
           </div>
         </div>
@@ -134,7 +134,7 @@ function ExceptionDetail({ record }: { record: ExceptionRecord }) {
                 onChange={(e) => setOwnerName(e.target.value)}
                 className="w-full rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray outline-none focus:border-primary focus:ring-1 focus:ring-primary disabled:bg-gray-50"
               >
-                <option value="">— Unassigned —</option>
+                <option value="">- Unassigned -</option>
                 {PERSONAS.map((p) => (
                   <option key={p.role} value={p.name}>
                     {p.name} · {p.role}
@@ -184,7 +184,7 @@ function ExceptionDetail({ record }: { record: ExceptionRecord }) {
               value={comment}
               onChange={(e) => setComment(e.target.value)}
               rows={2}
-              placeholder="Closure comment (required) — what was done / why this is resolved"
+              placeholder="Closure comment (required) - what was done / why this is resolved"
               className="w-full resize-none rounded-lg border border-border bg-white px-3 py-2 text-sm text-dark-gray outline-none placeholder:text-gray-300 focus:border-primary focus:ring-1 focus:ring-primary"
             />
             <button
@@ -253,7 +253,7 @@ export function Exceptions() {
         r.dueDate ? (
           <span className={isOverdue(r) ? "font-semibold text-danger" : ""}>{fmtDate(r.dueDate)}</span>
         ) : (
-          <span className="text-dark-gray/35">—</span>
+          <span className="text-dark-gray/35">-</span>
         ),
     },
     {
@@ -275,7 +275,7 @@ export function Exceptions() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">Exceptions</h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          Every control breach, override, or failed settlement — nothing is silently dismissed. An exception
+          Every control breach, override, or failed settlement - nothing is silently dismissed. An exception
           stays visible here until it is assigned, worked, and formally closed with a comment.
         </p>
       </div>
@@ -316,7 +316,7 @@ export function Exceptions() {
           columns={cols}
           data={rows}
           keyExtractor={(r) => r.id}
-          emptyMessage="No exceptions — every check has passed and every settlement has confirmed cleanly"
+          emptyMessage="No exceptions - every check has passed and every settlement has confirmed cleanly"
           pageSize={20}
           onRowClick={(r) => setSelectedId(r.id)}
         />

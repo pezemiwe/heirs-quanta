@@ -197,7 +197,7 @@ export function InvestmentLimits() {
                       <p className="mt-1 text-xs text-dark-gray/40">
                         {lim.direction === "max"
                           ? `${lim.currentPct.toFixed(1)}% used of ${lim.limitPct}% maximum`
-                          : `${lim.currentPct.toFixed(1)}% held — minimum ${lim.limitPct}% required`}
+                          : `${lim.currentPct.toFixed(1)}% held - minimum ${lim.limitPct}% required`}
                       </p>
                     </div>
                     {/* Waiver button */}
@@ -214,7 +214,7 @@ export function InvestmentLimits() {
                     {lim.status === "breach" && (
                       <div className="mt-2 rounded-md border border-red-200 bg-red-50 px-3 py-2">
                         <p className="text-xs font-medium text-red-700">
-                          ⚠ Limit breach — immediate rebalancing required. New
+                          ⚠ Limit breach - immediate rebalancing required. New
                           purchases in this category are blocked pending
                           remediation.
                         </p>
@@ -237,17 +237,17 @@ export function InvestmentLimits() {
           {[
             [
               "Federal Government Securities",
-              "Min 25% — floors qualify as statutory deposit",
+              "Min 25% - floors qualify as statutory deposit",
             ],
             ["State Government Bonds", "Max 10% of total investments"],
             ["Corporate Bonds (NSE-listed)", "Max 10% of total investments"],
             ["Equities (NSE/NGX listed)", "Max 20% of total investments"],
-            ["Foreign Investments", "Max 10% — CBN FX guidelines apply"],
-            ["Unquoted / Private", "Max 10% — includes private equity"],
+            ["Foreign Investments", "Max 10% - CBN FX guidelines apply"],
+            ["Unquoted / Private", "Max 10% - includes private equity"],
             ["Single Issuer Concentration", "Max 10% in any single name"],
-            ["Real Estate", "Max 25% — includes mortgage bonds"],
-            ["Infrastructure Bonds", "Max 30% — encouraged asset class"],
-            ["Money Market", "Max 30% — includes T-bills & placements"],
+            ["Real Estate", "Max 25% - includes mortgage bonds"],
+            ["Infrastructure Bonds", "Max 30% - encouraged asset class"],
+            ["Money Market", "Max 30% - includes T-bills & placements"],
           ].map(([rule, note]) => (
             <div
               key={rule}

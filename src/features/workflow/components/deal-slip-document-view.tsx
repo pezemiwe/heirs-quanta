@@ -8,7 +8,7 @@ const PRINT_BODY_CLASS = "deal-slip-print-active";
 
 /**
  * Printable deal-slip document with Download PDF and Print actions.
- * Static presentational view only — no workflow actions.
+ * Static presentational view only - no workflow actions.
  */
 export function DealSlipDocumentView({
   slip,

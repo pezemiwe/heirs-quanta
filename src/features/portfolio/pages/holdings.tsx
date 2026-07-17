@@ -129,8 +129,8 @@ export function PortfolioHoldings() {
     { key: "issuer", header: "Issuer", render: (r) => <span className="text-xs text-dark-gray/70">{r.issuer}</span> },
     { key: "currency", header: "CCY", align: "center", render: (r) => <span className="text-xs text-dark-gray/60">{r.currency}</span> },
     { key: "bookValueNGN", header: "Book Value (₦)", align: "right", render: (r) => <span className="text-xs font-semibold text-dark-gray">{fmtCompact(r.bookValueNGN)}</span> },
-    { key: "eirPct", header: "EIR", align: "right", render: (r) => <span className="text-xs text-dark-gray/70">{r.eirPct > 0 ? fmtPct(r.eirPct) : "—"}</span> },
-    { key: "couponRate", header: "Coupon", align: "right", render: (r) => <span className="text-xs text-dark-gray/70">{r.couponRate > 0 ? fmtPct(r.couponRate) : "—"}</span> },
+    { key: "eirPct", header: "EIR", align: "right", render: (r) => <span className="text-xs text-dark-gray/70">{r.eirPct > 0 ? fmtPct(r.eirPct) : "-"}</span> },
+    { key: "couponRate", header: "Coupon", align: "right", render: (r) => <span className="text-xs text-dark-gray/70">{r.couponRate > 0 ? fmtPct(r.couponRate) : "-"}</span> },
     { key: "maturityDate", header: "Maturity", render: (r) => <span className="text-xs text-dark-gray/60">{fmtDate(r.maturityDate)}</span> },
     { key: "stage", header: "Stage", render: (r) => <span className={`rounded-full px-2 py-0.5 text-xs font-medium ${STAGE_STYLE[r.stage] ?? "bg-gray-100 text-dark-gray/60"}`}>{r.stage}</span> },
   ];
@@ -340,12 +340,12 @@ export function PortfolioHoldings() {
                 },
                 {
                   label: "EIR",
-                  value: selected.eirPct > 0 ? fmtPct(selected.eirPct) : "—",
+                  value: selected.eirPct > 0 ? fmtPct(selected.eirPct) : "-",
                 },
                 {
                   label: "Coupon Rate",
                   value:
-                    selected.couponRate > 0 ? fmtPct(selected.couponRate) : "—",
+                    selected.couponRate > 0 ? fmtPct(selected.couponRate) : "-",
                 },
                 {
                   label: "Maturity Date",

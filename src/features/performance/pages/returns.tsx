@@ -342,7 +342,7 @@ export function Returns() {
     <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
-          Returns — P&amp;L Analysis
+          Returns - P&amp;L Analysis
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
           Unrealised gains and losses by classification · Valuation date 28 May
@@ -382,7 +382,7 @@ export function Returns() {
       </StatCardGrid>
 
       <SectionCard
-        title="FVOCI — OCI Reserve Movements"
+        title="FVOCI - OCI Reserve Movements"
         description="Fair value changes accumulated in equity (OCI)"
       >
         <DataTable<Row>
@@ -396,7 +396,7 @@ export function Returns() {
       </SectionCard>
 
       <SectionCard
-        title="FVTPL — Unrealised Gains / Losses"
+        title="FVTPL - Unrealised Gains / Losses"
         description="Fair value changes recognised through profit & loss"
       >
         <DataTable<Row>

@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────
-   Portfolio — shared formatters + colour maps
+   Portfolio - shared formatters + colour maps
    ───────────────────────────────────────────────────────── */
 
 const NAIRA_SYMBOL = "\u20A6";

@@ -7,9 +7,9 @@ import { fmtCompact, fmtPct } from "../utils/format";
 import type { Stage } from "../engine/types";
 
 const STAGE_LABELS: Record<Stage, string> = {
-  1: "Stage 1 — Performing",
-  2: "Stage 2 — Underperforming",
-  3: "Stage 3 — Credit-impaired",
+  1: "Stage 1 - Performing",
+  2: "Stage 2 - Underperforming",
+  3: "Stage 3 - Credit-impaired",
 };
 
 const STAGE_TONE: Record<Stage, "stage1" | "stage2" | "stage3"> = {
@@ -30,7 +30,7 @@ export function IFRS9Overview() {
       <div className="flex flex-wrap items-end justify-between gap-3">
         <div>
           <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
-            IFRS 9 & ECL — Debt Securities
+            IFRS 9 & ECL - Debt Securities
           </h1>
           <p className="mt-1 text-sm text-dark-gray/60">
             Reporting date ·{" "}

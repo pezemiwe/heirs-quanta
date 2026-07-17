@@ -27,7 +27,7 @@ export const DealSlipDocument = forwardRef<HTMLDivElement, { slip: DealSlip }>(
         className="deal-slip-document mx-auto w-full max-w-[520px] bg-[#FFFBFB] shadow-[0_4px_24px_rgba(0,0,0,0.08),0_0_0_1px_rgba(200,16,46,0.1)]"
         style={{ fontFamily: "'Georgia', 'Times New Roman', serif" }}
       >
-        {/* Accent bar — solid brand colour */}
+        {/* Accent bar - solid brand colour */}
         <div className="h-2" style={{ backgroundColor: HEIRS_BRAND_HEX }} />
 
         <div className="border-x border-b border-[#E8E0E0] px-6 pb-6 pt-5">
@@ -65,7 +65,7 @@ export const DealSlipDocument = forwardRef<HTMLDivElement, { slip: DealSlip }>(
             </h2>
             <div className="mt-2 flex flex-wrap items-center gap-2">
               <DealSlipStatusBadge status={slip.status} />
-              <span className="text-[11px] text-[#6B6060]">{e.portfolioBook || "—"}</span>
+              <span className="text-[11px] text-[#6B6060]">{e.portfolioBook || "-"}</span>
               <span className="text-[#D4C8C8]">·</span>
               <span className="text-[11px] text-[#6B6060]">{e.assetClass}</span>
             </div>
