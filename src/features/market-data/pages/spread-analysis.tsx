@@ -32,7 +32,7 @@ export function MarketDataSpreadAnalysis() {
           NGN vs USD Spread Analysis
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Sovereign yield differential by tenor — indicator of country risk
+          Sovereign yield differential by tenor â€” indicator of country risk
           premium
         </p>
       </div>
