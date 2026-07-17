@@ -616,8 +616,6 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
       bookedBy: dealer,
       impairmentStage: "Stage 1",
       eclProvision: 0,
-      // stash FX rate in marketPrice for downstream FX computations
-      marketPrice: fxRate || undefined,
     });
   }
 
@@ -729,6 +727,9 @@ function parseQuotedEquity(
     const marketValueTotal = parseNum(r[cCurrentMarketValue]);
     const portfolioBook = str(r[cPortfolio]) || "Quoted Equity Book";
 
+    const positionMarketValue =
+      marketValueTotal > 0 ? marketValueTotal : quantity * marketPriceUnit;
+
     const costBasisM = totalCost / 1_000_000;
     const mktValueM =
       marketValueTotal > 0
@@ -754,7 +755,7 @@ function parseQuotedEquity(
       couponRate: 0,
       couponFrequency: "N/A",
       status: "Active",
-      marketPrice: marketPriceUnit || undefined,
+      marketPrice: positionMarketValue || undefined,
       impairmentStage: "N/A",
       eclProvision: 0,
     });
