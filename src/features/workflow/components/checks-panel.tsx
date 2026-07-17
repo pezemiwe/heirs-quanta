@@ -145,7 +145,7 @@ export function ChecksPanel({ slip, canClear = false }: { slip: DealSlip; canCle
       >
         <span className="flex items-center gap-2 font-medium">
           {passed ? <CheckCircle2 className="h-4 w-4" /> : <AlertTriangle className="h-4 w-4" />}
-          {passed ? "All checks pass — ready for approval" : "One or more checks require attention before approval"}
+          {passed ? "All checks pass - ready for approval" : "One or more checks require attention before approval"}
         </span>
         <button
           type="button"

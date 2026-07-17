@@ -70,7 +70,7 @@ export function ApprovalsWorkflow() {
         decision === "approved"
           ? `${item.type.toUpperCase()} Approved`
           : `${item.type.toUpperCase()} Rejected`,
-      detail: `${item.title} — ₦${fmtCompact(item.amount)} — decision: ${decision}`,
+      detail: `${item.title} - ₦${fmtCompact(item.amount)} - decision: ${decision}`,
       status: decision === "approved" ? "success" : "warning",
       ip: "10.0.1.xx",
     });
@@ -92,14 +92,14 @@ export function ApprovalsWorkflow() {
     <div className="space-y-6 p-3 sm:p-4 md:p-6">
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray">
-          Approval Workflows — Maker-Checker
+          Approval Workflows - Maker-Checker
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
           Centralised approval queue across all modules · Logged in as{" "}
           <span className="font-medium text-dark-gray">
-            {persona.name || "—"}
+            {persona.name || "-"}
           </span>{" "}
-          ({persona.role || "—"})
+          ({persona.role || "-"})
         </p>
       </div>
 

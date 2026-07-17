@@ -1,5 +1,5 @@
 /**
- * Heirs Quanta — Demo / Seed Data Archive
+ * Heirs Quanta - Demo / Seed Data Archive
  *
  * All original hardcoded reference data lives here.
  * Nothing in the application imports from this file at runtime.
@@ -24,7 +24,7 @@ export {
   TARGETS as DEMO_TARGETS,
 } from "../features/portfolio/engine/reference-data";
 
-// Default model assumptions (these ARE used at runtime — yield curves, FX rates, etc.)
+// Default model assumptions (these ARE used at runtime - yield curves, FX rates, etc.)
 export { DEFAULT_ASSUMPTIONS as DEMO_VALUATION_ASSUMPTIONS } from "../features/valuation/engine/reference-data";
 export { DEFAULT_ASSUMPTIONS as DEMO_IFRS9_ASSUMPTIONS } from "../features/ifrs9/engine/reference-data";
 export { DEFAULT_LIABILITY_STRUCTURE as DEMO_LIABILITY_STRUCTURE } from "../features/duration-risk/engine/reference-data";

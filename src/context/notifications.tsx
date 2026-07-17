@@ -1,5 +1,5 @@
 /**
- * Heirs Quanta — Platform-Wide Notifications
+ * Heirs Quanta - Platform-Wide Notifications
  *
  * Surfaces four live signals, aggregated across every module, not scoped to
  * any one page:
@@ -9,7 +9,7 @@
  *   - instruments maturing soon
  *
  * Every notification is derived live from state that already lives in
- * useWorkflow() / useGovernance() / useInstrumentBook() — nothing here is a
+ * useWorkflow() / useGovernance() / useInstrumentBook() - nothing here is a
  * new source of truth, it's a read/aggregation layer. Only the "last seen"
  * marker (used to compute the unread badge) is its own small piece of
  * per-persona state, persisted to localStorage.
@@ -40,7 +40,7 @@ export interface AppNotification {
   severity: NotificationSeverity;
   title: string;
   detail: string;
-  /** ISO timestamp — when this condition arose / is anchored to. */
+  /** ISO timestamp - when this condition arose / is anchored to. */
   at: string;
   /** Route to navigate to when the notification is clicked. */
   linkTo: string;
@@ -63,7 +63,7 @@ function daysFromNow(iso: string): number {
 }
 
 /* ─────────────────────────────────────────────────────────────
-   "Last seen" persistence — per persona, localStorage only. The
+   "Last seen" persistence - per persona, localStorage only. The
    notification list itself is always live/derived, so there's nothing to
    sync cross-tab here beyond what useWorkflow/useGovernance/useInstrumentBook
    already do.
@@ -118,10 +118,10 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         severity: overdue ? "critical" : "warning",
         title: e.title,
         detail: overdue
-          ? `Overdue — ${e.detail}`
+          ? `Overdue - ${e.detail}`
           : e.owner
-            ? `Assigned to ${e.owner.name} — ${e.detail}`
-            : `Unassigned — ${e.detail}`,
+            ? `Assigned to ${e.owner.name} - ${e.detail}`
+            : `Unassigned - ${e.detail}`,
         at: e.raisedAt,
         linkTo: "/deal-capture/exceptions",
       });
@@ -137,7 +137,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
           id: `lim-${s.id}-${c.type}`,
           category: "limit-breach",
           severity: c.status === "breach" ? "critical" : "warning",
-          title: `${c.label} — ${s.economics.instrumentName}`,
+          title: `${c.label} - ${s.economics.instrumentName}`,
           detail: c.detail,
           at: s.updatedAt,
           linkTo: "/deal-capture/blotter",
@@ -145,7 +145,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
       }
     }
 
-    /* ── Pending approvals — governance queue + deal slips awaiting review ── */
+    /* ── Pending approvals - governance queue + deal slips awaiting review ── */
     for (const a of approvals) {
       if (a.status !== "pending") continue;
       items.push({
@@ -153,7 +153,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         category: "pending-approval",
         severity: a.priority === "high" ? "warning" : "info",
         title: a.title,
-        detail: `${a.module} — awaiting ${a.requiredApprover}`,
+        detail: `${a.module} - awaiting ${a.requiredApprover}`,
         at: a.submittedAt,
         linkTo: "/governance/approvals",
       });
@@ -164,7 +164,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         id: `slip-${s.id}`,
         category: "pending-approval",
         severity: "info",
-        title: `${s.economics.instrumentName} — ${s.status}`,
+        title: `${s.economics.instrumentName} - ${s.status}`,
         detail: `Deal slip ${s.id}, booked by ${s.createdBy.name}, awaiting ${
           s.status === "Submitted" ? "review" : "an approval decision"
         }`,
@@ -183,7 +183,7 @@ export function NotificationsProvider({ children }: { children: ReactNode }) {
         category: "maturity",
         severity: days <= MATURITY_CRITICAL_DAYS ? "critical" : "warning",
         title: `${inst.name} matures in ${days} day${days === 1 ? "" : "s"}`,
-        detail: `${inst.issuer} — ${inst.instrumentType} — maturity ${inst.maturityDate}`,
+        detail: `${inst.issuer} - ${inst.instrumentType} - maturity ${inst.maturityDate}`,
         at: inst.maturityDate,
         linkTo: "/deal-capture/treasury-cash",
       });

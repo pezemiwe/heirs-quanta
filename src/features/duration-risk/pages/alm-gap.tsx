@@ -108,7 +108,7 @@ export function DurationRiskALMGap() {
         ) : (
           <p>
             <strong>Negative duration gap.</strong> Liabilities reprice faster
-            than assets — rising rates benefit net position.
+            than assets - rising rates benefit net position.
           </p>
         )}
       </div>

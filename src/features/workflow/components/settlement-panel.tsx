@@ -6,7 +6,7 @@ import { useWorkflow } from "../store";
 import type { DealSlip } from "../types";
 
 function fmtTimestamp(iso: string | null): string {
-  if (!iso) return "—";
+  if (!iso) return "-";
   const d = new Date(iso);
   if (isNaN(d.getTime())) return iso;
   return d.toLocaleString("en-GB", {
@@ -95,7 +95,7 @@ export function SettlementPanel({ slip }: { slip: DealSlip }) {
         </div>
       )}
 
-      {/* Failed — shown above the retry form so the reason isn't lost */}
+      {/* Failed - shown above the retry form so the reason isn't lost */}
       {settlementStatus === "Failed" && (
         <div className="rounded-xl border border-red-200 bg-red-50/60 p-4">
           <div className="mb-1 flex items-center gap-2 text-sm font-semibold text-red-800">
@@ -103,12 +103,12 @@ export function SettlementPanel({ slip }: { slip: DealSlip }) {
           </div>
           <p className="text-xs text-red-700">{slip.settlement.failReason}</p>
           <p className="mt-1 text-xs text-red-700/70">
-            This is tracked as an open exception until formally closed — see Exceptions.
+            This is tracked as an open exception until formally closed - see Exceptions.
           </p>
         </div>
       )}
 
-      {/* Raise / retry — visible while Approved-and-not-raised, or after a failure */}
+      {/* Raise / retry - visible while Approved-and-not-raised, or after a failure */}
       {(settlementStatus === "Not Raised" || settlementStatus === "Failed") && slip.status !== "Rejected" && (
         <div className="rounded-xl border border-border bg-surface p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-dark-gray">
@@ -116,7 +116,7 @@ export function SettlementPanel({ slip }: { slip: DealSlip }) {
             {isRetry ? "Re-raise Settlement Instruction" : "Raise Settlement Instruction"}
           </div>
           <p className="mb-3 text-xs text-dark-gray/55">
-            Back office maker step — a different user must confirm this instruction before the position goes active.
+            Back office maker step - a different user must confirm this instruction before the position goes active.
           </p>
           <div className="grid grid-cols-1 gap-3 sm:grid-cols-2">
             <div>
@@ -156,12 +156,12 @@ export function SettlementPanel({ slip }: { slip: DealSlip }) {
       {settlementStatus === "Instruction Raised" && (
         <div className="rounded-xl border border-indigo-200 bg-indigo-50/40 p-4">
           <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-dark-gray">
-            <Clock3 className="h-4 w-4 text-indigo-600" /> Settlement Instruction — Awaiting Confirmation
+            <Clock3 className="h-4 w-4 text-indigo-600" /> Settlement Instruction - Awaiting Confirmation
           </div>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-3">
             <div>
               <dt className="text-dark-gray/50">Raised by</dt>
-              <dd className="font-medium text-dark-gray">{slip.settlement.raisedBy?.name ?? "—"}</dd>
+              <dd className="font-medium text-dark-gray">{slip.settlement.raisedBy?.name ?? "-"}</dd>
             </div>
             <div>
               <dt className="text-dark-gray/50">Raised at</dt>
@@ -169,22 +169,22 @@ export function SettlementPanel({ slip }: { slip: DealSlip }) {
             </div>
             <div>
               <dt className="text-dark-gray/50">Settlement date</dt>
-              <dd className="font-medium text-dark-gray">{slip.settlement.settlementDate || "—"}</dd>
+              <dd className="font-medium text-dark-gray">{slip.settlement.settlementDate || "-"}</dd>
             </div>
             <div>
               <dt className="text-dark-gray/50">Custodian</dt>
-              <dd className="font-medium text-dark-gray">{slip.settlement.custodian || "—"}</dd>
+              <dd className="font-medium text-dark-gray">{slip.settlement.custodian || "-"}</dd>
             </div>
             <div>
               <dt className="text-dark-gray/50">Counterparty</dt>
-              <dd className="font-medium text-dark-gray">{slip.settlement.counterparty || "—"}</dd>
+              <dd className="font-medium text-dark-gray">{slip.settlement.counterparty || "-"}</dd>
             </div>
           </dl>
 
           <div className="mt-4 border-t border-indigo-200/60 pt-3">
             {isSameActor && (
               <p className="mb-2 flex items-center gap-1.5 text-xs font-medium text-amber-700">
-                <Lock className="h-3.5 w-3.5" /> You raised this instruction — a different user must confirm it.
+                <Lock className="h-3.5 w-3.5" /> You raised this instruction - a different user must confirm it.
               </p>
             )}
             <div className="flex flex-wrap items-center gap-2">
@@ -217,7 +217,7 @@ export function SettlementPanel({ slip }: { slip: DealSlip }) {
                   <input
                     value={failReason}
                     onChange={(e) => setFailReason(e.target.value)}
-                    placeholder="Failure reason (required) — e.g. custodian rejected, funds unavailable"
+                    placeholder="Failure reason (required) - e.g. custodian rejected, funds unavailable"
                     className="min-w-64 flex-1 rounded-md border border-border bg-white px-2.5 py-1.5 text-xs outline-none focus:border-primary focus:ring-1 focus:ring-primary"
                   />
                   <button
@@ -242,7 +242,7 @@ export function SettlementPanel({ slip }: { slip: DealSlip }) {
       {settlementStatus === "Confirmed" && (
         <div className="rounded-xl border border-emerald-200 bg-emerald-50/50 p-4">
           <div className="mb-2 flex items-center gap-2 text-sm font-semibold text-emerald-800">
-            <CheckCircle2 className="h-4 w-4" /> Settlement Confirmed — Position Active
+            <CheckCircle2 className="h-4 w-4" /> Settlement Confirmed - Position Active
           </div>
           <dl className="grid grid-cols-2 gap-x-6 gap-y-2 text-xs sm:grid-cols-4">
             <div>

@@ -72,7 +72,7 @@ export function ValuationReports() {
               IFRS 13 Disclosure Pack
             </p>
             <p className="mt-0.5 text-xs text-gray-400">
-              Coming soon — Level 1/2/3 breakdown, fair value hierarchy, and
+              Coming soon - Level 1/2/3 breakdown, fair value hierarchy, and
               sensitivity tables packaged as PDF.
             </p>
           </div>

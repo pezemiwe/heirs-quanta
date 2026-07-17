@@ -34,7 +34,7 @@ BOOK_INSTRUMENTS.forEach((inst, i) => {
   const val = BOOK_VALUATIONS[i];
   const bsv = val?.balanceSheetValueNGN ?? 0;
 
-  // Purchase / Buy — face value (par/principal); never multiply by purchasePrice
+  // Purchase / Buy - face value (par/principal); never multiply by purchasePrice
   ALL_TXN.push({
     id: `TXN-${(1000 + i * 3).toString().padStart(5, "0")}`,
     date: inst.purchaseDate,
@@ -47,7 +47,7 @@ BOOK_INSTRUMENTS.forEach((inst, i) => {
     status: "Settled",
   });
 
-  // Coupon event — instruments with couponRate > 0
+  // Coupon event - instruments with couponRate > 0
   if (inst.couponRate > 0 && inst.couponFrequency !== "Zero") {
     const freqMonths =
       inst.couponFrequency === "Semi"
@@ -73,7 +73,7 @@ BOOK_INSTRUMENTS.forEach((inst, i) => {
     });
   }
 
-  // Maturity — instruments maturing within 90 days of valuation date
+  // Maturity - instruments maturing within 90 days of valuation date
   if (inst.maturityDate) {
     const matMs = new Date(inst.maturityDate).getTime();
     if (Math.abs(matMs - VALUATION_MS) < DAYS_90) {
@@ -222,7 +222,7 @@ export function Transactions() {
         <div>
           <h1 className="text-2xl font-bold text-dark-gray">Transaction Log</h1>
           <p className="mt-1 text-sm text-gray-500">
-            All purchases, coupon receipts and maturity events —{" "}
+            All purchases, coupon receipts and maturity events -{" "}
             {ALL_TXN.length} records
           </p>
         </div>

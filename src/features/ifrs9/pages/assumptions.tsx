@@ -192,7 +192,7 @@ export function IFRS9Assumptions() {
       </div>
 
       <SectionCard
-        title="FLI Overlays — 60-Month Path"
+        title="FLI Overlays - 60-Month Path"
         description="Forward-looking multipliers applied to monthly PD vectors for each macro scenario"
       >
         {/* Combined preview chart */}

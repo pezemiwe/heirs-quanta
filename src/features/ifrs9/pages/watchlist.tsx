@@ -22,7 +22,7 @@ const ACTIONS = [
   "Initiate recovery proceedings",
   "Obtain additional collateral",
   "Place on non-accrual",
-  "Monitor — no action required",
+  "Monitor - no action required",
 ];
 
 interface WatchRow extends Record<string, unknown> {
@@ -66,7 +66,7 @@ function toWatchRow(r: SecurityComputed, idx: number): WatchRow {
     ecl: r.ecl,
     coverageRatio: r.coverageRatio,
     ratingEquivalent: r.ratingEquivalent,
-    action: DEFAULT_ACTIONS[r.finalStage] ?? "Monitor — no action required",
+    action: DEFAULT_ACTIONS[r.finalStage] ?? "Monitor - no action required",
     addedToWatchlist: added,
   };
 }
@@ -201,7 +201,7 @@ export function IFRS9Watchlist() {
       <div className="flex items-start justify-between">
         <div>
           <p className="text-xs font-semibold uppercase tracking-wider text-primary">
-            IFRS 9 — Credit Risk Monitoring
+            IFRS 9 - Credit Risk Monitoring
           </p>
           <h1 className="mt-1 text-2xl font-bold text-dark-gray">
             Watchlist Management
@@ -240,10 +240,10 @@ export function IFRS9Watchlist() {
         />
       </StatCardGrid>
 
-      {/* Stage 3 — Credit Impaired */}
+      {/* Stage 3 - Credit Impaired */}
       {stage3Rows.length > 0 && (
         <SectionCard
-          title="Stage 3 — Credit-Impaired Instruments"
+          title="Stage 3 - Credit-Impaired Instruments"
           description="Lifetime ECL applied. Impairment committee approval required for material movements."
         >
           <DataTable<WatchRow>
@@ -256,10 +256,10 @@ export function IFRS9Watchlist() {
         </SectionCard>
       )}
 
-      {/* Stage 2 — SICR */}
+      {/* Stage 2 - SICR */}
       {stage2Rows.length > 0 && (
         <SectionCard
-          title="Stage 2 — Significant Increase in Credit Risk"
+          title="Stage 2 - Significant Increase in Credit Risk"
           description="Lifetime ECL. Management review required. Instruments must be monitored until downgrade or upgrade resolved."
         >
           <DataTable<WatchRow>
@@ -275,7 +275,7 @@ export function IFRS9Watchlist() {
       {/* Performance Status Watchlist */}
       {watchlistRows.length > 0 && (
         <SectionCard
-          title="Stage 1 — Performance Status: Watchlist"
+          title="Stage 1 - Performance Status: Watchlist"
           description="Currently Stage 1 but flagged as Watchlist by credit analyst. Monitor for SICR indicators."
         >
           <DataTable<WatchRow>

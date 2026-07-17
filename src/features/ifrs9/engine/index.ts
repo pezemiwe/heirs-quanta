@@ -22,7 +22,7 @@ import {
 const MS_PER_DAY = 86_400_000;
 const MS_PER_MONTH = MS_PER_DAY * 30.4375;
 /** Grace period after the contractual maturity date before an unsettled
- * position is treated as overdue — allows for normal settlement lag rather
+ * position is treated as overdue - allows for normal settlement lag rather
  * than flagging Stage 3 the instant the maturity date passes. */
 const EXPIRY_GRACE_DAYS = 5;
 
@@ -75,7 +75,7 @@ export function computeExpiryStage(
   maturity: Date,
   reportingDate: Date,
 ): Stage | null {
-  // Flag Stage 3 only once a position is genuinely overdue — its maturity
+  // Flag Stage 3 only once a position is genuinely overdue - its maturity
   // date has passed (plus a short settlement-lag grace period) without
   // being rolled over or settled. An upcoming maturity is not a credit
   // event: "about to mature" is not "already defaulted".

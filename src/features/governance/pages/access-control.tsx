@@ -138,7 +138,7 @@ export function AccessControl() {
           Access Control & Role-Based Permissions
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          Segregation of duties matrix — defines what each system persona may
+          Segregation of duties matrix - defines what each system persona may
           view, create, or approve
         </p>
       </div>
@@ -173,7 +173,7 @@ export function AccessControl() {
       {/* User roster */}
       <SectionCard
         title="User Roster & Role Tiers"
-        description="Segregation of duties — no maker may also be checker for the same transaction"
+        description="Segregation of duties - no maker may also be checker for the same transaction"
       >
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3">
           {ROLES.map((r) => {

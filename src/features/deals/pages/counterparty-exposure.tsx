@@ -1,7 +1,7 @@
 /**
- * Heirs Quanta — Counterparty Exposure
+ * Heirs Quanta - Counterparty Exposure
  *
- * Limit utilisation by counterparty, issuer, rating, sector, and currency —
+ * Limit utilisation by counterparty, issuer, rating, sector, and currency -
  * a pure read/aggregation view over the investment register (the workflow
  * store's single source of truth for live positions). Only register entries
  * with status "Active" are considered; each is joined back to its originating
@@ -12,12 +12,12 @@
  * issuer concentration thresholds already enforced by
  * `runLimitCheck` in `workflow/engine/checks.ts`, so the two stay consistent.
  * The counterparty (20%/15%) and sector (25%/18%) thresholds are internal
- * risk heuristics only — there is no formal regulatory limit for either
+ * risk heuristics only - there is no formal regulatory limit for either
  * elsewhere in this app, and they are labelled as such throughout.
  *
  * Percentages in the counterparty / issuer / rating / sector breakdowns are
  * computed against total active-position face value pooled across
- * currencies — the same simplification `runLimitCheck` already makes
+ * currencies - the same simplification `runLimitCheck` already makes
  * (it sums face value without FX conversion). The currency breakdown shows
  * the actual FX split directly, and the headline "Total Exposure" stat is
  * NGN-only (with a note) precisely because that pooled number isn't a
@@ -40,7 +40,7 @@ import type { DealEconomics, RegisterEntry } from "../../workflow/types";
 
 interface Position {
   entry: RegisterEntry;
-  /** Joined economics from the originating deal slip — null if it couldn't be found (shouldn't happen). */
+  /** Joined economics from the originating deal slip - null if it couldn't be found (shouldn't happen). */
   economics: DealEconomics | null;
 }
 
@@ -67,7 +67,7 @@ function groupBy(positions: Position[], total: number, keyFn: (p: Position) => s
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Threshold flagging — shared red/amber/green styling used by
+   Threshold flagging - shared red/amber/green styling used by
    the checks panel elsewhere in this module (danger/warning/success).
    ───────────────────────────────────────────────────────────── */
 
@@ -107,7 +107,7 @@ function categoricalRows(buckets: Bucket[]): ExposureRow[] {
 const SUB_INVESTMENT_GRADE_RATINGS = ["CCC+", "CCC", "CCC-", "CC", "C", "D", "SD"];
 
 /* ─────────────────────────────────────────────────────────────
-   Bar list — same visual language as portfolio/pages/allocation.tsx's
+   Bar list - same visual language as portfolio/pages/allocation.tsx's
    BarChart helper (label row + horizontal fill bar), extended with an
    optional status badge for the threshold-based breakdowns.
    ───────────────────────────────────────────────────────────── */
@@ -231,7 +231,7 @@ export function CounterpartyExposure() {
           Counterparty Exposure
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          Limit utilisation by counterparty, issuer, rating, sector, and currency — sourced live from the {positions.length}{" "}
+          Limit utilisation by counterparty, issuer, rating, sector, and currency - sourced live from the {positions.length}{" "}
           active position{positions.length === 1 ? "" : "s"} in the investment register.
         </p>
       </div>
@@ -251,20 +251,20 @@ export function CounterpartyExposure() {
               value={fmtCompact(totalExposureNGN)}
               subtitle={
                 nonNgnPositionCount > 0
-                  ? `NGN-denominated only — ${nonNgnPositionCount} position${nonNgnPositionCount === 1 ? "" : "s"} in other currencies, see FX exposure below`
+                  ? `NGN-denominated only - ${nonNgnPositionCount} position${nonNgnPositionCount === 1 ? "" : "s"} in other currencies, see FX exposure below`
                   : "All active positions are NGN-denominated"
               }
               variant="default"
             />
             <StatCard
               title="Largest Counterparty"
-              value={topCounterparty ? fmtPct(topCounterparty.pct) : "—"}
+              value={topCounterparty ? fmtPct(topCounterparty.pct) : "-"}
               subtitle={topCounterparty?.label ?? "No positions"}
               variant={flagToStatVariant[flagOf(topCounterparty)]}
             />
             <StatCard
               title="Largest Issuer"
-              value={topIssuer ? fmtPct(topIssuer.pct) : "—"}
+              value={topIssuer ? fmtPct(topIssuer.pct) : "-"}
               subtitle={topIssuer?.label ?? "No positions"}
               variant={flagToStatVariant[flagOf(topIssuer)]}
             />
@@ -273,14 +273,14 @@ export function CounterpartyExposure() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <SectionCard
               title="By Counterparty"
-              description="Internal risk heuristic, not a regulatory limit — flags above 20% (breach-style) and 15% (watch-style) of active exposure."
+              description="Internal risk heuristic, not a regulatory limit - flags above 20% (breach-style) and 15% (watch-style) of active exposure."
             >
               <ExposureBarList rows={counterpartyRows} emptyMessage="No counterparty data" />
             </SectionCard>
 
             <SectionCard
               title="By Issuer"
-              description="NAICOM single-issuer concentration guideline — the same 10% / 8% thresholds used by the deal slip limit check."
+              description="NAICOM single-issuer concentration guideline - the same 10% / 8% thresholds used by the deal slip limit check."
             >
               <ExposureBarList rows={issuerRows} emptyMessage="No issuer data" />
             </SectionCard>
@@ -289,12 +289,12 @@ export function CounterpartyExposure() {
           <div className="grid grid-cols-1 gap-4 lg:grid-cols-2">
             <SectionCard
               title="By Sector"
-              description="Internal risk heuristic, not a regulatory limit — flags above 25% (breach-style) and 18% (watch-style) of active exposure."
+              description="Internal risk heuristic, not a regulatory limit - flags above 25% (breach-style) and 18% (watch-style) of active exposure."
             >
               <ExposureBarList rows={sectorRows} emptyMessage="No sector data" />
             </SectionCard>
 
-            <SectionCard title="By Rating" description="Distribution of active exposure by credit rating — no hard limit, visibility only.">
+            <SectionCard title="By Rating" description="Distribution of active exposure by credit rating - no hard limit, visibility only.">
               <div className="space-y-4">
                 <ExposureBarList rows={ratingRows} emptyMessage="No rating data" />
                 <div className="flex items-start gap-3 rounded-lg border border-amber-200 bg-amber-50 p-3">
@@ -312,7 +312,7 @@ export function CounterpartyExposure() {
             </SectionCard>
           </div>
 
-          <SectionCard title="By Currency" description="Informational FX exposure breakdown — no threshold.">
+          <SectionCard title="By Currency" description="Informational FX exposure breakdown - no threshold.">
             <div className="space-y-4">
               <ExposureBarList rows={currencyRows} emptyMessage="No currency data" />
               <div className="flex items-start gap-3 rounded-lg border border-sky-200 bg-sky-50 p-3">

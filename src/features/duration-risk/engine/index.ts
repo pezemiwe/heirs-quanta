@@ -1,5 +1,5 @@
 /* ───────────────────────────────────────────────────────────
-   Duration & Risk Engine — Calculations
+   Duration & Risk Engine - Calculations
    ─────────────────────────────────────────────────────────── */
 
 import type { Assumptions, Instrument } from "../../valuation/engine/types";
@@ -90,7 +90,7 @@ export function shockedValueLocal(
     return inst.faceValue / (1 + shockedYield * remaining);
   }
 
-  // Coupon-bearing — PV of future cash flows at shocked yield
+  // Coupon-bearing - PV of future cash flows at shocked yield
   const { totalFuturePV } = buildCashFlowSchedule(inst, valDate, shockedYield);
   return totalFuturePV;
 }

@@ -11,7 +11,7 @@ interface ConfirmDialogProps {
   tone?: "danger" | "default";
 }
 
-/** Reusable confirm/cancel dialog built on the shared Modal — use this instead
+/** Reusable confirm/cancel dialog built on the shared Modal - use this instead
  * of window.confirm() for any destructive or hard-to-reverse action. */
 export function ConfirmDialog({
   isOpen,

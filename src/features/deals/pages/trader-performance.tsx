@@ -22,7 +22,7 @@ import { fmtCompact, fmtPct } from "../../portfolio/engine/book-compute";
 
 /* ─────────────────────────────────────────────────────────────
    Statuses that only exist downstream of "Approved" in the
-   transition graph (see workflow/engine/transitions.ts) — a slip's
+   transition graph (see workflow/engine/transitions.ts) - a slip's
    timeline containing a transition to any of these means it did,
    at some point, get approved.
    ───────────────────────────────────────────────────────────── */
@@ -35,11 +35,11 @@ const APPROVED_OR_BEYOND = new Set<DealSlipStatus>([
 ]);
 
 /* ─────────────────────────────────────────────────────────────
-   Duration formatting — kept local to this page since nothing
+   Duration formatting - kept local to this page since nothing
    else in the app currently formats hour/day durations for display.
    ───────────────────────────────────────────────────────────── */
 function fmtHoursDuration(hours: number | null): string {
-  if (hours === null || !isFinite(hours) || hours < 0) return "—";
+  if (hours === null || !isFinite(hours) || hours < 0) return "-";
   if (hours < 1) return `${Math.round(hours * 60)}m`;
   let h = Math.floor(hours);
   let m = Math.round((hours - h) * 60);
@@ -51,7 +51,7 @@ function fmtHoursDuration(hours: number | null): string {
 }
 
 function fmtDaysDuration(days: number | null): string {
-  if (days === null || !isFinite(days) || days < 0) return "—";
+  if (days === null || !isFinite(days) || days < 0) return "-";
   return `${days.toFixed(1)}d`;
 }
 
@@ -212,7 +212,7 @@ export function TraderPerformance() {
       align: "right",
       render: (r) =>
         r.approvalRate === null ? (
-          <span className="text-dark-gray/40">—</span>
+          <span className="text-dark-gray/40">-</span>
         ) : (
           fmtPct(r.approvalRate)
         ),
@@ -237,7 +237,7 @@ export function TraderPerformance() {
           Trader Performance
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          Per-trader booking volume, notional, and turnaround — derived from every deal slip's status
+          Per-trader booking volume, notional, and turnaround - derived from every deal slip's status
           timeline
         </p>
       </div>
@@ -263,7 +263,7 @@ export function TraderPerformance() {
         />
         <StatCard
           title="Best Avg Turnaround"
-          value={bestTurnaround ? fmtHoursDuration(bestTurnaround.avgReviewTurnaroundHours) : "—"}
+          value={bestTurnaround ? fmtHoursDuration(bestTurnaround.avgReviewTurnaroundHours) : "-"}
           subtitle={bestTurnaround ? bestTurnaround.name : "No resolved reviews yet"}
           variant="default"
         />

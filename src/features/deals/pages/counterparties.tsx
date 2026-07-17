@@ -152,7 +152,7 @@ export function Counterparties() {
         <StatCard
           title="Largest Counterparty"
           value={fmtCompact(rows[0]?.bsValue ?? 0)}
-          subtitle={rows[0]?.issuer ?? "—"}
+          subtitle={rows[0]?.issuer ?? "-"}
           variant="default"
         />
         <StatCard

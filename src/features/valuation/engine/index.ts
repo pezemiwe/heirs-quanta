@@ -1,5 +1,5 @@
 /* ───────────────────────────────────────────────────────────
-   Valuation Engine — Calculations
+   Valuation Engine - Calculations
    Fixed income amortisation, EIR, cash-flow PV, OCI, risk.
    ─────────────────────────────────────────────────────────── */
 
@@ -108,7 +108,7 @@ export function priceAtYield(
   periodsYear: number,
 ): number {
   if (periodsYear === 0) {
-    // zero coupon — t is in years
+    // zero coupon - t is in years
     return cashFlows.reduce((s, c) => s + c.cf / Math.pow(1 + y, c.t), 0);
   }
   const r = y / periodsYear;
@@ -160,7 +160,7 @@ export function buildAmortSchedule(
 
   let eir: number;
   if (ppy === 0) {
-    // zero coupon — annualised
+    // zero coupon - annualised
     const years = yearsBetween(parseDate(inst.purchaseDate), dates[0]);
     eir =
       years > 0
@@ -174,7 +174,7 @@ export function buildAmortSchedule(
   const schedule: AmortRow[] = [];
   let opening = inst.purchasePrice;
 
-  // Determine "Current" period — the one containing valuationDate
+  // Determine "Current" period - the one containing valuationDate
   for (let i = 0; i < dates.length; i++) {
     const eirIncome = ppy > 0 ? opening * periodRate : 0;
     const amort = eirIncome - couponCF;
@@ -427,7 +427,7 @@ function pickYieldCurve(
         inst.instrumentType === "Eurobond"
           ? assumptions.corporateSpread
           : 0,
-      label: `USD Benchmark — ${valDate}`,
+      label: `USD Benchmark - ${valDate}`,
     };
   }
   let spread = 0;
@@ -442,7 +442,7 @@ function pickYieldCurve(
   return {
     curve: assumptions.fgnYieldCurve,
     spread,
-    label: `FGN Sovereign — ${valDate}`,
+    label: `FGN Sovereign - ${valDate}`,
   };
 }
 

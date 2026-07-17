@@ -33,7 +33,7 @@ export function RowDetailModal({
               {f.label}
             </dt>
             <dd className="mt-1 text-sm font-medium text-dark-gray break-words">
-              {f.value ?? <span className="text-dark-gray/30">—</span>}
+              {f.value ?? <span className="text-dark-gray/30">-</span>}
             </dd>
           </div>
         ))}

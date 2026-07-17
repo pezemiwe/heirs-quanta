@@ -37,9 +37,9 @@ interface L3Row {
 type HierarchyRow = (L1Row | L2Row | L3Row) & Record<string, unknown>;
 
 const LEVEL_LABEL: Record<string, string> = {
-  1: "Level 1 — Quoted prices in active markets",
-  2: "Level 2 — Observable inputs",
-  3: "Level 3 — Unobservable inputs",
+  1: "Level 1 - Quoted prices in active markets",
+  2: "Level 2 - Observable inputs",
+  3: "Level 3 - Unobservable inputs",
 };
 
 export function ValuationReport() {
@@ -61,7 +61,7 @@ export function ValuationReport() {
     const byTypeLevel = new Map<string, AggRow>();
 
     for (const inst of BOOK_INSTRUMENTS) {
-      // inst.ifrs13Level is "L1" | "L2" | "L3" — strip the "L" prefix so the
+      // inst.ifrs13Level is "L1" | "L2" | "L3" - strip the "L" prefix so the
       // grouped label ("Level 1") matches the "Level 1"/"Level 2"/"Level 3"
       // strings the l1/l2/l3 filters below compare against.
       const levelKey = String(inst.ifrs13Level).replace("L", "");
@@ -183,7 +183,7 @@ export function ValuationReport() {
       </StatCardGrid>
 
       <SectionCard
-        title="Fair Value Hierarchy — All Instruments"
+        title="Fair Value Hierarchy - All Instruments"
         description="IFRS 13 Level 1, 2 and 3 breakdown by instrument type"
       >
         <DataTable<HierarchyRow>

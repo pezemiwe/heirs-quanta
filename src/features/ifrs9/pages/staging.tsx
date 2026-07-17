@@ -67,7 +67,7 @@ export function IFRS9Staging() {
         r.expiryStage ? (
           <StageBadge stage={r.expiryStage} />
         ) : (
-          <span className="text-xs text-dark-gray/40">—</span>
+          <span className="text-xs text-dark-gray/40">-</span>
         ),
     },
     {
@@ -95,7 +95,7 @@ export function IFRS9Staging() {
           }`}
           title="Qualitative override: 0 = none, 1–3 = force stage"
         >
-          <option value={0}>—</option>
+          <option value={0}>-</option>
           <option value={1}>1</option>
           <option value={2}>2</option>
           <option value={3}>3</option>
@@ -186,7 +186,7 @@ export function IFRS9Staging() {
                   value: selected.expiryStage ? (
                     <StageBadge stage={selected.expiryStage} />
                   ) : (
-                    "—"
+                    "-"
                   ),
                 },
                 {

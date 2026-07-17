@@ -1,5 +1,5 @@
 /* ───────────────────────────────────────────────────────────
-   Duration & Risk Engine — Reference Data
+   Duration & Risk Engine - Reference Data
    ─────────────────────────────────────────────────────────── */
 
 import type { CurveScenario, LiabilityBucket, NigerianScenario } from "./types";

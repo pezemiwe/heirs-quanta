@@ -67,7 +67,7 @@ export function ALCO() {
             ALCO Report
           </h1>
           <p className="mt-1 text-sm text-gray-500">
-            Asset-Liability Committee — Q2 2026, as at 28 May 2026
+            Asset-Liability Committee - Q2 2026, as at 28 May 2026
           </p>
         </div>
         <button className="rounded-lg border border-border px-4 py-2 text-sm text-gray-500 hover:bg-pale-red hover:text-primary">

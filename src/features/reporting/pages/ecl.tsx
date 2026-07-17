@@ -91,7 +91,7 @@ const COLUMNS: DataTableColumn<ECLRow>[] = [
     header: "Maturity",
     render: (r) => (
       <span className="text-xs text-gray-400">
-        {r.maturityDate !== "—" ? fmtDate(r.maturityDate) : "—"}
+        {r.maturityDate !== "-" ? fmtDate(r.maturityDate) : "-"}
       </span>
     ),
   },
@@ -127,7 +127,7 @@ export function ECLReports() {
           bsvNGN: bsv,
           eclNGN,
           eclPct: bsv > 0 ? eclNGN / bsv : 0,
-          maturityDate: inst.maturityDate ?? "—",
+          maturityDate: inst.maturityDate ?? "-",
         };
       })
         .filter((r) => r !== null)
@@ -170,7 +170,7 @@ export function ECLReports() {
           ECL Provision Report
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Expected Credit Loss register for {ALL_ROWS.length} instruments — as
+          Expected Credit Loss register for {ALL_ROWS.length} instruments - as
           at 28 May 2026
         </p>
       </div>

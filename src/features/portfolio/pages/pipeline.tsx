@@ -180,7 +180,7 @@ const INITIAL_DEALS: Deal[] = [
     investmentType: "Debt",
     targetClose: "2026-09-30",
     notes:
-      "FGN incentive zone eligible — NIRSAL co-investment under discussion.",
+      "FGN incentive zone eligible - NIRSAL co-investment under discussion.",
   },
   {
     id: "D005",
@@ -702,7 +702,7 @@ export function PortfolioPipeline() {
                       </span>
                     </td>
                     <td className="px-4 py-3 text-xs text-dark-gray/60">
-                      {deal.targetClose || "—"}
+                      {deal.targetClose || "-"}
                     </td>
                     <td className="px-3 py-2.5 sm:px-4 sm:py-3">
                       <div className="flex items-center gap-1.5">
@@ -831,12 +831,12 @@ export function PortfolioPipeline() {
                 },
                 {
                   label: "Lead PM",
-                  value: sel.lead || "—",
+                  value: sel.lead || "-",
                   accent: "text-dark-gray",
                 },
                 {
                   label: "Target Close",
-                  value: sel.targetClose || "—",
+                  value: sel.targetClose || "-",
                   accent: "text-dark-gray",
                 },
               ].map((m) => (

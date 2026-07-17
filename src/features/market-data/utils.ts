@@ -1,18 +1,18 @@
 const NAIRA_SYMBOL = "\u20A6";
 
 export function fmtPct(v: number, dp = 2): string {
-  if (v == null || isNaN(v)) return "—";
+  if (v == null || isNaN(v)) return "-";
   return `${(v * 100).toFixed(dp)}%`;
 }
 
 export function fmtBps(bps: number): string {
-  if (bps == null || isNaN(bps)) return "—";
+  if (bps == null || isNaN(bps)) return "-";
   const sign = bps > 0 ? "+" : "";
   return `${sign}${bps} bps`;
 }
 
 export function fmtFx(v: number, dp = 2): string {
-  if (v == null || isNaN(v)) return "—";
+  if (v == null || isNaN(v)) return "-";
   return v.toLocaleString("en-US", {
     minimumFractionDigits: dp,
     maximumFractionDigits: dp,
@@ -20,7 +20,7 @@ export function fmtFx(v: number, dp = 2): string {
 }
 
 export function fmtCompactNGN(v: number): string {
-  if (v == null || isNaN(v)) return "—";
+  if (v == null || isNaN(v)) return "-";
   const sign = v < 0 ? "-" : "";
   const a = Math.abs(v);
   if (a >= 1e12) return `${sign}${NAIRA_SYMBOL}${(a / 1e12).toFixed(2)}T`;

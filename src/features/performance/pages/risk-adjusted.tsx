@@ -153,7 +153,7 @@ export function RiskAdjusted() {
         </h1>
         <p className="mt-1 text-sm text-gray-500">
           Sharpe-like ratios and excess returns over risk-free rate (22.0%
-          T-bill proxy) — as at 28 May 2026
+          T-bill proxy) - as at 28 May 2026
         </p>
       </div>
 

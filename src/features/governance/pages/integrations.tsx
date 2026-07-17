@@ -156,7 +156,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: "int008",
-    name: "Custodian — FirstBank Trustees",
+    name: "Custodian - FirstBank Trustees",
     category: "settlement",
     vendor: "First Bank of Nigeria",
     description:
@@ -174,7 +174,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: "int009",
-    name: "Banking Platform — Access Bank",
+    name: "Banking Platform - Access Bank",
     category: "settlement",
     vendor: "Access Bank Plc",
     description:
@@ -191,7 +191,7 @@ const INTEGRATIONS: Integration[] = [
   },
   {
     id: "int010",
-    name: "Banking Platform — Zenith Bank",
+    name: "Banking Platform - Zenith Bank",
     category: "settlement",
     vendor: "Zenith Bank Plc",
     description:
@@ -348,7 +348,7 @@ export function ExternalIntegrations() {
           External Integrations
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          System connectivity status — market data feeds, ERP/GL, insurance,
+          System connectivity status - market data feeds, ERP/GL, insurance,
           actuarial, banking & custodian platforms
         </p>
       </div>

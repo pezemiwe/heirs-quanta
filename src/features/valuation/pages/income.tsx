@@ -73,7 +73,7 @@ export function ValuationIncome() {
             emphasis
           />
           <Row
-            label="Total Unrealised Gain/(Loss) — P&L"
+            label="Total Unrealised Gain/(Loss) - P&L"
             value={fmtNumber(income.fvtpl.totalUnrealisedGLNGN, 0)}
             emphasis
           />

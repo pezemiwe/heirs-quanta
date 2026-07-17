@@ -1,5 +1,5 @@
 /* ─────────────────────────────────────────────────────────
-   Portfolio Engine — Type Definitions
+   Portfolio Engine - Type Definitions
    ───────────────────────────────────────────────────────── */
 
 export type AssetClass =
@@ -41,7 +41,7 @@ export interface Holding {
   costBasis: number; // total ₦ millions
 
   /* Market */
-  marketValue: number; // ₦ millions — current fair value
+  marketValue: number; // ₦ millions - current fair value
   marketPrice?: number; // per unit (NGN) where applicable
   ytdReturn: number; // decimal e.g. 0.118
 

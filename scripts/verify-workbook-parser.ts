@@ -106,7 +106,7 @@ function runSyntheticTests() {
     console.log("✓ unrecognized sheet tracked:", result.unrecognizedSheets[0]);
   }
 
-  // 2. Column reorder — maturity date still correct via header lookup
+  // 2. Column reorder - maturity date still correct via header lookup
   {
     const wbNormal = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(
@@ -133,7 +133,7 @@ function runSyntheticTests() {
     });
   }
 
-  // 3. Recognized sheet, zero rows parsed — explicit warning
+  // 3. Recognized sheet, zero rows parsed - explicit warning
   {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(
@@ -156,7 +156,7 @@ function runSyntheticTests() {
     console.log("✓ zero-row parse warning:", sheet.warnings[0]);
   }
 
-  // 4. Timezone-safe date parsing — calendar dates must not shift under UTC+ timezones
+  // 4. Timezone-safe date parsing - calendar dates must not shift under UTC+ timezones
   {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(
@@ -212,7 +212,7 @@ function runSyntheticTests() {
     });
   }
 
-  // 5. dd/mm/yyyy branch — same timezone safety
+  // 5. dd/mm/yyyy branch - same timezone safety
   {
     const wb = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(

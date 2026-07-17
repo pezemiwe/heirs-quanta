@@ -96,7 +96,7 @@ export function IFRS9DataManager() {
       )}
 
       <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
-        {/* Step 1 — Download */}
+        {/* Step 1 - Download */}
         <SectionCard>
           <div className="flex flex-col gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-pale-red text-primary">
@@ -111,7 +111,7 @@ export function IFRS9DataManager() {
               </h3>
               <p className="mt-1 text-sm text-dark-gray/60">
                 CSV with 26 columns covering counterparty, exposure, ratings,
-                coupons and performance — pre-populated with 24 sample rows so
+                coupons and performance - pre-populated with 24 sample rows so
                 you can see the exact format.
               </p>
             </div>
@@ -127,7 +127,7 @@ export function IFRS9DataManager() {
           </div>
         </SectionCard>
 
-        {/* Step 2 — Upload */}
+        {/* Step 2 - Upload */}
         <SectionCard>
           <div className="flex flex-col gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-pale-red text-primary">
@@ -168,7 +168,7 @@ export function IFRS9DataManager() {
           </div>
         </SectionCard>
 
-        {/* Step 3 — Run / Sample */}
+        {/* Step 3 - Run / Sample */}
         <SectionCard>
           <div className="flex flex-col gap-3">
             <span className="flex h-10 w-10 items-center justify-center rounded-lg bg-pale-red text-primary">
@@ -194,7 +194,7 @@ export function IFRS9DataManager() {
                 loadSample();
                 setToast({
                   tone: "success",
-                  msg: "Portfolio Management book imported — 204 instruments. Navigate to any page to see results.",
+                  msg: "Portfolio Management book imported - 204 instruments. Navigate to any page to see results.",
                 });
               }}
             >
@@ -225,7 +225,7 @@ export function IFRS9DataManager() {
       >
         {hasData ? (
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-4">
-            <Cell label="Source" value={lastUploadedFile ?? "—"} />
+            <Cell label="Source" value={lastUploadedFile ?? "-"} />
             <Cell label="Instruments" value={String(securities.length)} />
             <Cell
               label="Corporates"

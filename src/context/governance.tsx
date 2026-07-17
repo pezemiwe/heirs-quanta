@@ -179,7 +179,7 @@ const SEED_AUDIT: AuditEntry[] = [
     module: "Deals",
     action: "New Booking Submitted",
     detail:
-      "FGN Bond 2031 — ₦500,000,000 face value submitted for checker approval",
+      "FGN Bond 2031 - ₦500,000,000 face value submitted for checker approval",
     status: "success",
     ip: "10.0.1.42",
   },
@@ -226,7 +226,7 @@ const SEED_AUDIT: AuditEntry[] = [
     module: "Deals",
     action: "New Booking Submitted",
     detail:
-      "MTN Nigeria Bond 2028 — ₦1,200,000,000 face value — exceeds single-issuer 10% guideline",
+      "MTN Nigeria Bond 2028 - ₦1,200,000,000 face value - exceeds single-issuer 10% guideline",
     status: "warning",
     ip: "10.0.1.42",
   },
@@ -236,7 +236,7 @@ const SEED_AUDIT: AuditEntry[] = [
     user: "Amaka Osei",
     role: "Chief Financial Officer",
     module: "Deals",
-    action: "Booking Rejected — Limit Breach",
+    action: "Booking Rejected - Limit Breach",
     detail:
       "MTN Nigeria Bond 2028 rejected. Single-issuer concentration would reach 12.3% (limit 10%)",
     status: "blocked",
@@ -250,7 +250,7 @@ const SEED_AUDIT: AuditEntry[] = [
     module: "Compliance",
     action: "Regulatory Check Run",
     detail:
-      "Monthly CBN investment limit check — 2 warnings flagged on equities allocation (18.7% vs 20% cap)",
+      "Monthly CBN investment limit check - 2 warnings flagged on equities allocation (18.7% vs 20% cap)",
     status: "warning",
     ip: "10.0.1.66",
   },
@@ -262,7 +262,7 @@ const SEED_AUDIT: AuditEntry[] = [
     module: "Accounting",
     action: "Journal Entry Submitted",
     detail:
-      "Accrued coupon income ₦6,842,000 for May 2026 — pending CFO approval",
+      "Accrued coupon income ₦6,842,000 for May 2026 - pending CFO approval",
     status: "success",
     ip: "10.0.1.42",
   },
@@ -298,7 +298,7 @@ const SEED_AUDIT: AuditEntry[] = [
     module: "Valuation",
     action: "Valuation Override Request",
     detail:
-      "Stanbic IBTC Bond — manual Level 3 fair value override requested: ₦98.50 vs model ₦97.80",
+      "Stanbic IBTC Bond - manual Level 3 fair value override requested: ₦98.50 vs model ₦97.80",
     status: "warning",
     ip: "10.0.1.55",
   },
@@ -334,7 +334,7 @@ const SEED_AUDIT: AuditEntry[] = [
     module: "Portfolio",
     action: "Limit Exception Raised",
     detail:
-      "Equities allocation at 18.7% — approaching 20% NAICOM ceiling. Exception logged for monitoring.",
+      "Equities allocation at 18.7% - approaching 20% NAICOM ceiling. Exception logged for monitoring.",
     status: "warning",
     ip: "10.0.1.42",
   },
@@ -346,7 +346,7 @@ const SEED_AUDIT: AuditEntry[] = [
     module: "Portfolio",
     action: "Limit Exception Acknowledged",
     detail:
-      "Equities limit exception reviewed. No immediate action — monitor weekly. Waiver ref: WAV-2026-001",
+      "Equities limit exception reviewed. No immediate action - monitor weekly. Waiver ref: WAV-2026-001",
     status: "success",
     ip: "10.0.1.11",
   },
@@ -380,7 +380,7 @@ const SEED_APPROVALS: ApprovalItem[] = [
     type: "deal",
     title: "FGN Bond 2033 Purchase",
     description:
-      "FGN Apr 2033 — ₦750M face value — AC classification. First purchase in this ISIN.",
+      "FGN Apr 2033 - ₦750M face value - AC classification. First purchase in this ISIN.",
     amount: 750_000_000,
     maker: "Fatima Aliyu",
     makerRole: "Portfolio Analyst",
@@ -395,7 +395,7 @@ const SEED_APPROVALS: ApprovalItem[] = [
     type: "deal",
     title: "FBNH Commercial Paper Rollover",
     description:
-      "First Bank of Nigeria Commercial Paper — 90-day rollover — ₦200M. Previous tranche matured yesterday.",
+      "First Bank of Nigeria Commercial Paper - 90-day rollover - ₦200M. Previous tranche matured yesterday.",
     amount: 200_000_000,
     maker: "Fatima Aliyu",
     makerRole: "Portfolio Analyst",
@@ -408,9 +408,9 @@ const SEED_APPROVALS: ApprovalItem[] = [
   {
     id: "ap003",
     type: "ecl",
-    title: "DANGOTE CEMENT PLC — Stage 1 → Stage 2",
+    title: "DANGOTE CEMENT PLC - Stage 1 → Stage 2",
     description:
-      "SICR indicators triggered: DSR ratio deteriorated from 2.1x to 1.4x. Recommend Lifetime ECL — ₦28.7M charge.",
+      "SICR indicators triggered: DSR ratio deteriorated from 2.1x to 1.4x. Recommend Lifetime ECL - ₦28.7M charge.",
     amount: 28_700_000,
     maker: "Chidi Okafor",
     makerRole: "Risk Manager",
@@ -440,7 +440,7 @@ const SEED_APPROVALS: ApprovalItem[] = [
     type: "valuation",
     title: "UBA Eurobond Level 3 Override",
     description:
-      "Manual fair value input ₦98.20 (model: ₦96.50). Illiquid market — last observed trade 14 days ago.",
+      "Manual fair value input ₦98.20 (model: ₦96.50). Illiquid market - last observed trade 14 days ago.",
     amount: 450_000_000,
     maker: "Chidi Okafor",
     makerRole: "Risk Manager",
@@ -468,9 +468,9 @@ const SEED_APPROVALS: ApprovalItem[] = [
   {
     id: "ap007",
     type: "counterparty",
-    title: "New Counterparty Onboarding — Vetiva Capital",
+    title: "New Counterparty Onboarding - Vetiva Capital",
     description:
-      "Vetiva Capital Management Ltd — new broker-dealer. AML screening passed. KYC documentation complete.",
+      "Vetiva Capital Management Ltd - new broker-dealer. AML screening passed. KYC documentation complete.",
     amount: 0,
     maker: "Fatima Aliyu",
     makerRole: "Portfolio Analyst",

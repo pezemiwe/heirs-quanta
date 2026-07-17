@@ -185,7 +185,7 @@ export function PortfolioReports() {
     const usableW = pageW - margin * 2; // 170mm
     const date = new Date().toLocaleDateString("en-NG", { day: "2-digit", month: "short", year: "numeric" });
 
-    // PDF-safe number formatters (no ₦ symbol — Helvetica doesn't support it)
+    // PDF-safe number formatters (no ₦ symbol - Helvetica doesn't support it)
     const pdfFull = (v: number) =>
       "NGN " + new Intl.NumberFormat("en-NG").format(Math.round(v));
     const pdfCompact = (v: number) => {
@@ -249,7 +249,7 @@ export function PortfolioReports() {
       doc.setFontSize(6.5);
       doc.setTextColor(130, 130, 150);
       doc.text(k.label, x + 4, y + 6);
-      // Value — shrink font if needed
+      // Value - shrink font if needed
       doc.setFont("helvetica", "bold");
       doc.setTextColor(26, 26, 46);
       const valWidth = doc.getTextWidth(k.value);

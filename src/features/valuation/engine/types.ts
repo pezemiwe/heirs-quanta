@@ -1,5 +1,5 @@
 /* ───────────────────────────────────────────────────────────
-   Heirs Quanta Valuation Engine — Fixed Income Types
+   Heirs Quanta Valuation Engine - Fixed Income Types
    ─────────────────────────────────────────────────────────── */
 
 export type Classification = "AC" | "FVOCI" | "FVTPL";
@@ -142,7 +142,7 @@ export interface InstrumentValuation {
   amortSchedule: AmortRow[];
   acCarryingValue: number; // clean AC value at valuation date
   accruedInterest: number;
-  totalBookValueDirty: number; // AC dirty (AC + accrued) — for AC class
+  totalBookValueDirty: number; // AC dirty (AC + accrued) - for AC class
 
   /* Cash flow PV / fair value */
   cleanFairValue: number;

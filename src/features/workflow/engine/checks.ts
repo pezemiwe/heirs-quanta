@@ -1,5 +1,5 @@
 /**
- * Heirs Quanta — Deal Slip Control Checks
+ * Heirs Quanta - Deal Slip Control Checks
  *
  * Six automated checks that run against a deal slip's economics before it
  * may move from "Under Review" to "Approved". Every check produces a
@@ -44,16 +44,16 @@ export function runLimitCheck(
 ): ControlCheck {
   const fv = economics.faceValue;
   if (!fv || fv <= 0) {
-    return makeCheck("limit", "Single-Issuer Concentration", "breach", "Face value is zero or missing — cannot assess concentration.");
+    return makeCheck("limit", "Single-Issuer Concentration", "breach", "Face value is zero or missing - cannot assess concentration.");
   }
   // Concentration limits are meaningless against a book that doesn't exist
-  // yet — a founding position can't be "concentrated" relative to nothing.
+  // yet - a founding position can't be "concentrated" relative to nothing.
   if (existingBookFaceValueNGN <= 0) {
     return makeCheck(
       "limit",
       "Single-Issuer Concentration",
       "pass",
-      "No existing book to compare against — this would be the seed position.",
+      "No existing book to compare against - this would be the seed position.",
     );
   }
   const proposedPct = (fv / (existingBookFaceValueNGN + fv)) * 100;
@@ -63,7 +63,7 @@ export function runLimitCheck(
       "limit",
       "Single-Issuer Concentration",
       "breach",
-      `Single-issuer concentration would reach ${actual} — exceeds the NAICOM 10% ceiling.`,
+      `Single-issuer concentration would reach ${actual} - exceeds the NAICOM 10% ceiling.`,
       { threshold: "10%", actual },
     );
   }
@@ -72,7 +72,7 @@ export function runLimitCheck(
       "limit",
       "Single-Issuer Concentration",
       "watch",
-      `Single-issuer concentration would reach ${actual} — approaching the 10% ceiling.`,
+      `Single-issuer concentration would reach ${actual} - approaching the 10% ceiling.`,
       { threshold: "10%", actual },
     );
   }
@@ -88,7 +88,7 @@ export function runLimitCheck(
 /** Counterparty on file + rationale documented for large tickets. */
 export function runComplianceCheck(economics: DealEconomics): ControlCheck {
   if (!economics.counterparty?.trim()) {
-    return makeCheck("compliance", "Counterparty & KYC", "breach", "No counterparty recorded — KYC cannot be evidenced.");
+    return makeCheck("compliance", "Counterparty & KYC", "breach", "No counterparty recorded - KYC cannot be evidenced.");
   }
   const LARGE_TICKET = 1_000_000_000;
   if (economics.faceValue >= LARGE_TICKET && !economics.notes?.trim()) {
@@ -96,7 +96,7 @@ export function runComplianceCheck(economics: DealEconomics): ControlCheck {
       "compliance",
       "Counterparty & KYC",
       "watch",
-      `Ticket size ${economics.faceValue.toLocaleString()} exceeds ₦1B — investment rationale / IC reference should be documented.`,
+      `Ticket size ${economics.faceValue.toLocaleString()} exceeds ₦1B - investment rationale / IC reference should be documented.`,
     );
   }
   return makeCheck("compliance", "Counterparty & KYC", "pass", `Counterparty "${economics.counterparty}" on file.`);
@@ -114,7 +114,7 @@ export function runPricingCheck(economics: DealEconomics): ControlCheck {
       "pricing",
       "Price Sanity",
       "breach",
-      `Clean price ${actual} (of par) is well outside a plausible range — verify against the market.`,
+      `Clean price ${actual} (of par) is well outside a plausible range - verify against the market.`,
       { threshold: "0.50 – 1.50", actual },
     );
   }
@@ -123,7 +123,7 @@ export function runPricingCheck(economics: DealEconomics): ControlCheck {
       "pricing",
       "Price Sanity",
       "watch",
-      `Clean price ${actual} (of par) is a wide discount/premium — confirm against a market quote.`,
+      `Clean price ${actual} (of par) is a wide discount/premium - confirm against a market quote.`,
       { threshold: "0.85 – 1.15", actual },
     );
   }
@@ -144,7 +144,7 @@ export function runEligibilityCheck(economics: DealEconomics): ControlCheck {
       "eligibility",
       "IFRS 9 Eligibility",
       "breach",
-      "Equity instruments cannot be classified Amortised Cost under IFRS 9 — use FVOCI or FVTPL.",
+      "Equity instruments cannot be classified Amortised Cost under IFRS 9 - use FVOCI or FVTPL.",
     );
   }
   return makeCheck("eligibility", "IFRS 9 Eligibility", "pass", `Classification "${economics.classification}" is consistent with asset class "${economics.assetClass}".`);
@@ -154,13 +154,13 @@ export function runEligibilityCheck(economics: DealEconomics): ControlCheck {
 export function runRatingCheck(economics: DealEconomics): ControlCheck {
   const rating = economics.creditRating?.trim();
   if (!rating) {
-    return makeCheck("rating", "Credit Rating", "watch", "No credit rating captured — treated as unrated.", { actual: "Unrated" });
+    return makeCheck("rating", "Credit Rating", "watch", "No credit rating captured - treated as unrated.", { actual: "Unrated" });
   }
   if (SUB_INVESTMENT_RATINGS.includes(rating)) {
     return makeCheck("rating", "Credit Rating", "breach", `Rating "${rating}" is deep sub-investment grade.`, { actual: rating });
   }
   if (WATCH_RATINGS.includes(rating)) {
-    return makeCheck("rating", "Credit Rating", "watch", `Rating "${rating}" is speculative grade — flag for risk sign-off.`, { actual: rating });
+    return makeCheck("rating", "Credit Rating", "watch", `Rating "${rating}" is speculative grade - flag for risk sign-off.`, { actual: rating });
   }
   return makeCheck("rating", "Credit Rating", "pass", `Rating "${rating}" is acceptable.`, { actual: rating });
 }
@@ -175,7 +175,7 @@ export function runTenorCheck(economics: DealEconomics): ControlCheck {
   const years = (maturity - purchase) / (365.25 * 86400_000);
   const actual = `${years.toFixed(1)}y`;
   if (years > 25) {
-    return makeCheck("tenor", "Tenor", "watch", `Tenor ${actual} is unusually long — confirm ALM / duration limits.`, { threshold: "≤ 25y", actual });
+    return makeCheck("tenor", "Tenor", "watch", `Tenor ${actual} is unusually long - confirm ALM / duration limits.`, { threshold: "≤ 25y", actual });
   }
   return makeCheck("tenor", "Tenor", "pass", `Tenor ${actual} is within normal bounds.`, { threshold: "≤ 25y", actual });
 }
@@ -194,7 +194,7 @@ export function runAllChecks(
   ];
 }
 
-/** A deal slip may only be Approved once every check is pass/cleared — no breach, watch, or pending. */
+/** A deal slip may only be Approved once every check is pass/cleared - no breach, watch, or pending. */
 export function allChecksPassed(checks: ControlCheck[]): boolean {
   if (checks.length === 0) return false;
   return checks.every((c) => c.status === "pass" || c.status === "cleared");

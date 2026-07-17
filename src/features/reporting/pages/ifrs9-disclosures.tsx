@@ -248,19 +248,19 @@ export function IFRS9Disclosures() {
         <StatCard
           title="Stage 1"
           value={String(stage1Count)}
-          subtitle="12-month ECL — Performing"
+          subtitle="12-month ECL - Performing"
           variant="default"
         />
         <StatCard
           title="Stage 2"
           value={String(stage2Count)}
-          subtitle="Lifetime ECL — SICR"
+          subtitle="Lifetime ECL - SICR"
           variant="warning"
         />
         <StatCard
           title="Stage 3"
           value={String(stage3Count)}
-          subtitle="Lifetime ECL — Credit-impaired"
+          subtitle="Lifetime ECL - Credit-impaired"
           variant="danger"
         />
       </StatCardGrid>
@@ -279,7 +279,7 @@ export function IFRS9Disclosures() {
 
       <SectionCard
         title="Stage 2 &amp; 3 Instruments"
-        description="Elevated credit risk — disclosure required"
+        description="Elevated credit risk - disclosure required"
       >
         <DataTable<InstRow>
           columns={instCols}

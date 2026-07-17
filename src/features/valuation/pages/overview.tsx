@@ -48,7 +48,7 @@ export function ValuationOverview() {
         <StatCard
           title="OCI Reserve"
           value={fmtMoneyCompact(totals.totalOCIReserveNGN, "NGN")}
-          subtitle="Fair Value (OCI) — unrealised movement"
+          subtitle="Fair Value (OCI) - unrealised movement"
           icon={<Activity className="h-4 w-4" />}
           variant={totals.totalOCIReserveNGN >= 0 ? "default" : "danger"}
         />

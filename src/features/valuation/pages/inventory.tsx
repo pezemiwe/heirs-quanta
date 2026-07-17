@@ -603,7 +603,7 @@ function EditInstrumentDrawer({
               Edit Instrument
             </h3>
             <p className="mt-0.5 text-xs text-gray-500">
-              {instrument.id} — changes are applied immediately.
+              {instrument.id} - changes are applied immediately.
             </p>
           </div>
           <button

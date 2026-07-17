@@ -74,7 +74,7 @@ const PlatformMockup = () => (
         <span className="h-2.5 w-2.5 rounded-full bg-emerald-400" />
         <div className="mx-auto flex h-5 w-52 items-center justify-center rounded border border-border bg-white">
           <span className="font-mono text-[9px] text-dark-gray/40">
-            heirs-quanta.app — Dashboard
+            heirs-quanta.app - Dashboard
           </span>
         </div>
       </div>
@@ -392,7 +392,7 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
           backgroundSize: "60px 60px",
         }}
       />
-      {/* Red glow — top-left */}
+      {/* Red glow - top-left */}
       <div
         className="pointer-events-none absolute -top-60 -left-60 h-[700px] w-[700px] rounded-full opacity-25"
         style={{
@@ -400,7 +400,7 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
           filter: "blur(100px)",
         }}
       />
-      {/* Deep-blue glow — bottom-right */}
+      {/* Deep-blue glow - bottom-right */}
       <div
         className="pointer-events-none absolute -bottom-40 -right-20 h-[500px] w-[500px] rounded-full"
         style={{
@@ -492,7 +492,7 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
                 IFRS 9 &amp; ECL
               </strong>
               , Deal Capture, Performance Analytics, Duration &amp; Risk, Market
-              Data, Accounting, and Reporting — unified in a single audit-ready
+              Data, Accounting, and Reporting - unified in a single audit-ready
               platform built for CBN compliance.
             </p>
 
@@ -550,7 +550,7 @@ const HeroSection = ({ onEnter }: { onEnter: () => void }) => {
             </div>
           </div>
 
-          {/* Right — mockup */}
+          {/* Right - mockup */}
           <div
             className={`flex justify-center transition-all duration-700 delay-200 lg:justify-end ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           >
@@ -646,7 +646,7 @@ const MODULES = [
     id: "ifrs9",
     number: "05",
     icon: <Calculator className="h-6 w-6" />,
-    title: "IFRS 9 — Expected Credit Loss",
+    title: "IFRS 9 - Expected Credit Loss",
     subtitle: "Automated ECL computation aligned to CBN guidelines",
     description:
       "Automate the full IFRS 9 impairment workflow from SICR detection and stage allocation through PD/LGD/EAD estimation to ECL charge computation. Built to CBN reporting standards, with full audit trail.",
@@ -685,7 +685,7 @@ const MODULES = [
     title: "Duration & Risk Analytics",
     subtitle: "Interest rate sensitivity, VaR & stress testing",
     description:
-      "Quantify and manage portfolio risk exposures — duration, convexity, value-at-risk, and credit spread sensitivity and run stress scenarios across interest rate and FX shock assumptions.",
+      "Quantify and manage portfolio risk exposures - duration, convexity, value-at-risk, and credit spread sensitivity and run stress scenarios across interest rate and FX shock assumptions.",
     capabilities: [
       "Modified duration & convexity analytics",
       "DV01 & PV01 sensitivity measures",
@@ -799,7 +799,7 @@ const ModulesSection = () => {
                   </div>
                 </div>
 
-                {/* Right pane — capabilities */}
+                {/* Right pane - capabilities */}
                 <div className="flex flex-col justify-center border-t border-border p-8 lg:border-l lg:border-t-0 lg:p-10">
                   <p className="mb-5 text-xs font-semibold uppercase tracking-wider text-dark-gray/35">
                     Key capabilities
@@ -1058,7 +1058,7 @@ const ComplianceSection = () => {
             </div>
           </div>
 
-          {/* Right — compliance items */}
+          {/* Right - compliance items */}
           <div
             className={`transition-all duration-700 delay-200 ${inView ? "opacity-100 translate-y-0" : "opacity-0 translate-y-6"}`}
           >

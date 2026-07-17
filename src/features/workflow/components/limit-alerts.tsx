@@ -8,7 +8,7 @@ function limitChecks(checks: ControlCheck[]): ControlCheck[] {
 
 /**
  * Renders a limit alert banner for any watch/breach "limit" checks passed
- * in. This is the low-level building block — used both for a saved deal
+ * in. This is the low-level building block - used both for a saved deal
  * slip's own checks (`LimitAlerts`) and for a live, not-yet-submitted
  * preview computed straight from the form (see deal-slip-workspace.tsx).
  */
@@ -32,7 +32,7 @@ export function LimitAlertsFromChecks({ checks }: { checks: ControlCheck[] }) {
           )}
           <div>
             <p className="font-medium">
-              {c.status === "breach" ? "Limit breach" : "Approaching limit"} — {c.label}
+              {c.status === "breach" ? "Limit breach" : "Approaching limit"} - {c.label}
             </p>
             <p className="mt-0.5 text-xs opacity-80">{c.detail}</p>
           </div>
@@ -43,7 +43,7 @@ export function LimitAlertsFromChecks({ checks }: { checks: ControlCheck[] }) {
 }
 
 /**
- * Per-slip limit alert banner — surfaced anywhere a single deal slip's
+ * Per-slip limit alert banner - surfaced anywhere a single deal slip's
  * economics approach or breach a configured limit (currently: single-issuer
  * concentration). Renders nothing if the slip has no open limit alerts.
  */
@@ -52,7 +52,7 @@ export function LimitAlerts({ slip }: { slip: DealSlip }) {
 }
 
 /**
- * Global aggregator — every deal slip currently sitting on an open (not
+ * Global aggregator - every deal slip currently sitting on an open (not
  * cleared) limit watch/breach, across the whole pipeline. Surfaced on the
  * blotter and counterparty exposure pages so limit issues are visible
  * wherever someone is looking at the book, not just on the one deal slip
@@ -74,7 +74,7 @@ export function LimitAlertsSummary({ onSelect }: { onSelect?: (dealSlipId: strin
     <div className="rounded-xl border border-amber-200 bg-amber-50/60 p-4">
       <div className="mb-3 flex items-center gap-2 text-sm font-semibold text-amber-800">
         <ShieldAlert className="h-4 w-4" />
-        Limit Alerts — {flagged.length} deal slip{flagged.length === 1 ? "" : "s"}
+        Limit Alerts - {flagged.length} deal slip{flagged.length === 1 ? "" : "s"}
         {breachCount > 0 && <span className="text-red-700"> ({breachCount} breach{breachCount === 1 ? "" : "es"})</span>}
         {watchCount > 0 && <span> ({watchCount} watch)</span>}
       </div>

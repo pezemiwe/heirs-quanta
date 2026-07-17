@@ -52,9 +52,9 @@ export function InputsSection({
         <Select
           label="ECL Stage"
           options={[
-            { value: "1", label: "Stage 1 — 12-month ECL" },
-            { value: "2", label: "Stage 2 — Lifetime ECL (SICR)" },
-            { value: "3", label: "Stage 3 — Credit Impaired" },
+            { value: "1", label: "Stage 1 - 12-month ECL" },
+            { value: "2", label: "Stage 2 - Lifetime ECL (SICR)" },
+            { value: "3", label: "Stage 3 - Credit Impaired" },
           ]}
           placeholder="Select stage…"
           value={selectVal}

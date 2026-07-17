@@ -13,10 +13,10 @@ import type { SettlementStatus } from "../../workflow/types";
 import { fmtDate } from "../../portfolio/engine/book-compute";
 
 /* ─────────────────────────────────────────────────────────────
-   Settlements — settlement-instruction status for every deal slip
+   Settlements - settlement-instruction status for every deal slip
    that has reached Approved or later. Pure read/aggregation over
    the workflow store (dealSlips): no separate data source, no
-   fictional "mark settled" action — raising and confirming a
+   fictional "mark settled" action - raising and confirming a
    settlement instruction happens on the deal slip itself (Trade
    Blotter → Settlement panel), this page is the audit view.
    ───────────────────────────────────────────────────────────── */
@@ -63,13 +63,13 @@ export function Settlements() {
         name: s.economics.instrumentName,
         issuer: s.economics.issuer,
         counterparty: s.settlement.counterparty ?? s.economics.counterparty,
-        custodian: s.settlement.custodian ?? s.economics.custodian ?? "—",
+        custodian: s.settlement.custodian ?? s.economics.custodian ?? "-",
         faceValue: s.economics.faceValue,
         currency: s.economics.currency,
         settlementDate: s.settlement.settlementDate,
         settlementStatus: s.settlement.status,
-        raisedBy: s.settlement.raisedBy?.name ?? "—",
-        confirmedBy: s.settlement.confirmedBy?.name ?? "—",
+        raisedBy: s.settlement.raisedBy?.name ?? "-",
+        confirmedBy: s.settlement.confirmedBy?.name ?? "-",
         failReason: s.settlement.failReason ?? "",
       }))
       .sort((a, b) => a.settlementDate.localeCompare(b.settlementDate));
@@ -123,10 +123,10 @@ export function Settlements() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray flex items-center gap-2">
           <ArrowLeftRight className="h-6 w-6 text-primary" />
-          Settlements — Settlement Instructions
+          Settlements - Settlement Instructions
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
-          Settlement instruction status for every deal slip that has reached Approved or later — raise and confirm
+          Settlement instruction status for every deal slip that has reached Approved or later - raise and confirm
           settlement instructions from the deal slip's Settlement panel in the Trade Blotter
         </p>
       </div>
@@ -169,7 +169,7 @@ export function Settlements() {
           columns={cols}
           data={rows}
           keyExtractor={(r) => r.id}
-          emptyMessage="No deal slips have reached Approved yet — settlement instructions can only be raised once a deal slip is approved"
+          emptyMessage="No deal slips have reached Approved yet - settlement instructions can only be raised once a deal slip is approved"
           pageSize={20}
           onRowClick={setSelected}
         />

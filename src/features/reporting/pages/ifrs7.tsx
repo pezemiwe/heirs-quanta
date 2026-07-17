@@ -130,7 +130,7 @@ export function IFRS7Disclosures() {
           IFRS 7 Financial Instruments Disclosures
         </h1>
         <p className="mt-1 text-sm text-gray-500">
-          Quantitative risk disclosures for the investment book — as at 28 May
+          Quantitative risk disclosures for the investment book - as at 28 May
           2026
         </p>
       </div>
@@ -143,19 +143,19 @@ export function IFRS7Disclosures() {
         <div className="grid grid-cols-3 gap-4">
           {[
             {
-              stage: "Stage 1 — Performing",
+              stage: "Stage 1 - Performing",
               count: stage1Insts.length,
               bsv: bsvByStage(1),
               color: "text-success",
             },
             {
-              stage: "Stage 2 — Underperforming",
+              stage: "Stage 2 - Underperforming",
               count: stage2Insts.length,
               bsv: bsvByStage(2),
               color: "text-yellow-600",
             },
             {
-              stage: "Stage 3 — Non-Performing",
+              stage: "Stage 3 - Non-Performing",
               count: stage3Insts.length,
               bsv: bsvByStage(3),
               color: "text-danger",
@@ -211,7 +211,7 @@ export function IFRS7Disclosures() {
       {/* liquidity risk section */}
       <section>
         <h2 className="mb-4 text-base font-semibold text-dark-gray border-b border-border pb-2">
-          Liquidity Risk — Maturity Analysis
+          Liquidity Risk - Maturity Analysis
         </h2>
         <DataTable columns={LIQ_COLS} data={LIQ_ROWS} />
       </section>

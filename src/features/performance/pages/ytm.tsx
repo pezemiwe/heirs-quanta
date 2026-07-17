@@ -160,7 +160,7 @@ export function YTMAnalysis() {
         r.eir > 0 ? (
           <span className="font-medium text-primary">{fmtPct(r.eir)}</span>
         ) : (
-          <span className="text-dark-gray/40">—</span>
+          <span className="text-dark-gray/40">-</span>
         ),
     },
     {
@@ -171,7 +171,7 @@ export function YTMAnalysis() {
         r.marketYield > 0 ? (
           fmtPct(r.marketYield)
         ) : (
-          <span className="text-dark-gray/40">—</span>
+          <span className="text-dark-gray/40">-</span>
         ),
     },
     {
@@ -180,7 +180,7 @@ export function YTMAnalysis() {
       align: "right",
       render: (r) => {
         if (r.eir === 0 || r.marketYield === 0)
-          return <span className="text-dark-gray/40">—</span>;
+          return <span className="text-dark-gray/40">-</span>;
         const cls = r.yieldSpread >= 0 ? "text-emerald-600" : "text-primary";
         const sign = r.yieldSpread >= 0 ? "+" : "";
         return (
@@ -208,19 +208,19 @@ export function YTMAnalysis() {
       key: "macaulay",
       header: "Macaulay",
       align: "right",
-      render: (r) => (r.macaulay > 0 ? `${r.macaulay.toFixed(2)}y` : "—"),
+      render: (r) => (r.macaulay > 0 ? `${r.macaulay.toFixed(2)}y` : "-"),
     },
     {
       key: "modified",
       header: "Mod. Duration",
       align: "right",
-      render: (r) => (r.modified > 0 ? `${r.modified.toFixed(2)}y` : "—"),
+      render: (r) => (r.modified > 0 ? `${r.modified.toFixed(2)}y` : "-"),
     },
     {
       key: "dv01",
       header: "DV01 (NGN)",
       align: "right",
-      render: (r) => (r.dv01 > 0 ? fmtCompact(r.dv01) : "—"),
+      render: (r) => (r.dv01 > 0 ? fmtCompact(r.dv01) : "-"),
     },
     {
       key: "maturityDate",
@@ -256,7 +256,7 @@ export function YTMAnalysis() {
         />
         <StatCard
           title="Avg Yield to Call"
-          value={avgYTC !== null ? fmtPct(avgYTC) : "—"}
+          value={avgYTC !== null ? fmtPct(avgYTC) : "-"}
           subtitle={`${callableRows.length} callable instruments`}
           variant="default"
         />
@@ -334,7 +334,7 @@ export function YTMAnalysis() {
                         {fmtPct(selected.eir)}
                       </span>
                     ) : (
-                      "—"
+                      "-"
                     ),
                 },
                 {
@@ -342,7 +342,7 @@ export function YTMAnalysis() {
                   value:
                     selected.marketYield > 0
                       ? fmtPct(selected.marketYield)
-                      : "—",
+                      : "-",
                 },
                 {
                   label: "EIR–Market Spread",
@@ -359,7 +359,7 @@ export function YTMAnalysis() {
                           fmtPct(selected.yieldSpread)}
                       </span>
                     ) : (
-                      "—"
+                      "-"
                     ),
                 },
                 {
@@ -380,18 +380,18 @@ export function YTMAnalysis() {
                   value:
                     selected.macaulay > 0
                       ? `${selected.macaulay.toFixed(2)}y`
-                      : "—",
+                      : "-",
                 },
                 {
                   label: "Modified Duration",
                   value:
                     selected.modified > 0
                       ? `${selected.modified.toFixed(2)}y`
-                      : "—",
+                      : "-",
                 },
                 {
                   label: "DV01 (NGN)",
-                  value: selected.dv01 > 0 ? fmtCompact(selected.dv01) : "—",
+                  value: selected.dv01 > 0 ? fmtCompact(selected.dv01) : "-",
                 },
                 {
                   label: "Maturity Date",

@@ -279,7 +279,7 @@ export function LoginPage() {
               {/* Persona selector */}
               <div>
                 <label className="mb-1.5 block text-xs font-semibold uppercase tracking-wider text-dark-gray/45">
-                  Quick access — select persona
+                  Quick access - select persona
                 </label>
                 <div className="relative">
                   <User className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-dark-gray/35" />
@@ -288,7 +288,7 @@ export function LoginPage() {
                     onChange={(e) => handlePersonaChange(e.target.value)}
                     className="w-full appearance-none rounded-xl border border-border bg-surface-muted py-3 pl-10 pr-10 text-sm text-dark-gray outline-none transition-all focus:border-primary focus:ring-2 focus:ring-primary/15"
                   >
-                    <option value="">— Select a user persona —</option>
+                    <option value="">- Select a user persona -</option>
                     {PERSONAS.map((p) => (
                       <option key={p.role} value={p.role}>
                         {p.name} · {p.role}

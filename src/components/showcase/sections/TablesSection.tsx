@@ -13,7 +13,7 @@ export function TablesSection({ filterClose, setFilterClose }: Props) {
       <div className="flex flex-wrap items-center justify-between gap-3 pb-1">
         <PageHeader
           title="Investment Book"
-          description="December 2024 snapshot — 5 records"
+          description="December 2024 snapshot - 5 records"
           className="pb-0"
         />
         <FilterPopover

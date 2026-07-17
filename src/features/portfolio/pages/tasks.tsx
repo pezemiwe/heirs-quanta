@@ -54,7 +54,7 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "T002",
-    title: "IC meeting prep — May investment pipeline review",
+    title: "IC meeting prep - May investment pipeline review",
     source: "Group Executive",
     due: "2026-05-28",
     priority: "medium",
@@ -92,7 +92,7 @@ const INITIAL_TASKS: Task[] = [
   },
   {
     id: "T006",
-    title: "Update IRR model — Afropay acquisition",
+    title: "Update IRR model - Afropay acquisition",
     source: "Investment Committee",
     due: "2026-06-05",
     priority: "medium",

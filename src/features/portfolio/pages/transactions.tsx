@@ -119,7 +119,7 @@ export function PortfolioTransactions() {
     BOOK_INSTRUMENTS.forEach((inst, i) => {
       const val = BOOK_VALUATIONS[i];
 
-      // Purchase / Buy — notional is par/principal (face value), same basis as
+      // Purchase / Buy - notional is par/principal (face value), same basis as
       // the Maturity row and Holdings. Workbook imports store purchasePrice as an
       // absolute local-currency amount too (~53M for placements), so multiplying
       // faceValue × purchasePrice inflates Buy to trillions.
@@ -135,7 +135,7 @@ export function PortfolioTransactions() {
         status: "Settled",
       });
 
-      // Coupon event — instruments with couponRate > 0
+      // Coupon event - instruments with couponRate > 0
       if (inst.couponRate > 0 && inst.couponFrequency !== "Zero") {
         const freqMonths =
           inst.couponFrequency === "Semi"
@@ -163,7 +163,7 @@ export function PortfolioTransactions() {
         });
       }
 
-      // Maturity — instruments maturing within 90 days of valuation date
+      // Maturity - instruments maturing within 90 days of valuation date
       if (inst.maturityDate) {
         const matMs = new Date(inst.maturityDate).getTime();
         if (Math.abs(matMs - VALUATION_MS) < DAYS_90) {
@@ -248,7 +248,7 @@ export function PortfolioTransactions() {
         <div>
           <h1 className="text-2xl font-bold text-dark-gray">Transaction Log</h1>
           <p className="mt-1 text-sm text-gray-500">
-            All purchases, coupon receipts and maturity events —{" "}
+            All purchases, coupon receipts and maturity events -{" "}
             {ALL_TXN.length} records
           </p>
         </div>

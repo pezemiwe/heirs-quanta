@@ -235,7 +235,7 @@ export function IFRS9Portfolio() {
             <p className="mt-2 text-sm text-gray-500">
               Remove{" "}
               <span className="font-medium text-dark-gray">
-                SN {String(deleting.sn)} — {String(deleting.counterparty)}
+                SN {String(deleting.sn)} - {String(deleting.counterparty)}
               </span>{" "}
               from the portfolio? This cannot be undone.
             </p>
@@ -305,7 +305,7 @@ function EditSecurityDrawer({
               Edit Security
             </h3>
             <p className="mt-0.5 text-xs text-gray-500">
-              SN {String(row.sn)} — changes recompute ECL immediately.
+              SN {String(row.sn)} - changes recompute ECL immediately.
             </p>
           </div>
           <button

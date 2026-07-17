@@ -1,5 +1,5 @@
 /**
- * Heirs Quanta — Portfolio Workbook Parser
+ * Heirs Quanta - Portfolio Workbook Parser
  *
  * Accepts an ArrayBuffer from an .xlsx workbook (or a single CSV sheet) and
  * produces the three canonical data structures consumed by all platform modules:
@@ -41,7 +41,7 @@ export interface SheetSummary {
   warnings: string[];
 }
 
-/** A sheet whose name didn't match any known type — parsed by nothing, tracked instead of silently dropped. */
+/** A sheet whose name didn't match any known type - parsed by nothing, tracked instead of silently dropped. */
 export interface UnrecognizedSheet {
   sheetName: string;
   rowCount: number;
@@ -94,7 +94,7 @@ function parseDate(s: unknown): string {
     const day = parseInt(mdm[1]);
     const mon = MONTH[mdm[2].toLowerCase()] ?? 0;
     let yr = parseInt(mdm[3]);
-    // Always pivot 2-digit years to the 2000s — this book's bond maturities run
+    // Always pivot 2-digit years to the 2000s - this book's bond maturities run
     // out to "50" (2050) and no legitimate 19XX date exists in this platform's data.
     if (yr < 100) yr += 2000;
     return formatISODate(yr, mon, day);
@@ -164,11 +164,11 @@ function findHeaderRow(rows: unknown[][]): number {
    Column resolution by header name (not fixed position)
    ─────────────────────────────────────────────────────────────
    The Heirs workbook template is hand-maintained and columns have shifted
-   before (this is the same failure class as the dd-Mon-yy year-pivot bug —
+   before (this is the same failure class as the dd-Mon-yy year-pivot bug -
    just in a different column). Every sheet parser below resolves each field
    it needs by looking up the actual header text in that sheet's header row
-   first, and only falls back to the historically-hardcoded position — with
-   a warning — if none of that field's known header aliases are present. */
+   first, and only falls back to the historically-hardcoded position - with
+   a warning - if none of that field's known header aliases are present. */
 
 /** Normalise a header cell → canonical lookup key (lowercase, alphanumeric only) */
 function normaliseHeader(h: unknown): string {
@@ -187,8 +187,8 @@ function buildHeaderMap(headerRow: unknown[] | undefined): Map<string, number> {
 
 /**
  * Resolves a column index by trying header-name aliases (normalised) against
- * the sheet's header map, in order. Falls back to `fallbackIndex` — the
- * historically hardcoded position — only if none of the aliases matched,
+ * the sheet's header map, in order. Falls back to `fallbackIndex` - the
+ * historically hardcoded position - only if none of the aliases matched,
  * pushing a warning onto `warnings` so the fallback is never silent.
  */
 function resolveColumn(
@@ -202,8 +202,8 @@ function resolveColumn(
     const idx = headerMap.get(alias);
     if (idx !== undefined) return idx;
   }
-  warnings.push(`Expected column '${label}' not found — falling back to position ${fallbackIndex + 1}`);
-  console.warn(`[workbook-parser] Expected column '${label}' not found — falling back to position ${fallbackIndex + 1}`);
+  warnings.push(`Expected column '${label}' not found - falling back to position ${fallbackIndex + 1}`);
+  console.warn(`[workbook-parser] Expected column '${label}' not found - falling back to position ${fallbackIndex + 1}`);
   return fallbackIndex;
 }
 
@@ -223,7 +223,7 @@ function detectSheetType(
 }
 
 /* ─────────────────────────────────────────────────────────────
-   Sheet parsers — each returns Instrument[]
+   Sheet parsers - each returns Instrument[]
    ───────────────────────────────────────────────────────────── */
 
 /**
@@ -838,7 +838,7 @@ export function instrumentToSecurity(inst: Instrument, sn: number): Security {
   const purchaseLcy = inst.purchasePrice * fxRate;
   const faceLcy = inst.faceValue * fxRate;
 
-  // Safe date parsing — fall back to sensible defaults
+  // Safe date parsing - fall back to sensible defaults
   const origDate = inst.purchaseDate ? new Date(inst.purchaseDate + "T00:00:00Z") : new Date();
   const matDate = inst.maturityDate && inst.maturityDate !== "2099-12-31"
     ? new Date(inst.maturityDate + "T00:00:00Z")
@@ -1001,7 +1001,7 @@ export function parseWorkbook(buffer: ArrayBuffer): ParsedWorkbook {
         break;
       }
       default:
-        // Unrecognised sheet — tracked and surfaced to the UI instead of
+        // Unrecognised sheet - tracked and surfaced to the UI instead of
         // silently dropped (a sheet the template renamed or added is a real
         // data-loss risk, not something to swallow).
         unrecognizedSheets.push({ sheetName, rowCount: nonEmpty.length });
@@ -1014,11 +1014,11 @@ export function parseWorkbook(buffer: ArrayBuffer): ParsedWorkbook {
     }));
 
     // A recognised sheet that parsed zero rows is a fully-broken sheet
-    // (wrong header row, unexpected layout, etc.) — the aggregate
+    // (wrong header row, unexpected layout, etc.) - the aggregate
     // rowsSkipped number alone can hide this, so call it out explicitly.
     const candidateRows = Math.max(0, nonEmpty.length - 2);
     if (parsed.length === 0 && candidateRows > 0) {
-      warnings = [`0 of ${candidateRows} rows parsed — sheet may be malformed or using an unexpected layout`, ...warnings];
+      warnings = [`0 of ${candidateRows} rows parsed - sheet may be malformed or using an unexpected layout`, ...warnings];
     }
 
     const typeLabels: Record<string, string> = {
@@ -1053,7 +1053,7 @@ export function parseWorkbook(buffer: ArrayBuffer): ParsedWorkbook {
     .map(instrumentToHolding);
   allHoldings.push(...fixedIncomeHoldings);
 
-  // Derive IFRS9 Securities — only debt instruments (exclude equities)
+  // Derive IFRS9 Securities - only debt instruments (exclude equities)
   const securities: Security[] = allInstruments
     .filter((i) => i.instrumentType !== "Equity" && i.couponFrequency !== "N/A")
     .map((inst, idx) => instrumentToSecurity(inst, idx + 1));

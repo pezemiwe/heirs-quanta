@@ -126,7 +126,7 @@ export function Journals() {
         r.couponCash > 0 ? (
           fmtCompact(r.couponCash)
         ) : (
-          <span className="text-dark-gray/40">—</span>
+          <span className="text-dark-gray/40">-</span>
         ),
     },
     {
@@ -198,7 +198,7 @@ export function Journals() {
 
       <SectionCard
         title="Journal Entry Log"
-        description="One entry per instrument — EIR income recognition and coupon settlement"
+        description="One entry per instrument - EIR income recognition and coupon settlement"
       >
         <DataTable<Row>
           columns={cols}
@@ -261,7 +261,7 @@ export function Journals() {
                   value:
                     selected.couponCash > 0
                       ? fmtCompact(selected.couponCash)
-                      : "—",
+                      : "-",
                 },
                 {
                   label: "Closing Carrying Value",

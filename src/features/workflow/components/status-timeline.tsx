@@ -65,7 +65,7 @@ export function StatusTimeline({ slip }: { slip: DealSlip }) {
             <div className="min-w-0 flex-1 pt-0.5">
               <div className="flex flex-wrap items-center gap-2">
                 <span className={`text-sm font-semibold ${tone.text}`}>
-                  {tx.from ? `${tx.from} → ${tx.to}` : `Created — ${tx.to}`}
+                  {tx.from ? `${tx.from} → ${tx.to}` : `Created - ${tx.to}`}
                 </span>
                 <span className="text-xs text-dark-gray/40">{fmtTimestamp(tx.at)}</span>
               </div>

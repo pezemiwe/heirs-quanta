@@ -200,7 +200,7 @@ const COLUMNS: DataTableColumn<HoldingRow>[] = [
     align: "right",
     render: (r) => (
       <span className="text-xs text-dark-gray/70">
-        {r.eirPct > 0 ? fmtPct(r.eirPct) : "—"}
+        {r.eirPct > 0 ? fmtPct(r.eirPct) : "-"}
       </span>
     ),
   },
@@ -210,7 +210,7 @@ const COLUMNS: DataTableColumn<HoldingRow>[] = [
     align: "right",
     render: (r) => (
       <span className="text-xs text-dark-gray/70">
-        {r.couponRate > 0 ? fmtPct(r.couponRate) : "—"}
+        {r.couponRate > 0 ? fmtPct(r.couponRate) : "-"}
       </span>
     ),
   },
@@ -598,9 +598,9 @@ export function PortfolioHoldings() {
                     }))
                   }
                 >
-                  <option value="AC">AC — Amortised Cost</option>
-                  <option value="FVOCI">FVOCI — Fair Value (OCI)</option>
-                  <option value="FVTPL">FVTPL — Fair Value (P&L)</option>
+                  <option value="AC">AC - Amortised Cost</option>
+                  <option value="FVOCI">FVOCI - Fair Value (OCI)</option>
+                  <option value="FVTPL">FVTPL - Fair Value (P&L)</option>
                 </select>
               </Field>
               <Field label="IFRS 13 Level">

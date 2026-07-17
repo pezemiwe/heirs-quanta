@@ -14,10 +14,10 @@ import type { Currency, Instrument } from "../../valuation/engine/types";
 import { fmtCompact, fmtDate } from "../../portfolio/engine/book-compute";
 
 /* ─────────────────────────────────────────────────────────────
-   GL Reconciliation — Subledger (deal-slip driven register) vs
+   GL Reconciliation - Subledger (deal-slip driven register) vs
    Instrument Book (the "GL" that Valuation / Duration Risk / IFRS 9 /
    Accounting actually read from). Pure read/aggregation over existing
-   state — no new store, no persistence.
+   state - no new store, no persistence.
    ───────────────────────────────────────────────────────────── */
 
 const CURRENCY_SYMBOLS: Record<Currency, string> = {
@@ -77,20 +77,20 @@ export function Reconciliation() {
       activeRegister.map((r) => [r.instrumentId, r]),
     );
 
-    // Instruments in the book with no corresponding active register entry —
+    // Instruments in the book with no corresponding active register entry -
     // these bypassed the deal-slip workflow entirely (typically a bulk
     // workbook upload of historical opening balances).
     const withoutSlip: Instrument[] = instruments.filter(
       (inst) => !activeRegisterByInstrumentId.has(inst.id),
     );
 
-    // Active register entries whose instrument no longer exists in the book —
+    // Active register entries whose instrument no longer exists in the book -
     // should not normally happen; flags a data-integrity gap.
     const orphaned: RegisterEntry[] = activeRegister.filter(
       (r) => !instrumentsById.has(r.instrumentId),
     );
 
-    // Per-currency totals — face values are never summed across currencies.
+    // Per-currency totals - face values are never summed across currencies.
     const rowByCcy = new Map<Currency, CurrencyRow>();
     const ensure = (ccy: Currency): CurrencyRow => {
       let row = rowByCcy.get(ccy);
@@ -235,7 +235,7 @@ export function Reconciliation() {
       <div>
         <h1 className="text-2xl font-semibold tracking-tight text-dark-gray flex items-center gap-2">
           <Scale className="h-6 w-6 text-primary" />
-          GL Reconciliation — Subledger vs Instrument Book
+          GL Reconciliation - Subledger vs Instrument Book
         </h1>
         <p className="mt-1 text-sm text-dark-gray/60">
           Reconciles the deal-slip-driven investment register (subledger) against the shared instrument book
@@ -245,13 +245,13 @@ export function Reconciliation() {
 
       <StatCardGrid>
         <StatCard
-          title="Subledger — Active Positions"
+          title="Subledger - Active Positions"
           value={String(subCount)}
           subtitle="Register entries with status Active"
           variant="default"
         />
         <StatCard
-          title="GL — Instrument Book"
+          title="GL - Instrument Book"
           value={String(glCount)}
           subtitle="All instruments in the shared book"
           variant="default"
@@ -272,7 +272,7 @@ export function Reconciliation() {
 
       <SectionCard
         title="Face Value Reconciliation by Currency"
-        description="Subledger vs GL, grouped by currency — totals are never mixed across currencies"
+        description="Subledger vs GL, grouped by currency - totals are never mixed across currencies"
       >
         <DataTable<CurrencyTableRow>
           columns={currencyCols}
@@ -287,7 +287,7 @@ export function Reconciliation() {
           <CheckCircle2 className="mt-0.5 h-5 w-5 shrink-0 text-emerald-700" />
           <div>
             <p className="text-sm font-semibold text-emerald-800">
-              Subledger and GL are fully reconciled — {glCount} instrument{glCount === 1 ? "" : "s"},{" "}
+              Subledger and GL are fully reconciled - {glCount} instrument{glCount === 1 ? "" : "s"},{" "}
               {fmtCompact(ngnGlFace)} <span className="font-normal text-emerald-700/70">(NGN instruments)</span>
             </p>
             <p className="mt-1 text-sm text-emerald-900/80">
@@ -299,8 +299,8 @@ export function Reconciliation() {
       ) : (
         <>
           <SectionCard
-            title="Breaks — Instruments Without a Deal Slip"
-            description="Instruments present in the instrument book with no active deal-slip register entry of record — typically bulk-imported opening balances that bypassed the deal-slip workflow"
+            title="Breaks - Instruments Without a Deal Slip"
+            description="Instruments present in the instrument book with no active deal-slip register entry of record - typically bulk-imported opening balances that bypassed the deal-slip workflow"
           >
             <DataTable<BreakTableRow>
               columns={withoutSlipCols}
@@ -313,8 +313,8 @@ export function Reconciliation() {
 
           {orphaned.length > 0 ? (
             <SectionCard
-              title="Breaks — Orphaned Register Entries"
-              description="Active register entries whose instrument no longer exists in the book — should not normally happen; flagged as a data-integrity issue"
+              title="Breaks - Orphaned Register Entries"
+              description="Active register entries whose instrument no longer exists in the book - should not normally happen; flagged as a data-integrity issue"
             >
               <DataTable<OrphanTableRow>
                 columns={orphanCols}

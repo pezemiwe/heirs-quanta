@@ -31,7 +31,7 @@ export const BOOK_COMPUTED: PortfolioResult = runPortfolioEngine(
   DEFAULT_ASSUMPTIONS,
 );
 
-/** Flat list of per-instrument valuations — most modules need this */
+/** Flat list of per-instrument valuations - most modules need this */
 export const BOOK_VALUATIONS: InstrumentValuation[] = BOOK_COMPUTED.valuations;
 
 /** Re-export raw instruments for convenience */
@@ -48,7 +48,7 @@ export type { Instrument, InstrumentValuation, PortfolioResult };
 const NAIRA_SYMBOL = "\u20A6";
 
 export function fmtN(n: number, decimals = 0): string {
-  if (!isFinite(n)) return "—";
+  if (!isFinite(n)) return "-";
   return n.toLocaleString("en-US", {
     minimumFractionDigits: decimals,
     maximumFractionDigits: decimals,
@@ -56,7 +56,7 @@ export function fmtN(n: number, decimals = 0): string {
 }
 
 export function fmtCompact(n: number, ccy = NAIRA_SYMBOL): string {
-  if (!isFinite(n)) return "—";
+  if (!isFinite(n)) return "-";
   const abs = Math.abs(n);
   const sign = n < 0 ? "-" : "";
   if (abs >= 1e12) return `${sign}${ccy}${(abs / 1e12).toFixed(2)}T`;
@@ -67,7 +67,7 @@ export function fmtCompact(n: number, ccy = NAIRA_SYMBOL): string {
 }
 
 export function fmtPct(n: number, dp = 2): string {
-  if (!isFinite(n)) return "—";
+  if (!isFinite(n)) return "-";
   return `${(n * 100).toFixed(dp)}%`;
 }
 

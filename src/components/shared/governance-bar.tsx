@@ -99,7 +99,7 @@ export function GovernanceBar({
         {!canAct && (
           <span className="flex items-center gap-1.5 text-xs font-medium text-amber-700">
             <Lock className="h-3.5 w-3.5" />
-            Insufficient permissions — view only
+            Insufficient permissions - view only
           </span>
         )}
       </div>

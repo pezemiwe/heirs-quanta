@@ -80,7 +80,7 @@ export function App() {
                 }
               />
 
-              {/* Portfolio — all sub-pages via :page param */}
+              {/* Portfolio - all sub-pages via :page param */}
               <Route
                 path="/portfolio"
                 element={

@@ -1,6 +1,6 @@
 import type { DealEconomics, DealSlip } from "../types";
 
-/** Heirs brand red — matches IFRS 9 PDF exports (reports.tsx). */
+/** Heirs brand red - matches IFRS 9 PDF exports (reports.tsx). */
 export const HEIRS_BRAND_HEX = "#C8102E";
 export const HEIRS_BRAND_RGB = [200, 16, 46] as const;
 
@@ -9,7 +9,7 @@ export interface SlipDisplayField {
   value: string;
 }
 
-const EM = "—";
+const EM = "-";
 
 function daysBetween(a: string, b: string): number {
   const ms =
@@ -33,7 +33,7 @@ function fmtDate(iso: string | null | undefined): string {
   return iso.slice(0, 10);
 }
 
-/** Par / principal — shown in the notional amount highlight box. */
+/** Par / principal - shown in the notional amount highlight box. */
 export function dealNotional(e: DealEconomics): number {
   return e.faceValue;
 }
@@ -50,7 +50,7 @@ export function slipVersionLabel(slip: DealSlip): string {
   return `v${version} · ${slip.updatedAt.slice(0, 10)}`;
 }
 
-/** Submitted date — timeline transition, else createdAt for drafts. */
+/** Submitted date - timeline transition, else createdAt for drafts. */
 export function submittedDate(slip: DealSlip): string {
   const tx = slip.timeline.find((t) => t.to === "Submitted");
   return fmtDate(tx?.at ?? slip.createdAt);

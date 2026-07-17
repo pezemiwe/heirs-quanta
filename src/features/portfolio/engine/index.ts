@@ -148,7 +148,7 @@ function computeConcentration(
 
   limits.unshift(
     {
-      label: `Largest single holding (${sorted[0]?.name ?? "—"})`,
+      label: `Largest single holding (${sorted[0]?.name ?? "-"})`,
       current: (top1 / totalNav) * 100,
       limit: 20,
       status:
@@ -196,7 +196,7 @@ function computePortfolioBeta(holdings: Holding[], totalNav: number): number {
 }
 
 /* ─────────────────────────────────────────────────────────
-   YTD return — time-weighted (simple weighted average
+   YTD return - time-weighted (simple weighted average
    of holding returns, weighted by current market value)
    ───────────────────────────────────────────────────────── */
 function computeYTDReturn(holdings: Holding[], totalNav: number): number {
