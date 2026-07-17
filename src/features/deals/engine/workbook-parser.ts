@@ -938,7 +938,7 @@ export function instrumentToHolding(inst: Instrument): Holding {
  */
 function generateId(provided: string | undefined, prefix: string): string {
   const p = (provided || "").trim();
-  if (!p || /^(PLACEMENT|TB|TBILL|COR|SG|FGN|EQ|PUSD|INV)\s*\d*$/i.test(p)) {
+  if (!p || /^(PLACEMENT|TB|TBILL|COR|SG|FGN|EQ|QEQU|PUSD|INV)\s*\d*$/i.test(p)) {
     const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `HQ-${prefix}-${rand}`;
   }

@@ -117,7 +117,25 @@ function loadFromStorage(): PersistedBook | null {
   try {
     const raw = localStorage.getItem(LS_KEY);
     if (!raw) return null;
-    return JSON.parse(raw) as PersistedBook;
+    const parsed = JSON.parse(raw) as PersistedBook;
+    
+    // Auto-migrate generic IDs that were loaded before the parser was fixed
+    let changed = false;
+    parsed.instruments = parsed.instruments.map(inst => {
+      if (/^(PLACEMENT|TB|TBILL|COR|SG|FGN|EQ|QEQU|PUSD|INV)\s*[-_]?\s*\d*$/i.test(inst.id)) {
+        changed = true;
+        const prefix = inst.id.substring(0, 3).toUpperCase().replace(/[^A-Z]/g, '') || "HQ";
+        const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
+        return { ...inst, id: `HQ-${prefix}-${rand}` };
+      }
+      return inst;
+    });
+    
+    if (changed) {
+      saveToStorage(parsed);
+    }
+    
+    return parsed;
   } catch {
     return null;
   }
