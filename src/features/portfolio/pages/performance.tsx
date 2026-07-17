@@ -213,7 +213,7 @@ export function PortfolioPerformance() {
             <XAxis dataKey="sector" tick={{ fontSize: 10 }} />
             <YAxis
               tick={{ fontSize: 10 }}
-              tickFormatter={(v: number) => `?${(v / 1e9).toFixed(0)}B`}
+              tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(0)}B`}
             />
             <Tooltip
               formatter={

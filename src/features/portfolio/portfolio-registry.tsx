@@ -31,50 +31,7 @@ export interface Portfolio {
   origin?: "managed" | "imported";
 }
 
-const SEED: Portfolio[] = [
-  {
-    id: "pb-trading",
-    name: "Trading Book",
-    type: "Trading",
-    baseCurrency: "NGN",
-    description: "Short-duration instruments held for active trading.",
-    manager: "Head of Trading",
-    mandatedBy: "Investment Committee",
-    strategy: "Active trading - mark-to-market daily",
-    status: "Active",
-    createdAt: "2024-01-01",
-    instrumentCount: 68,
-    origin: "managed",
-  },
-  {
-    id: "pb-banking",
-    name: "Banking Book",
-    type: "Banking",
-    baseCurrency: "NGN",
-    description: "Long-duration fixed income and loan-book instruments.",
-    manager: "Head of Fixed Income",
-    mandatedBy: "Investment Committee",
-    strategy: "Buy and hold - EIR amortisation",
-    status: "Active",
-    createdAt: "2024-01-01",
-    instrumentCount: 97,
-    origin: "managed",
-  },
-  {
-    id: "pb-htm",
-    name: "Held-to-Maturity",
-    type: "HTM",
-    baseCurrency: "NGN",
-    description: "Instruments designated HTM under IFRS 9 - AC classification.",
-    manager: "Head of Fixed Income",
-    mandatedBy: "Board Risk Committee",
-    strategy: "Hold to maturity - no rebalancing",
-    status: "Active",
-    createdAt: "2024-01-01",
-    instrumentCount: 39,
-    origin: "managed",
-  },
-];
+
 
 interface RegistryContextValue {
   portfolios: Portfolio[];
@@ -86,34 +43,50 @@ interface RegistryContextValue {
 
 const RegistryContext = createContext<RegistryContextValue | null>(null);
 
-let _counter = SEED.length + 1;
+let _counter = 1;
 
 export function PortfolioRegistryProvider({
   children,
 }: {
   children: ReactNode;
 }) {
-  const [managedPortfolios, setManagedPortfolios] = useState<Portfolio[]>(SEED);
+  const [managedPortfolios, setManagedPortfolios] = useState<Portfolio[]>([]);
   const book = useInstrumentBook();
 
   const portfolios = useMemo<Portfolio[]>(() => {
-    const observed = new Map<string, Portfolio>();
+    const observedMap = new Map<string, Portfolio & { _currencies: Set<string> }>();
 
     for (const instrument of book.instruments) {
-      const name = instrument.portfolioBook?.trim();
-      if (!name) continue;
+      let rawName = instrument.portfolioBook?.trim();
+      if (!rawName) continue;
+      
+      const t = rawName.toLowerCase().replace(/\s+/g, " ");
+      let key = t;
+      let display = rawName;
+      if (t.includes("annuity")) {
+        key = "annuity funds";
+        display = "Annuity Funds";
+      } else if (t.includes("phf")) {
+        key = "phf";
+        display = "PHF";
+      } else {
+        key = t;
+        // Keep display as Title Cased variant
+        display = rawName.split(/\s+/).map(w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase()).join(" ");
+      }
 
-      const existing = observed.get(name);
+      const existing = observedMap.get(key);
       if (existing) {
         existing.instrumentCount = (existing.instrumentCount ?? 0) + 1;
+        existing._currencies.add(instrument.currency || "NGN");
         continue;
       }
 
-      observed.set(name, {
-        id: `pb-imported-${name.toLowerCase().replace(/[^a-z0-9]+/g, "-")}`,
-        name,
+      observedMap.set(key, {
+        id: `pb-imported-${key.replace(/[^a-z0-9]+/g, "-")}`,
+        name: display,
         type: "Custom",
-        baseCurrency: instrument.currency,
+        baseCurrency: instrument.currency || "NGN",
         description: `Imported from ${instrument.sourceFileName ?? "uploaded workbook"}`,
         manager: "Imported via Deal Capture",
         mandatedBy: instrument.importBatchLabel ?? "Uploaded book",
@@ -122,24 +95,32 @@ export function PortfolioRegistryProvider({
         createdAt: instrument.purchaseDate || new Date().toISOString().slice(0, 10),
         instrumentCount: 1,
         origin: "imported",
+        _currencies: new Set([instrument.currency || "NGN"]),
       });
     }
 
+    const observedList = Array.from(observedMap.values()).map(p => {
+      if (p._currencies.size > 1) {
+        p.baseCurrency = "Mixed";
+      } else if (p._currencies.size === 1) {
+        p.baseCurrency = Array.from(p._currencies)[0];
+      }
+      return p as Portfolio;
+    });
+
     const merged = managedPortfolios.map((portfolio) => {
-      const observedMatch = observed.get(portfolio.name);
+      const observedMatch = observedList.find(o => o.name.toLowerCase() === portfolio.name.toLowerCase());
       if (!observedMatch) return portfolio;
 
       return {
         ...portfolio,
         instrumentCount: observedMatch.instrumentCount,
-        baseCurrency: observedMatch.baseCurrency || portfolio.baseCurrency,
       };
     });
 
-    const managedNames = new Set(managedPortfolios.map((portfolio) => portfolio.name));
-    for (const observedPortfolio of observed.values()) {
-      if (!managedNames.has(observedPortfolio.name)) {
-        merged.push(observedPortfolio);
+    for (const obs of observedList) {
+      if (!merged.find((m) => m.name.toLowerCase() === obs.name.toLowerCase())) {
+        merged.push(obs);
       }
     }
 

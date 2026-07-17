@@ -40,10 +40,10 @@ export function PortfolioAllocation() {
     const { totals, byType, byClassification, bySector } = v.result;
 
     const ccy: Record<string, number> = {};
-    for (const inst of v.instruments) {
-      ccy[inst.currency] = (ccy[inst.currency] ?? 0) + inst.faceValue;
+    for (const val of v.result.valuations) {
+      ccy[val.instrument.currency] = (ccy[val.instrument.currency] ?? 0) + val.balanceSheetValueNGN;
     }
-    const totalFV = v.instruments.reduce((s, i) => s + i.faceValue, 0);
+    const totalFV = v.result.totals.totalBSValueNGN;
     const CURRENCY = Object.entries(ccy)
       .sort((a, b) => b[1] - a[1]).slice(0, 6)
       .map(([label, fv], idx) => ({ label, pct: fv / totalFV, color: ["#C8102E","#1E3A5F","#5C0000","#E8563A","#92400E","#6B7280"][idx] }));

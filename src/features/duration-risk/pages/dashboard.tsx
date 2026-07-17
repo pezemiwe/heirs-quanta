@@ -35,7 +35,7 @@ function shockBarColor(bps: number): string {
 
 const fmtNGNBillions = (v: number) => {
   const b = v / 1e9;
-  return `?${Math.abs(b).toFixed(1)}B`;
+  return `₦${Math.abs(b).toFixed(1)}B`;
 };
 
 export function DurationRiskDashboard() {
