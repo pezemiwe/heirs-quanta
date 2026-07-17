@@ -17,6 +17,7 @@ import {
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
 import { NotificationBell } from "../../components/shared/notification-bell";
+import { GlobalSearch } from "../../components/shared/module-shell";
 import { PortfolioProvider, usePortfolio } from "./store";
 import { ValuationProvider } from "../valuation/store";
 import { IFRS9Provider } from "../ifrs9/store";
@@ -219,6 +220,7 @@ export function PortfolioModule() {
               </span>
             </div>
             <div className="flex items-center gap-3">
+              <GlobalSearch />
               <NotificationBell />
               <UserMenu
                 persona={persona}

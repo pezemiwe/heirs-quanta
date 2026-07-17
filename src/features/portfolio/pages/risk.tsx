@@ -385,7 +385,7 @@ export function PortfolioRisk() {
           <thead>
             <tr className="border-b border-border text-xs text-gray-400">
               <th className="pb-2 text-left font-medium">Scenario</th>
-              <th className="pb-2 text-right font-medium">P&L Impact (?)</th>
+              <th className="pb-2 text-right font-medium">P&L Impact (₦)</th>
               <th className="pb-2 text-right font-medium">% of AuM</th>
               <th className="pb-2 text-right font-medium">Severity</th>
             </tr>

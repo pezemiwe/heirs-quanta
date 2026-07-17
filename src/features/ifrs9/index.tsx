@@ -14,6 +14,7 @@ import {
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
 import { NotificationBell } from "../../components/shared/notification-bell";
+import { GlobalSearch } from "../../components/shared/module-shell";
 
 import { IFRS9Provider } from "./store";
 import { IFRS9DataManager } from "./pages/data-manager";
@@ -159,6 +160,7 @@ export function IFRS9Module() {
           </div>
 
           <div className="flex items-center gap-3">
+            <GlobalSearch />
             <NotificationBell />
             <UserMenu
               persona={persona}

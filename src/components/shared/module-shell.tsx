@@ -7,7 +7,7 @@ import { NotificationBell } from "./notification-bell";
 import { usePersona } from "../../context/persona";
 import { useInstrumentBook } from "../../context/instrument-book";
 
-function GlobalSearch() {
+export function GlobalSearch() {
   const { instruments } = useInstrumentBook();
   const navigate = useNavigate();
   const [query, setQuery] = useState("");

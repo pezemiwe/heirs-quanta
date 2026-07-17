@@ -13,6 +13,7 @@ import {
 import { Logo } from "../../components/shared/logo";
 import { UserMenu } from "../../components/shared/user-menu";
 import { NotificationBell } from "../../components/shared/notification-bell";
+import { GlobalSearch } from "../../components/shared/module-shell";
 
 import { ValuationProvider } from "./store";
 import { IFRS9Provider } from "../ifrs9/store";
@@ -152,6 +153,7 @@ export function ValuationModule() {
             </span>
           </div>
           <div className="flex items-center gap-3">
+            <GlobalSearch />
             <NotificationBell />
             <UserMenu
               persona={persona}
