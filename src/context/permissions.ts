@@ -150,6 +150,45 @@ export const ROLE_ACCESS: Record<string, RoleMatrix> = {
     reporting: "none",
     governance: "full",
   },
+
+  "Chief Trader": {
+    portfolio: "full",
+    "deal-capture": "full",
+    "market-data": "full",
+    valuation: "full",
+    ifrs9: "none",
+    performance: "full",
+    "duration-risk": "full",
+    accounting: "none",
+    reporting: "full",
+    governance: "read-only",
+  },
+
+  "Senior Trader": {
+    portfolio: "full",
+    "deal-capture": "full",
+    "market-data": "full",
+    valuation: "read-only",
+    ifrs9: "none",
+    performance: "full",
+    "duration-risk": "none",
+    accounting: "none",
+    reporting: "read-only",
+    governance: "none",
+  },
+
+  "Junior Trader": {
+    portfolio: "full",
+    "deal-capture": "full",
+    "market-data": "full",
+    valuation: "read-only",
+    ifrs9: "none",
+    performance: "full",
+    "duration-risk": "none",
+    accounting: "none",
+    reporting: "read-only",
+    governance: "none",
+  },
 };
 
 /** Returns the access level for a given role + module, defaulting to "none". */
