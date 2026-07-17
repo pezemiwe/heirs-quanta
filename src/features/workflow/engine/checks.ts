@@ -180,9 +180,39 @@ export function runTenorCheck(economics: DealEconomics): ControlCheck {
   return makeCheck("tenor", "Tenor", "pass", `Tenor ${actual} is within normal bounds.`, { threshold: "≤ 25y", actual });
 }
 
+/** Delegation of Authority (DoA) Limit Check */
+export function runDoACheck(economics: DealEconomics, tradingLimit: number | undefined): ControlCheck {
+  if (tradingLimit === undefined) {
+    return makeCheck("limit", "Delegation of Authority", "pass", "No trading limit configured for this user.");
+  }
+  
+  const fv = economics.faceValue;
+  if (!fv || fv <= 0) {
+    return makeCheck("limit", "Delegation of Authority", "breach", "Face value is zero or missing.");
+  }
+
+  if (fv > tradingLimit) {
+    return makeCheck(
+      "limit",
+      "Delegation of Authority",
+      "breach",
+      `Deal size ₦${fv.toLocaleString()} exceeds your trading limit of ₦${tradingLimit.toLocaleString()}. Chief Trader approval explicitly required.`,
+      { threshold: `≤ ₦${tradingLimit.toLocaleString()}`, actual: `₦${fv.toLocaleString()}` }
+    );
+  }
+
+  return makeCheck(
+    "limit",
+    "Delegation of Authority",
+    "pass",
+    `Deal size ₦${fv.toLocaleString()} is within your trading limit of ₦${tradingLimit.toLocaleString()}.`,
+    { threshold: `≤ ₦${tradingLimit.toLocaleString()}`, actual: `₦${fv.toLocaleString()}` }
+  );
+}
+
 export function runAllChecks(
   economics: DealEconomics,
-  ctx: { existingBookFaceValueNGN: number },
+  ctx: { existingBookFaceValueNGN: number; tradingLimit?: number },
 ): ControlCheck[] {
   return [
     runLimitCheck(economics, ctx.existingBookFaceValueNGN),
@@ -191,6 +221,7 @@ export function runAllChecks(
     runEligibilityCheck(economics),
     runRatingCheck(economics),
     runTenorCheck(economics),
+    runDoACheck(economics, ctx.tradingLimit),
   ];
 }
 

@@ -360,7 +360,10 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       const slip = getSlipOrThrow(id);
       assertTransition(slip.status, "Submitted", getTier(persona.role));
       const now = nowIso();
-      const checks = runAllChecks(slip.economics, { existingBookFaceValueNGN });
+      const checks = runAllChecks(slip.economics, { 
+        existingBookFaceValueNGN, 
+        tradingLimit: persona.tradingLimit 
+      });
       const tx = mkTx(slip.status, "Submitted", actor, now);
       commit((prev) => ({
         ...prev,
@@ -415,6 +418,9 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       assertTransition(slip.status, "Approved", getTier(persona.role));
       if (!allChecksPassed(slip.checks)) {
         throw new Error("All control checks must pass (or be cleared with a reason) before this deal slip can be approved.");
+      }
+      if (slip.createdBy.name === persona.name) {
+        throw new Error("Segregation of Duties breach: You cannot approve a deal slip that you created.");
       }
       const now = nowIso();
       const tx = mkTx(slip.status, "Approved", actor, now, reason);
@@ -713,6 +719,10 @@ export function WorkflowProvider({ children }: { children: ReactNode }) {
       const slip = getSlipOrThrow(dealSlipId);
       const check = slip.checks.find((c) => c.id === checkId);
       const now = nowIso();
+      if (slip.createdBy.name === persona.name) {
+        throw new Error("Segregation of Duties breach: You cannot approve a deal slip that you created.");
+      }
+
       commit((prev) => {
         const dealSlips = prev.dealSlips.map((s) =>
           s.id === dealSlipId

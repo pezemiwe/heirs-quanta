@@ -4,6 +4,7 @@ export interface Persona {
   name: string;
   role: string;
   avatar: string;
+  tradingLimit?: number;
 }
 
 interface PersonaContextValue {

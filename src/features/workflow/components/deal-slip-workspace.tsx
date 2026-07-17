@@ -8,7 +8,7 @@ import { ConfirmDialog } from "../../../components/shared/confirm-dialog";
 import { Modal } from "../../../components/shared/modal";
 import { useWorkflow } from "../store";
 import { isEditable } from "../engine/transitions";
-import { runLimitCheck } from "../engine/checks";
+import { runLimitCheck, runDoACheck } from "../engine/checks";
 import { LimitAlertsFromChecks } from "./limit-alerts";
 import { DealSlipDocumentView } from "./deal-slip-document-view";
 import type { AssetClass, DealDocument, DealEconomics, DealSlip } from "../types";
@@ -178,10 +178,13 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
   // Live preview of the single-issuer concentration check - recomputed as the
   // trader types, so a limit issue is visible before they ever submit, not
   // just after the real check run. Same rule the store uses on submit.
-  const livePreviewCheck = useMemo(() => {
+  const livePreviewChecks = useMemo(() => {
     const existingBookFaceValueNGN = instrumentBook.instruments.reduce((sum, i) => sum + i.faceValue, 0);
-    return runLimitCheck(form, existingBookFaceValueNGN);
-  }, [form, instrumentBook.instruments]);
+    return [
+      runLimitCheck(form, existingBookFaceValueNGN),
+      runDoACheck(form, persona.tradingLimit)
+    ];
+  }, [form, instrumentBook.instruments, persona.tradingLimit]);
 
   if (slip && !editable) {
     // Read-only summary once the slip has moved past Draft / Returned for Amendment.
@@ -290,7 +293,7 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
         </div>
       )}
 
-      <LimitAlertsFromChecks checks={form.faceValue > 0 && form.issuer ? [livePreviewCheck] : []} />
+      <LimitAlertsFromChecks checks={form.faceValue > 0 && form.issuer ? livePreviewChecks : []} />
 
       <div className="rounded-xl border border-border bg-surface p-5 shadow-sm">
         <h2 className="mb-4 text-sm font-semibold text-dark-gray">Instrument Details</h2>
@@ -464,6 +467,11 @@ export function DealSlipWorkspace({ slip, onCreated, onSubmitted, onSaved }: Dea
         )}
 
         <div className="flex items-center gap-3">
+          {persona.tradingLimit !== undefined && (
+            <div className="mr-2 text-xs font-medium text-gray-500">
+              Trading Limit: <span className="text-dark-gray font-semibold">₦{persona.tradingLimit.toLocaleString()}</span>
+            </div>
+          )}
           <button
             type="button"
             onClick={() => setForm(slip?.economics ?? EMPTY_ECONOMICS)}
