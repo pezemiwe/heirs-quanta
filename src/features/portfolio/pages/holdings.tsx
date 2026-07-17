@@ -9,7 +9,7 @@ import {
   Layers,
 } from "lucide-react";
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useSearchParams } from "react-router-dom";
 import {
   DataTable,
   type DataTableColumn,
@@ -41,6 +41,23 @@ type HoldingRow = {
   [key: string]: unknown;
 };
 
+const MATURITY_BUCKETS = [
+  { bucket: "Matured", minDays: -100000, maxDays: 0 },
+  { bucket: "0-3 Months", minDays: 0, maxDays: 90 },
+  { bucket: "3-6 Months", minDays: 90, maxDays: 180 },
+  { bucket: "6-12 Months", minDays: 180, maxDays: 365 },
+  { bucket: "1-2 Years", minDays: 365, maxDays: 730 },
+  { bucket: "2-5 Years", minDays: 730, maxDays: 1826 },
+  { bucket: "5-10 Years", minDays: 1826, maxDays: 3652 },
+  { bucket: "10+ Years", minDays: 3652, maxDays: 100000 },
+];
+function getMaturityBucket(date: string | null): string {
+  if (!date) return "N/A";
+  const days = (new Date(date).getTime() - new Date("2026-05-28").getTime()) / 86400000;
+  const b = MATURITY_BUCKETS.find((x) => days > x.minDays && days <= x.maxDays);
+  return b ? b.bucket : "N/A";
+}
+
 const ALL_CLASSIFICATIONS = ["All", "AC", "FVOCI", "FVTPL"];
 
 const CLASS_STYLE: Record<string, { bg: string; text: string }> = {
@@ -62,6 +79,7 @@ const STAGE_STYLE: Record<string, string> = {
 export function PortfolioHoldings() {
   const v = useValuation();
   const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
 
   const allRows = useMemo<HoldingRow[]>(() => {
     if (!v.hasData) return [];
@@ -81,6 +99,7 @@ export function PortfolioHoldings() {
         eirPct: val?.eir ?? 0,
         couponRate: inst.couponRate,
         maturityDate: inst.maturityDate ?? null,
+        maturityBucket: getMaturityBucket(inst.maturityDate ?? null),
         stage: inst.impairmentStage ?? "N/A",
         status: inst.status as string,
       } as HoldingRow;
@@ -97,8 +116,9 @@ export function PortfolioHoldings() {
   useMemo(() => { setRows(allRows); }, [allRows]);
 
   const [search, setSearch] = useState("");
-  const [typeFilter, setTypeFilter] = useState("All");
-  const [classFilter, setClassFilter] = useState("All");
+  const [typeFilter, setTypeFilter] = useState(searchParams.get("type") || "All");
+  const [classFilter, setClassFilter] = useState(searchParams.get("classification") || "All");
+  const [maturityBucketFilter, setMaturityBucketFilter] = useState(searchParams.get("maturityBucket") || "All");
   const [selected, setSelected] = useState<HoldingRow | null>(null);
   const [editing, setEditing] = useState<HoldingRow | null>(null);
   const [deleting, setDeleting] = useState<HoldingRow | null>(null);
@@ -168,6 +188,8 @@ export function PortfolioHoldings() {
       if (typeFilter !== "All" && r.instrumentType !== typeFilter) return false;
       if (classFilter !== "All" && r.classification !== classFilter)
         return false;
+      if (maturityBucketFilter !== "All" && r.maturityBucket !== maturityBucketFilter)
+        return false;
       if (
         q &&
         !r.name.toLowerCase().includes(q) &&
@@ -177,7 +199,7 @@ export function PortfolioHoldings() {
         return false;
       return true;
     });
-  }, [rows, search, typeFilter, classFilter]);
+  }, [rows, search, typeFilter, classFilter, maturityBucketFilter]);
 
   const totalBookValue = filtered.reduce((s, r) => s + r.bookValueNGN, 0);
 
@@ -296,17 +318,42 @@ export function PortfolioHoldings() {
               <option key={t}>{t}</option>
             ))}
           </select>
-          <select
-            value={classFilter}
-            onChange={(e) => setClassFilter(e.target.value)}
-            className="rounded-lg border border-border bg-surface py-2 px-3 text-sm outline-none focus:border-primary"
-          >
-            {ALL_CLASSIFICATIONS.map((c) => (
-              <option key={c} value={c}>
-                {c === "All" ? "All Classifications" : (CLASS_LABEL[c] ?? c)}
-              </option>
-            ))}
-          </select>
+          {/* classification filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-dark-gray">
+              Class:
+            </span>
+            <select
+              value={classFilter}
+              onChange={(e) => setClassFilter(e.target.value)}
+              className="rounded-lg border border-border bg-white px-3 py-1.5 text-sm outline-none focus:border-primary"
+            >
+              {ALL_CLASSIFICATIONS.map((c) => (
+                <option key={c} value={c}>
+                  {c === "All" ? "All Classes" : c}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* maturity filter */}
+          <div className="flex items-center gap-2">
+            <span className="text-sm font-medium text-dark-gray">
+              Maturity:
+            </span>
+            <select
+              value={maturityBucketFilter}
+              onChange={(e) => setMaturityBucketFilter(e.target.value)}
+              className="rounded-lg border border-border bg-white px-3 py-1.5 text-sm outline-none focus:border-primary"
+            >
+              <option value="All">All Maturities</option>
+              {MATURITY_BUCKETS.map((b) => (
+                <option key={b.bucket} value={b.bucket}>
+                  {b.bucket}
+                </option>
+              ))}
+            </select>
+          </div>
         </div>
       </div>
 

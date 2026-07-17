@@ -17,6 +17,7 @@ import {
   fmtPct,
 } from "../../portfolio/engine/book-compute";
 import { useIFRS9 } from "../../ifrs9/store";
+import { useNavigate } from "react-router-dom";
 
 function SummaryRow({
   label,
@@ -40,6 +41,7 @@ function SummaryRow({
 }
 
 export function ReportingDashboard() {
+  const navigate = useNavigate();
   const { computed: BOOK_COMPUTED, instruments: BOOK_INSTRUMENTS } =
     useBookComputed();
   const ifrs9 = useIFRS9();
@@ -146,7 +148,7 @@ export function ReportingDashboard() {
         >
           <div className="mt-1 space-y-3">
             {byClass.map((b) => (
-              <div key={b.classification}>
+              <div key={b.classification} onClick={() => navigate('/portfolio/holdings?classification=' + b.classification)} className="cursor-pointer rounded-lg p-2 hover:bg-black/5 transition-colors -mx-2">
                 <div className="flex justify-between text-sm mb-1">
                   <span className="flex items-center gap-2">
                     <Badge
@@ -195,7 +197,7 @@ export function ReportingDashboard() {
             <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
             <YAxis
               tick={{ fontSize: 10 }}
-              tickFormatter={(v: number) => `?${(v / 1e9).toFixed(1)}B`}
+              tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(1)}B`}
             />
             <Tooltip
               formatter={
@@ -203,7 +205,7 @@ export function ReportingDashboard() {
               }
               contentStyle={{ fontSize: 12 }}
             />
-            <Bar dataKey="faceValue" fill="#C8102E" radius={[4, 4, 0, 0]} />
+            <Bar dataKey="faceValue" fill="#C8102E" radius={[4, 4, 0, 0]} onClick={(data: any) => navigate('/portfolio/holdings?maturityBucket=' + data.bucket)} cursor="pointer" />
           </BarChart>
         </ResponsiveContainer>
       </SectionCard>

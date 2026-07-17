@@ -122,7 +122,7 @@ export function PortfolioDashboard({ persona }: Props) {
                   <XAxis dataKey="bucket" tick={{ fontSize: 10 }} />
                   <YAxis tick={{ fontSize: 10 }} tickFormatter={(v: number) => `₦${(v / 1e9).toFixed(0)}B`} />
                   <Tooltip formatter={((v: number) => [fmtCompact(v), "Face Value"]) as never} contentStyle={{ fontSize: 12 }} />
-                  <Bar dataKey="faceValueNGN" fill="#C8102E" radius={[4, 4, 0, 0]} />
+                  <Bar dataKey="faceValueNGN" fill="#C8102E" radius={[4, 4, 0, 0]} onClick={(data: any) => navigate('/portfolio/holdings?maturityBucket=' + data.bucket)} cursor="pointer" />
                 </ReBarChart>
               </ResponsiveContainer>
             </div>
@@ -131,7 +131,7 @@ export function PortfolioDashboard({ persona }: Props) {
               <h2 className="mb-4 text-sm font-semibold text-dark-gray">IFRS 9 Classification</h2>
               <div className="space-y-4">
                 {computed!.byClassification.map((b) => (
-                  <div key={b.classification}>
+                  <div key={b.classification} onClick={() => navigate('/portfolio/holdings?classification=' + b.classification)} className="cursor-pointer rounded-lg p-2 hover:bg-black/5 transition-colors -mx-2">
                     <div className="flex justify-between text-xs mb-1">
                       <span className="font-medium text-dark-gray flex items-center gap-1.5">
                         <span className="h-2 w-2 rounded-full inline-block" style={{ background: CLASSIFICATION_COLORS[b.classification] }} />
