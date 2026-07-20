@@ -656,6 +656,16 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
     const maturityDate = parseDate(r[cMaturityDate]);
     const portfolioBook = "Placements <90 Days";
 
+    let faceValue = principal;
+    if (purchaseDate && maturityDate) {
+      const pDate = new Date(purchaseDate);
+      const mDate = new Date(maturityDate);
+      const tenorDays = Math.round((mDate.getTime() - pDate.getTime()) / 86400000);
+      const grossInterest = principal * couponRate * (tenorDays / 365);
+      const netInterest = grossInterest * 0.9; // 10% WHT deducted
+      faceValue = principal + netInterest;
+    }
+
     instruments.push({
       id,
       name: `${institution} Placement ${id}`,
@@ -666,12 +676,12 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
       classification: "AC",
       ifrs13Level: "L2",
       currency: "NGN",
-      faceValue: principal,
+      faceValue,
       purchasePrice: principal,
       purchaseDate: purchaseDate || "2026-01-01",
       maturityDate: maturityDate || "2026-06-01",
-      couponRate,
-      couponFrequency: "Zero",
+      couponRate: 0, // Yield is derived from faceValue vs purchasePrice
+      couponFrequency: "Monthly", // Force monthly schedule for proper accrual steps
       status: "Active",
       bookedBy: institution,
       impairmentStage: "Stage 1",

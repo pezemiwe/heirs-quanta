@@ -176,13 +176,24 @@ export function buildAmortSchedule(
 
   // Determine "Current" period - the one containing valuationDate
   for (let i = 0; i < dates.length; i++) {
-    const eirIncome = ppy > 0 ? opening * periodRate : 0;
+    const cfDate = dates[i];
+    const prev = i === 0 ? parseDate(inst.purchaseDate) : dates[i - 1];
+
+    let eirIncome = 0;
+    if (inst.instrumentType === "Bank Placement") {
+      // Calculate exact simple interest for the period (net of WHT)
+      const days = daysBetween(prev, cfDate);
+      const totalDays = daysBetween(parseDate(inst.purchaseDate), parseDate(inst.maturityDate));
+      const totalNetInterest = inst.faceValue - inst.purchasePrice;
+      eirIncome = totalDays > 0 ? totalNetInterest * (days / totalDays) : 0;
+    } else {
+      eirIncome = ppy > 0 ? opening * periodRate : 0;
+    }
+
     const amort = eirIncome - couponCF;
     const closing = opening + amort;
-    const cfDate = dates[i];
 
     let status: AmortRow["status"];
-    const prev = i === 0 ? parseDate(inst.purchaseDate) : dates[i - 1];
     if (cfDate.getTime() < valuationDate.getTime()) status = "Past";
     else if (
       prev.getTime() <= valuationDate.getTime() &&
