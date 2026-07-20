@@ -433,11 +433,25 @@ function AmortTab({
                 <tr>
                   <th className="px-4 py-2.5 text-left">Per</th>
                   <th className="px-4 py-2.5 text-left">Date</th>
-                  <th className="px-4 py-2.5 text-right">Opening Bal</th>
-                  <th className="px-4 py-2.5 text-right">EIR Income</th>
-                  <th className="px-4 py-2.5 text-right">Coupon CF</th>
-                  <th className="px-4 py-2.5 text-right">Amort</th>
-                  <th className="px-4 py-2.5 text-right">Closing Bal</th>
+                  <th className="px-4 py-2.5 text-right">
+                    {inst.instrumentType === "Bank Placement" ? "Opening Amortised Cost" : "Opening Bal"}
+                  </th>
+                  {inst.instrumentType === "Bank Placement" ? (
+                    <>
+                      <th className="px-4 py-2.5 text-right">This month Interest</th>
+                      <th className="px-4 py-2.5 text-right">WHT (10%)</th>
+                      <th className="px-4 py-2.5 text-right">This month Interest (Net)</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-4 py-2.5 text-right">EIR Income</th>
+                      <th className="px-4 py-2.5 text-right">Coupon CF</th>
+                      <th className="px-4 py-2.5 text-right">Amort</th>
+                    </>
+                  )}
+                  <th className="px-4 py-2.5 text-right">
+                    {inst.instrumentType === "Bank Placement" ? "Closing Amortised Cost" : "Closing Bal"}
+                  </th>
                   <th className="px-4 py-2.5 text-center">Status</th>
                 </tr>
               </thead>
@@ -458,15 +472,19 @@ function AmortTab({
                     <td className="px-4 py-2 text-right">
                       {fmtNumber(r.openingBalance, 0)}
                     </td>
-                    <td className="px-4 py-2 text-right">
-                      {fmtNumber(r.eirIncome, 0)}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      {fmtNumber(r.couponCF, 0)}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      {fmtNumber(r.amortisation, 0)}
-                    </td>
+                    {inst.instrumentType === "Bank Placement" ? (
+                      <>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.eirIncome / 0.9, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber((r.eirIncome / 0.9) * 0.1, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.eirIncome, 0)}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.eirIncome, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.couponCF, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.amortisation, 0)}</td>
+                      </>
+                    )}
                     <td className="px-4 py-2 text-right">
                       {fmtNumber(r.closingBalance, 0)}
                     </td>
