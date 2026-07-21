@@ -225,7 +225,7 @@ export function MonthlySchedule() {
   };
 
   return (
-    <div className="space-y-6 max-h-[calc(100vh-6rem)] overflow-hidden flex flex-col">
+    <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6 max-h-[calc(100vh-6rem)] overflow-hidden flex flex-col">
       <PageHeader 
         title="Monthly Closing Schedule" 
         description={`Reporting Date: ${fmtDate(v.assumptions.valuationDate)}`}
@@ -250,7 +250,7 @@ export function MonthlySchedule() {
           />
         </div>
 
-        <div className="flex-1 overflow-auto">
+        <div className="flex-1 overflow-auto [&::-webkit-scrollbar]:hidden [-ms-overflow-style:none] [scrollbar-width:none]">
           {instrumentsForTab.length === 0 ? (
             <div className="p-8 text-center text-gray-500">
               No instruments found for this asset class.
