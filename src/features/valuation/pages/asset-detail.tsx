@@ -432,6 +432,37 @@ function SummaryTab({
         </SectionCard>
       )}
 
+      {inst.instrumentType === "FGN Bond" && (
+        <SectionCard title="FGN Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row label="TOTAL COUPON RECEIVED TO DATE" value="N/A (Derived)" mono />
+            <Row label="LAST MONTH ACCRUED INTEREST" value="N/A (Derived)" mono />
+            
+            <Row label="EFFECTIVE INTEREST RATE" value={fmtPct(val.eir, 4)} mono />
+            <Row label="DAYS EARNED IN THE MONTH" value="N/A (Derived)" mono />
+            
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
+            <Row label="TOTAL ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
+            
+            <Row label="LAST COUPON DATE" value="N/A (Derived)" mono />
+            <Row label="NEXT COUPON DATE" value="N/A (Derived)" mono />
+            
+            <Row label="LAST MONTH MARKET VALUE (CLEAN)" value="N/A (Derived)" mono />
+            <Row label="LAST MONTH MARKET YIELD" value="N/A (Derived)" mono />
+            <Row label="LAST MONTH MARKET PRICE" value="N/A (Derived)" mono />
+            
+            <Row label="CURRENT MARKET YIELD" value={inst.marketYield != null ? fmtPct(inst.marketYield, 4) : "Derived from Curve"} mono emphasis />
+            <Row label="CURRENT MARKET PRICE" value={fmtNumber((val.cleanFairValue / (inst.faceValue || 1)) * 100, 2)} mono emphasis />
+            
+            <Row label="ACTUAL CURRENT MARKET VALUE (CLEAN)" value={fmtMoney(val.cleanFairValue, ccy)} mono />
+            <Row label="TOTAL CURRENT MARKET VALUE" value={fmtMoney(val.totalBookValueDirty, ccy)} mono emphasis />
+            
+            <Row label="CURRENT MARK TO MARKET GAIN /(LOSS)" value={fmtMoney(val.unrealisedGL, ccy)} mono emphasis />
+            <Row label="MARK TO MARKET TO POST THIS MONTH" value={fmtMoney(val.unrealisedGL, ccy)} mono emphasis />
+          </div>
+        </SectionCard>
+      )}
+
       {inst.instrumentType === "Bank Placement" && ccy !== "NGN" && (
         <SectionCard title="FCY Placement FX Schedule (Accounting)" className="lg:col-span-2">
           {(() => {
