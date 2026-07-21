@@ -262,7 +262,7 @@ export function MonthlySchedule() {
                   {cols.map((c, i) => (
                     <th 
                       key={i} 
-                      className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider ${c.isGrey ? 'bg-gray-200/50 border-l border-gray-300' : ''}`}
+                      className={`px-4 py-3 text-left text-xs font-semibold text-gray-600 uppercase tracking-wider whitespace-nowrap ${c.isGrey ? 'bg-gray-200/50 border-l border-gray-300' : ''}`}
                     >
                       {c.header}
                     </th>
@@ -275,7 +275,7 @@ export function MonthlySchedule() {
                     {cols.map((c, cIdx) => (
                       <td 
                         key={cIdx} 
-                        className={`px-4 py-3 text-sm align-top ${c.isGrey ? 'bg-gray-50/50 border-l border-gray-200' : 'text-gray-900'}`}
+                        className={`px-4 py-3 text-sm align-top whitespace-nowrap ${c.isGrey ? 'bg-gray-50/50 border-l border-gray-200' : 'text-gray-900'}`}
                       >
                         {c.render(val.instrument, val, rIdx)}
                       </td>
