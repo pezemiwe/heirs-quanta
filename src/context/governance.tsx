@@ -467,7 +467,7 @@ const SEED_APPROVALS: ApprovalItem[] = [
     amount: 450_000_000,
     maker: "Chidi Okafor",
     makerRole: "Risk Manager",
-    submittedAt: "2026-05-28 16:30:00",
+    submittedAt: "2026-05-31 16:30:00",
     status: "pending",
     module: "Valuation",
     priority: "medium",
@@ -497,7 +497,7 @@ const SEED_APPROVALS: ApprovalItem[] = [
     amount: 0,
     maker: "Fatima Aliyu",
     makerRole: "Portfolio Analyst",
-    submittedAt: "2026-05-28 14:00:00",
+    submittedAt: "2026-05-31 14:00:00",
     status: "pending",
     module: "Deals",
     priority: "low",
@@ -698,3 +698,4 @@ export function useGovernance() {
     throw new Error("useGovernance must be used inside GovernanceProvider");
   return ctx;
 }
+

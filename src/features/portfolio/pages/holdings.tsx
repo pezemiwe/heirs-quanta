@@ -53,7 +53,7 @@ const MATURITY_BUCKETS = [
 ];
 function getMaturityBucket(date: string | null): string {
   if (!date) return "N/A";
-  const days = (new Date(date).getTime() - new Date("2026-05-28").getTime()) / 86400000;
+  const days = (new Date(date).getTime() - new Date("2026-05-31").getTime()) / 86400000;
   const b = MATURITY_BUCKETS.find((x) => days > x.minDays && days <= x.maxDays);
   return b ? b.bucket : "N/A";
 }
@@ -625,3 +625,4 @@ function EditHoldingDrawer({
     </div>
   );
 }
+

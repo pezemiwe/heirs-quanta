@@ -14,7 +14,7 @@ import {
   useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
-const VALUATION_DATE = "2026-05-28";
+const VALUATION_DATE = "2026-05-31";
 const CALLABLE_TYPES = new Set([
   "FGN Bond",
   "Corporate Bond",
@@ -404,3 +404,4 @@ export function YTMAnalysis() {
     </div>
   );
 }
+

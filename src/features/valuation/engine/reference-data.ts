@@ -10,7 +10,7 @@ import type {
 } from "./types";
 
 /* ─── default valuation date ────────────────────────────── */
-export const DEFAULT_VALUATION_DATE = "2026-05-28";
+export const DEFAULT_VALUATION_DATE = "2026-05-31";
 
 /* ─── yield curves ──────────────────────────────────────── */
 export const DEFAULT_FGN_CURVE: YieldCurvePoint[] = [
@@ -368,7 +368,7 @@ const TYPE_DEFAULTS: Record<
   },
 };
 
-const VALUATION_REFERENCE = new Date("2026-05-28T00:00:00Z");
+const VALUATION_REFERENCE = new Date("2026-05-31T00:00:00Z");
 
 function randomPurchaseAndMaturity(tenor: { min: number; max: number }): {
   purchase: string;

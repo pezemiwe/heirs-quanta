@@ -46,7 +46,7 @@ const INITIAL_TASKS: Task[] = [
     id: "T001",
     title: "Respond to UCA dividend accrual query",
     source: "Group Finance",
-    due: "2026-05-28",
+    due: "2026-05-31",
     priority: "high",
     status: "in-progress",
     notes:
@@ -56,7 +56,7 @@ const INITIAL_TASKS: Task[] = [
     id: "T002",
     title: "IC meeting prep - May investment pipeline review",
     source: "Group Executive",
-    due: "2026-05-28",
+    due: "2026-05-31",
     priority: "medium",
     status: "done",
   },
@@ -539,3 +539,4 @@ function TaskFormModal({
     </div>
   );
 }
+

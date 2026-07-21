@@ -90,17 +90,18 @@ export function couponDates(inst: Instrument): Date[] {
   const maturity = parseDate(inst.maturityDate);
   const months = monthsPerPeriod(inst.couponFrequency);
   if (months === 0) return [maturity]; // zero coupon / equity / N/A
+  
   const dates: Date[] = [];
-  // generate forward from purchase
-  let i = 1;
-  let d = addMonths(purchase, i * months);
-  while (d.getTime() < maturity.getTime()) {
-    dates.push(d);
-    i++;
-    d = addMonths(purchase, i * months);
+  let current = new Date(maturity.getTime());
+  
+  // Anchor on maturity and step backwards until we hit a date <= purchase date
+  while (current.getTime() > purchase.getTime()) {
+    dates.push(current);
+    current = addMonths(current, -months);
   }
-  dates.push(maturity);
-  return dates;
+  
+  // Reverse to make it chronological (earliest coupon after purchase comes first)
+  return dates.reverse();
 }
 
 /* ─── EIR solver (Newton on price-from-cf) ───────────────── */
@@ -181,10 +182,10 @@ export function buildAmortSchedule(
     const cfDate = dates[i];
     const prev = i === 0 ? parseDate(inst.purchaseDate) : dates[i - 1];
 
+    const days = daysBetween(prev, cfDate);
     let eirIncome = 0;
     if (inst.instrumentType === "Bank Placement") {
       // Calculate exact simple interest for the period (net of WHT)
-      const days = daysBetween(prev, cfDate);
       const totalDays = daysBetween(parseDate(inst.purchaseDate), parseDate(inst.maturityDate));
       const totalNetInterest = inst.faceValue - inst.purchasePrice;
       eirIncome = totalDays > 0 ? totalNetInterest * (days / totalDays) : 0;
@@ -206,6 +207,8 @@ export function buildAmortSchedule(
 
     schedule.push({
       period: i + 1,
+      periodStartDate: toISO(prev),
+      daysBetween: days,
       date: toISO(cfDate),
       openingBalance: opening,
       eirIncome,
@@ -259,17 +262,14 @@ export function accruedInterest(
 ): number {
   const ppy = periodsPerYear(inst.couponFrequency);
   if (ppy === 0) return 0;
-  const couponCF = (inst.faceValue * inst.couponRate) / ppy;
 
   // find current period bounds
   let periodStart = parseDate(inst.purchaseDate);
   for (const row of schedule) {
     const rowDate = parseDate(row.date);
     if (rowDate.getTime() >= valuationDate.getTime()) {
-      const total = daysBetween(periodStart, rowDate);
       const elapsed = daysBetween(periodStart, valuationDate);
-      const frac = total > 0 ? Math.max(0, elapsed / total) : 0;
-      return couponCF * frac;
+      return inst.faceValue * (inst.couponRate ?? 0) * (Math.max(0, elapsed) / 365);
     }
     periodStart = rowDate;
   }

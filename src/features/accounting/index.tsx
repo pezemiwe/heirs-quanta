@@ -8,6 +8,7 @@ import {
   Receipt,
   ShieldAlert,
   Wallet,
+  Table,
 } from "lucide-react";
 import {
   ModuleShell,
@@ -22,6 +23,7 @@ import { EIRAmortisation } from "./pages/eir-amortisation";
 import { CouponRecognition } from "./pages/coupon-recognition";
 import { Disposals } from "./pages/disposals";
 import { MultiCurrency } from "./pages/multi-currency";
+import { MonthlySchedule } from "./pages/monthly-schedule";
 
 export type AccountingPage =
   | "journals"
@@ -31,7 +33,8 @@ export type AccountingPage =
   | "coupon-recognition"
   | "impairment"
   | "disposals"
-  | "multi-currency";
+  | "multi-currency"
+  | "monthly-schedule";
 
 const NAV: ModuleNavItem[] = [
   {
@@ -82,12 +85,19 @@ const NAV: ModuleNavItem[] = [
     icon: <Wallet className="h-4 w-4" />,
     group: "lifecycle",
   },
+  {
+    id: "monthly-schedule",
+    label: "Monthly Closing Schedule",
+    icon: <Table className="h-4 w-4" />,
+    group: "reports",
+  },
 ];
 
 const GROUPS: Record<string, string> = {
   ledger: "General Ledger",
   valuation: "Valuation Postings",
   lifecycle: "Lifecycle",
+  reports: "Reports & Schedules",
 };
 
 function PageBody({ page }: { page: AccountingPage }) {
@@ -108,6 +118,8 @@ function PageBody({ page }: { page: AccountingPage }) {
       return <Disposals />;
     case "multi-currency":
       return <MultiCurrency />;
+    case "monthly-schedule":
+      return <MonthlySchedule />;
   }
 }
 

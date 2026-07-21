@@ -243,6 +243,13 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
   const headerMap = buildHeaderMap(rows[hdr]);
   const col = (label: string, aliases: string[], fallback: number) =>
     resolveColumn(headerMap, warnings, label, aliases, fallback);
+  const optCol = (aliases: string[]) => {
+    for (const alias of aliases) {
+      const idx = headerMap.get(alias);
+      if (idx !== undefined) return idx;
+    }
+    return -1;
+  };
 
   const cId = col("IDENTIFIER", ["identifier"], 1);
   const cDealId = col("IDENTIFIER/DEAL ID", ["identifierdealid"], 4);
@@ -262,6 +269,22 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
   const cCostPriceClean = col("COST PRICE/CLEAN", ["costpriceclean"], 15);
   const cMarketYield = col("CURRENT MARKET YIELD", ["currentmarketyield"], 31);
   const cMarketPrice = col("CURRENT MARKET PRICE", ["currentmarketprice"], 32);
+
+  const c_couponReceivedToDateGross = optCol(["totalcouponreceivedtodate"]);
+  const c_lastMonthAccruedInterest = optCol(["lastmonthaccruedinterest"]);
+  const c_effectiveInterestRate = optCol(["effectiveinterestrate"]);
+  const c_daysEarnedInMonth = optCol(["daysearnedinthemonth"]);
+  const c_interestIncomeThisMonth = optCol(["thismonthinterest"]);
+  const c_totalAccruedInterest = optCol(["totalaccruedinterest"]);
+  const c_lastMonthMarketValueClean = optCol(["lastmonthmarketvalueclean"]);
+  const c_lastMonthMarketYield = optCol(["lastmonthmarketyield"]);
+  const c_lastMonthMarketPrice = optCol(["lastmonthmarketprice"]);
+  const c_currentMarketYield = optCol(["currentmarketyield"]);
+  const c_currentMarketPrice = optCol(["currentmarketprice"]);
+  const c_actualCurrentMarketValueClean = optCol(["actualcurrentmarketvalueclean"]);
+  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalue"]);
+  const c_currentMtmGainLoss = optCol(["currentmarktomarketgainloss"]);
+  const c_monthlyMtmToPost = optCol(["marktomarkettopostthismonth"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -288,7 +311,99 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
     if (!maturityDate) warnings.push(`Row ${i + 1}: missing maturity date for ${id}`);
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
+    const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    if (c_couponReceivedToDateGross >= 0) {
+      const raw = String(r[c_couponReceivedToDateGross] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["couponReceivedToDateGross"] = parseNum(raw);
+      }
+    }
+    if (c_lastMonthAccruedInterest >= 0) {
+      const raw = String(r[c_lastMonthAccruedInterest] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["lastMonthAccruedInterest"] = parseNum(raw);
+      }
+    }
+    if (c_effectiveInterestRate >= 0) {
+      const raw = String(r[c_effectiveInterestRate] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["effectiveInterestRate"] = parseNum(raw);
+      }
+    }
+    if (c_daysEarnedInMonth >= 0) {
+      const raw = String(r[c_daysEarnedInMonth] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["daysEarnedInMonth"] = parseNum(raw);
+      }
+    }
+    if (c_interestIncomeThisMonth >= 0) {
+      const raw = String(r[c_interestIncomeThisMonth] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["interestIncomeThisMonth"] = parseNum(raw);
+      }
+    }
+    if (c_totalAccruedInterest >= 0) {
+      const raw = String(r[c_totalAccruedInterest] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["totalAccruedInterest"] = parseNum(raw);
+      }
+    }
+    if (c_lastMonthMarketValueClean >= 0) {
+      const raw = String(r[c_lastMonthMarketValueClean] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["lastMonthMarketValueClean"] = parseNum(raw);
+      }
+    }
+    if (c_lastMonthMarketYield >= 0) {
+      const raw = String(r[c_lastMonthMarketYield] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["lastMonthMarketYield"] = parseNum(raw);
+      }
+    }
+    if (c_lastMonthMarketPrice >= 0) {
+      const raw = String(r[c_lastMonthMarketPrice] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["lastMonthMarketPrice"] = parseNum(raw);
+      }
+    }
+    if (c_currentMarketYield >= 0) {
+      const raw = String(r[c_currentMarketYield] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["currentMarketYield"] = parseNum(raw);
+      }
+    }
+    if (c_currentMarketPrice >= 0) {
+      const raw = String(r[c_currentMarketPrice] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["currentMarketPrice"] = parseNum(raw);
+      }
+    }
+    if (c_actualCurrentMarketValueClean >= 0) {
+      const raw = String(r[c_actualCurrentMarketValueClean] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["actualCurrentMarketValueClean"] = parseNum(raw);
+      }
+    }
+    if (c_totalCurrentMarketValue >= 0) {
+      const raw = String(r[c_totalCurrentMarketValue] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["totalCurrentMarketValue"] = parseNum(raw);
+      }
+    }
+    if (c_currentMtmGainLoss >= 0) {
+      const raw = String(r[c_currentMtmGainLoss] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["currentMtmGainLoss"] = parseNum(raw);
+      }
+    }
+    if (c_monthlyMtmToPost >= 0) {
+      const raw = String(r[c_monthlyMtmToPost] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["monthlyMtmToPost"] = parseNum(raw);
+      }
+    }
     instruments.push({
+      uploadedManualValues,
       id,
       name,
       instrumentType: "FGN Bond",
@@ -329,6 +444,13 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
   const headerMap = buildHeaderMap(rows[hdr]);
   const col = (label: string, aliases: string[], fallback: number) =>
     resolveColumn(headerMap, warnings, label, aliases, fallback);
+  const optCol = (aliases: string[]) => {
+    for (const alias of aliases) {
+      const idx = headerMap.get(alias);
+      if (idx !== undefined) return idx;
+    }
+    return -1;
+  };
 
   const cId = col("IDENTIFIER/DEAL ID", ["identifierdealid"], 1);
   const cDealer = col("INVESTMENT FIRM", ["investmentfirm"], 2);
@@ -340,6 +462,17 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
   const cFaceValue = col("FACE VALUE", ["facevalue"], 11);
   const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 15);
   const cCost = col("COST", ["cost"], 14);
+
+  const c_couponReceivedToDateGross = optCol(["couponreceivedtodategross"]);
+  const c_couponReceivedToDateNet = optCol(["couponreceivedtodatenet"]);
+  const c_principalRepaymentThisMonth = optCol(["principalrepaymentforthemonth"]);
+  const c_lastMonthAccruedInterest = optCol(["lastmonthaccruedinterest"]);
+  const c_interestIncomeThisMonth = optCol(["thismonthinterest"]);
+  const c_grossCoupon = optCol(["grosscoupon"]);
+  const c_wht = optCol(["chargeswht"]);
+  const c_netCoupon = optCol(["netcoupon"]);
+  const c_totalAccruedInterest = optCol(["totalaccruedinterest"]);
+  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalue"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -361,7 +494,69 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
     if (!purchaseDate) warnings.push(`Row ${i + 1}: missing value date for ${id}`);
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
+    const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    if (c_couponReceivedToDateGross >= 0) {
+      const raw = String(r[c_couponReceivedToDateGross] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["couponReceivedToDateGross"] = parseNum(raw);
+      }
+    }
+    if (c_couponReceivedToDateNet >= 0) {
+      const raw = String(r[c_couponReceivedToDateNet] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["couponReceivedToDateNet"] = parseNum(raw);
+      }
+    }
+    if (c_principalRepaymentThisMonth >= 0) {
+      const raw = String(r[c_principalRepaymentThisMonth] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["principalRepaymentThisMonth"] = parseNum(raw);
+      }
+    }
+    if (c_lastMonthAccruedInterest >= 0) {
+      const raw = String(r[c_lastMonthAccruedInterest] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["lastMonthAccruedInterest"] = parseNum(raw);
+      }
+    }
+    if (c_interestIncomeThisMonth >= 0) {
+      const raw = String(r[c_interestIncomeThisMonth] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["interestIncomeThisMonth"] = parseNum(raw);
+      }
+    }
+    if (c_grossCoupon >= 0) {
+      const raw = String(r[c_grossCoupon] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["grossCoupon"] = parseNum(raw);
+      }
+    }
+    if (c_wht >= 0) {
+      const raw = String(r[c_wht] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["wht"] = parseNum(raw);
+      }
+    }
+    if (c_netCoupon >= 0) {
+      const raw = String(r[c_netCoupon] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["netCoupon"] = parseNum(raw);
+      }
+    }
+    if (c_totalAccruedInterest >= 0) {
+      const raw = String(r[c_totalAccruedInterest] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["totalAccruedInterest"] = parseNum(raw);
+      }
+    }
+    if (c_totalCurrentMarketValue >= 0) {
+      const raw = String(r[c_totalCurrentMarketValue] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["totalCurrentMarketValue"] = parseNum(raw);
+      }
+    }
     instruments.push({
+      uploadedManualValues,
       id,
       name,
       instrumentType: "State Bond",
@@ -411,6 +606,13 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
   const headerMap = buildHeaderMap(rows[hdr]);
   const col = (label: string, aliases: string[], fallback: number) =>
     resolveColumn(headerMap, warnings, label, aliases, fallback);
+  const optCol = (aliases: string[]) => {
+    for (const alias of aliases) {
+      const idx = headerMap.get(alias);
+      if (idx !== undefined) return idx;
+    }
+    return -1;
+  };
 
   const cId = col("IDENTIFIER", ["identifier"], 1);
   const cDealer = col("DEALER", ["dealer"], 2);
@@ -422,6 +624,13 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
   const cFaceValue = col("FACE VALUE", ["facevalue"], 11);
   const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 15);
   const cCost = col("COST", ["cost"], 14);
+
+  const c_couponReceivedToDateNet = optCol(["totalcouponreceivedtodatenet"]);
+  const c_couponReceivedToDateGross = optCol(["totalcoupongross"]);
+  const c_lastMonthAccruedInterest = optCol(["lastmonthaccruedinterest"]);
+  const c_interestIncomeThisMonth = optCol(["thismonthinterest"]);
+  const c_totalAccruedInterest = optCol(["totalaccruedinterest"]);
+  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalue"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -442,7 +651,45 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
 
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
+    const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    if (c_couponReceivedToDateNet >= 0) {
+      const raw = String(r[c_couponReceivedToDateNet] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["couponReceivedToDateNet"] = parseNum(raw);
+      }
+    }
+    if (c_couponReceivedToDateGross >= 0) {
+      const raw = String(r[c_couponReceivedToDateGross] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["couponReceivedToDateGross"] = parseNum(raw);
+      }
+    }
+    if (c_lastMonthAccruedInterest >= 0) {
+      const raw = String(r[c_lastMonthAccruedInterest] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["lastMonthAccruedInterest"] = parseNum(raw);
+      }
+    }
+    if (c_interestIncomeThisMonth >= 0) {
+      const raw = String(r[c_interestIncomeThisMonth] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["interestIncomeThisMonth"] = parseNum(raw);
+      }
+    }
+    if (c_totalAccruedInterest >= 0) {
+      const raw = String(r[c_totalAccruedInterest] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["totalAccruedInterest"] = parseNum(raw);
+      }
+    }
+    if (c_totalCurrentMarketValue >= 0) {
+      const raw = String(r[c_totalCurrentMarketValue] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["totalCurrentMarketValue"] = parseNum(raw);
+      }
+    }
     instruments.push({
+      uploadedManualValues,
       id,
       name,
       instrumentType: "Corporate Bond",
@@ -501,6 +748,13 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
   const headerMap = buildHeaderMap(rows[hdr]);
   const col = (label: string, aliases: string[], fallback: number) =>
     resolveColumn(headerMap, warnings, label, aliases, fallback);
+  const optCol = (aliases: string[]) => {
+    for (const alias of aliases) {
+      const idx = headerMap.get(alias);
+      if (idx !== undefined) return idx;
+    }
+    return -1;
+  };
 
   const cDealer = col("DEALER", ["dealer"], 1);
   const cId = col("IDENTIFIER", ["identifier"], 2);
@@ -511,6 +765,15 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
   const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 7);
   const cInterestRate = col("INTEREST RATE", ["interestrate"], 8);
   const cFaceValue = col("FACEVALUE", ["facevalue"], 9);
+
+  const c_interestReceivable = optCol(["interestreceivable"]);
+  const c_effectiveInterestRate = optCol(["effectiveinterestrate"]);
+  const c_interestIncomeThisMonth = optCol(["interestincomeforthemonthincomeleg"]);
+  const c_accruedInterestClosing = optCol(["closingaccruedinterestassetleg"]);
+  const c_currentMarketBidDiscountRate = optCol(["currentmarketbiddiscountrate"]);
+  const c_currentMarketValue = optCol(["currentmarketvalue"]);
+  const c_currentMtmGainLoss = optCol(["currentmarktomarketgainlossassetleg"]);
+  const c_monthlyMtmToPost = optCol(["monthlymarktomarkettopostincomeleg"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -531,7 +794,57 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
 
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
+    const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    if (c_interestReceivable >= 0) {
+      const raw = String(r[c_interestReceivable] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["interestReceivable"] = parseNum(raw);
+      }
+    }
+    if (c_effectiveInterestRate >= 0) {
+      const raw = String(r[c_effectiveInterestRate] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["effectiveInterestRate"] = parseNum(raw);
+      }
+    }
+    if (c_interestIncomeThisMonth >= 0) {
+      const raw = String(r[c_interestIncomeThisMonth] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["interestIncomeThisMonth"] = parseNum(raw);
+      }
+    }
+    if (c_accruedInterestClosing >= 0) {
+      const raw = String(r[c_accruedInterestClosing] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["accruedInterestClosing"] = parseNum(raw);
+      }
+    }
+    if (c_currentMarketBidDiscountRate >= 0) {
+      const raw = String(r[c_currentMarketBidDiscountRate] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["currentMarketBidDiscountRate"] = parseNum(raw);
+      }
+    }
+    if (c_currentMarketValue >= 0) {
+      const raw = String(r[c_currentMarketValue] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["currentMarketValue"] = parseNum(raw);
+      }
+    }
+    if (c_currentMtmGainLoss >= 0) {
+      const raw = String(r[c_currentMtmGainLoss] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["currentMtmGainLoss"] = parseNum(raw);
+      }
+    }
+    if (c_monthlyMtmToPost >= 0) {
+      const raw = String(r[c_monthlyMtmToPost] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["monthlyMtmToPost"] = parseNum(raw);
+      }
+    }
     instruments.push({
+      uploadedManualValues,
       id,
       name,
       instrumentType: "T-Bill",
@@ -570,6 +883,13 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
   const headerMap = buildHeaderMap(rows[hdr]);
   const col = (label: string, aliases: string[], fallback: number) =>
     resolveColumn(headerMap, warnings, label, aliases, fallback);
+  const optCol = (aliases: string[]) => {
+    for (const alias of aliases) {
+      const idx = headerMap.get(alias);
+      if (idx !== undefined) return idx;
+    }
+    return -1;
+  };
 
   const cDealer = col("DEALER", ["dealer"], 1);
   const cId = col("IDENTIFIER", ["identifier"], 2);
@@ -580,6 +900,16 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
   const cValueDate = col("VALUE DATE", ["valuedate"], 10);
   const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 11);
   const cOpeningFx = col("OPENING EXCHANGE RATE", ["openingexchangerate", "openingrate"], -1);
+
+  const c_interestReceivable = optCol(["interestreceivableusd"]);
+  const c_effectiveInterestRate = optCol(["effectiveinterestrate"]);
+  const c_interestIncomeThisMonth = optCol(["thismonthinterestincomeusd"]);
+  const c_accruedInterestClosingUsd = optCol(["accruedinterestusd"]);
+  const c_accruedInterestClosingNgn = optCol(["accruedinterestngn"]);
+  const c_closingAmortisedCostUsd = optCol(["closingamortisedcostusd"]);
+  const c_thisMonthExchangeGainLoss = optCol(["thismonthexchangegainlossngn"]);
+  const c_totalUnrealisedExchangeGainLoss = optCol(["totalunrealisedexchangegainlossngn"]);
+  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalueinclusiveoffxngn"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -598,7 +928,63 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
     const maturityDate = parseDate(r[cMaturityDate]);
     const portfolioBook = str(r[cPortfolio]) || "USD Placement Book";
 
+    const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    if (c_interestReceivable >= 0) {
+      const raw = String(r[c_interestReceivable] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["interestReceivable"] = parseNum(raw);
+      }
+    }
+    if (c_effectiveInterestRate >= 0) {
+      const raw = String(r[c_effectiveInterestRate] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["effectiveInterestRate"] = parseNum(raw);
+      }
+    }
+    if (c_interestIncomeThisMonth >= 0) {
+      const raw = String(r[c_interestIncomeThisMonth] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["interestIncomeThisMonth"] = parseNum(raw);
+      }
+    }
+    if (c_accruedInterestClosingUsd >= 0) {
+      const raw = String(r[c_accruedInterestClosingUsd] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["accruedInterestClosingUsd"] = parseNum(raw);
+      }
+    }
+    if (c_accruedInterestClosingNgn >= 0) {
+      const raw = String(r[c_accruedInterestClosingNgn] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["accruedInterestClosingNgn"] = parseNum(raw);
+      }
+    }
+    if (c_closingAmortisedCostUsd >= 0) {
+      const raw = String(r[c_closingAmortisedCostUsd] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["closingAmortisedCostUsd"] = parseNum(raw);
+      }
+    }
+    if (c_thisMonthExchangeGainLoss >= 0) {
+      const raw = String(r[c_thisMonthExchangeGainLoss] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["thisMonthExchangeGainLoss"] = parseNum(raw);
+      }
+    }
+    if (c_totalUnrealisedExchangeGainLoss >= 0) {
+      const raw = String(r[c_totalUnrealisedExchangeGainLoss] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["totalUnrealisedExchangeGainLoss"] = parseNum(raw);
+      }
+    }
+    if (c_totalCurrentMarketValue >= 0) {
+      const raw = String(r[c_totalCurrentMarketValue] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["totalCurrentMarketValue"] = parseNum(raw);
+      }
+    }
     instruments.push({
+      uploadedManualValues,
       id,
       name: `${dealer} USD Placement ${id}`,
       instrumentType: "Fixed Deposit",
@@ -637,6 +1023,13 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
   const headerMap = buildHeaderMap(rows[hdr]);
   const col = (label: string, aliases: string[], fallback: number) =>
     resolveColumn(headerMap, warnings, label, aliases, fallback);
+  const optCol = (aliases: string[]) => {
+    for (const alias of aliases) {
+      const idx = headerMap.get(alias);
+      if (idx !== undefined) return idx;
+    }
+    return -1;
+  };
 
   const cId = col("IDENTIFIER", ["identifier"], 1);
   const cInstitution = col("INSTITUTION", ["institution"], 2);
@@ -644,6 +1037,13 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
   const cRate = col("RATE", ["rate"], 4);
   const cValueDate = col("VALUE DATE", ["valuedate"], 5);
   const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 6);
+
+  const c_interestReceivable = optCol(["interestreceivable"]);
+  const c_effectiveInterestRate = optCol(["effectiveinterestrate"]);
+  const c_interestIncomeThisMonth = optCol(["thismonthinterest"]);
+  const c_wht = optCol(["wht10", "wht"]);
+  const c_netIncome = optCol(["netincome"]);
+  const c_accruedInterestClosing = optCol(["closingaccruedinterest", "closingamortisedcost"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -670,7 +1070,45 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
       faceValue = principal + netInterest;
     }
 
+    const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    if (c_interestReceivable >= 0) {
+      const raw = String(r[c_interestReceivable] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["interestReceivable"] = parseNum(raw);
+      }
+    }
+    if (c_effectiveInterestRate >= 0) {
+      const raw = String(r[c_effectiveInterestRate] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["effectiveInterestRate"] = parseNum(raw);
+      }
+    }
+    if (c_interestIncomeThisMonth >= 0) {
+      const raw = String(r[c_interestIncomeThisMonth] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["interestIncomeThisMonth"] = parseNum(raw);
+      }
+    }
+    if (c_wht >= 0) {
+      const raw = String(r[c_wht] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["wht"] = parseNum(raw);
+      }
+    }
+    if (c_netIncome >= 0) {
+      const raw = String(r[c_netIncome] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["netIncome"] = parseNum(raw);
+      }
+    }
+    if (c_accruedInterestClosing >= 0) {
+      const raw = String(r[c_accruedInterestClosing] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["accruedInterestClosing"] = parseNum(raw);
+      }
+    }
     instruments.push({
+      uploadedManualValues,
       id,
       name: `${institution} Placement ${id}`,
       instrumentType: "Bank Placement",
@@ -714,6 +1152,13 @@ function parseQuotedEquity(
   const headerMap = buildHeaderMap(rows[hdr]);
   const col = (label: string, aliases: string[], fallback: number) =>
     resolveColumn(headerMap, warnings, label, aliases, fallback);
+  const optCol = (aliases: string[]) => {
+    for (const alias of aliases) {
+      const idx = headerMap.get(alias);
+      if (idx !== undefined) return idx;
+    }
+    return -1;
+  };
 
   const cId = col("IDENTIFIER", ["identifier"], 1);
   const cPortfolio = col("PORTFOLIO", ["portfolio"], 2);
@@ -724,6 +1169,15 @@ function parseQuotedEquity(
   const cCost = col("COST", ["cost"], 7);
   const cClosingMarketPrice = col("CLOSING MARKET PRICE", ["closingmarketprice"], 8);
   const cCurrentMarketValue = col("CURRENT MARKET VALUE", ["currentmarketvalue"], 9);
+
+  const c_currentMarketValue = optCol(["currentmarketvalueassetleg"]);
+  const c_openingGainLoss = optCol(["openinggainlossassetleg"]);
+  const c_currentMtmGainLoss = optCol(["currentmtmfairvaluegainlossassetleg"]);
+  const c_monthlyMtmToPost = optCol(["monthlyfairvaluegainlossincomeleg"]);
+  const c_grossDividendReceived = optCol(["grossdividendreceivedforthemonth"]);
+  const c_wht = optCol(["wht"]);
+  const c_netDividendReceived = optCol(["dividendreceivedforthemonthnetofwht"]);
+  const c_ytdDividendReceivedNet = optCol(["ytddividendreceivednet"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -752,7 +1206,57 @@ function parseQuotedEquity(
     const ytdReturn =
       costBasisM > 0 ? (mktValueM - costBasisM) / costBasisM : 0;
 
+    const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    if (c_currentMarketValue >= 0) {
+      const raw = String(r[c_currentMarketValue] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["currentMarketValue"] = parseNum(raw);
+      }
+    }
+    if (c_openingGainLoss >= 0) {
+      const raw = String(r[c_openingGainLoss] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["openingGainLoss"] = parseNum(raw);
+      }
+    }
+    if (c_currentMtmGainLoss >= 0) {
+      const raw = String(r[c_currentMtmGainLoss] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["currentMtmGainLoss"] = parseNum(raw);
+      }
+    }
+    if (c_monthlyMtmToPost >= 0) {
+      const raw = String(r[c_monthlyMtmToPost] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["monthlyMtmToPost"] = parseNum(raw);
+      }
+    }
+    if (c_grossDividendReceived >= 0) {
+      const raw = String(r[c_grossDividendReceived] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["grossDividendReceived"] = parseNum(raw);
+      }
+    }
+    if (c_wht >= 0) {
+      const raw = String(r[c_wht] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["wht"] = parseNum(raw);
+      }
+    }
+    if (c_netDividendReceived >= 0) {
+      const raw = String(r[c_netDividendReceived] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["netDividendReceived"] = parseNum(raw);
+      }
+    }
+    if (c_ytdDividendReceivedNet >= 0) {
+      const raw = String(r[c_ytdDividendReceivedNet] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["ytdDividendReceivedNet"] = parseNum(raw);
+      }
+    }
     instruments.push({
+      uploadedManualValues,
       id,
       name: company,
       instrumentType: "Equity",
@@ -952,7 +1456,7 @@ export function instrumentToHolding(inst: Instrument): Holding {
  */
 function generateId(provided: string | undefined, prefix: string): string {
   const p = (provided || "").trim();
-  if (!p || /^(PLACEMENT|TB|TBILL|COR|SG|FGN|EQ|QEQU|PUSD|INV)\s*\d*$/i.test(p)) {
+  if (!p) {
     const rand = Math.random().toString(36).substring(2, 6).toUpperCase();
     return `HQ-${prefix}-${rand}`;
   }

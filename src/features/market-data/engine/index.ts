@@ -16,7 +16,7 @@ import type {
 
 /* ─── constants (ported from notebook) ───────────────────────────────── */
 
-export const VALUATION_DATE = "2026-05-28";
+export const VALUATION_DATE = "2026-05-31";
 export const HISTORY_DAYS = 90;
 export const ALERT_BPS = 25;
 
@@ -563,3 +563,4 @@ export function applyBondYieldOverride(
     lastUpdated: new Date().toISOString(),
   };
 }
+

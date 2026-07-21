@@ -50,7 +50,7 @@ const DEFAULT_ACTIONS: Record<number, string> = {
 
 function toWatchRow(r: SecurityComputed, idx: number): WatchRow {
   const added = new Date(
-    new Date("2026-05-28").getTime() - (idx % 14) * 24 * 3600 * 1000,
+    new Date("2026-05-31").getTime() - (idx % 14) * 24 * 3600 * 1000,
   )
     .toISOString()
     .slice(0, 10);
@@ -372,3 +372,4 @@ export function IFRS9Watchlist() {
     </div>
   );
 }
+

@@ -69,7 +69,50 @@ export interface Instrument {
   /* FX specific properties for FCY instruments */
   purchaseFxRate?: number;
   openingFxRate?: number;
+
+  /* Reconciliation data (uploaded manual values from grey cells) */
+  uploadedManualValues?: Partial<Record<ManualValueKey, number>>;
 }
+
+export type ManualValueKey =
+  | "interestReceivable"
+  | "effectiveInterestRate"
+  | "interestIncomeThisMonth"
+  | "wht"
+  | "netIncome"
+  | "accruedInterestClosing"
+  | "accruedInterestClosingNgn"
+  | "accruedInterestClosingUsd"
+  | "closingAmortisedCost"
+  | "closingAmortisedCostNgn"
+  | "closingAmortisedCostUsd"
+  | "currentMarketBidDiscountRate"
+  | "currentMarketValue"
+  | "currentMarketValueNgn"
+  | "currentMarketValueUsd"
+  | "currentMtmGainLoss"
+  | "monthlyMtmToPost"
+  | "couponReceivedToDateGross"
+  | "couponReceivedToDateNet"
+  | "principalRepaymentThisMonth"
+  | "lastMonthAccruedInterest"
+  | "grossCoupon"
+  | "netCoupon"
+  | "totalAccruedInterest"
+  | "totalCurrentMarketValue"
+  | "daysEarnedInMonth"
+  | "lastMonthMarketValueClean"
+  | "lastMonthMarketYield"
+  | "lastMonthMarketPrice"
+  | "currentMarketYield"
+  | "currentMarketPrice"
+  | "actualCurrentMarketValueClean"
+  | "thisMonthExchangeGainLoss"
+  | "totalUnrealisedExchangeGainLoss"
+  | "openingGainLoss"
+  | "grossDividendReceived"
+  | "netDividendReceived"
+  | "ytdDividendReceivedNet";
 
 /* ─── valuation engine assumptions ──────────────────────── */
 export interface Assumptions {
@@ -98,6 +141,8 @@ export interface YieldCurvePoint {
 /* ─── derived schedules / metrics ───────────────────────── */
 export interface AmortRow {
   period: number;
+  periodStartDate: string;
+  daysBetween: number;
   date: string;
   openingBalance: number;
   eirIncome: number;

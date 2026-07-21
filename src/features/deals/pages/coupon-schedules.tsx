@@ -15,7 +15,7 @@ import {
   daysBetween,
 } from "../../portfolio/engine/book-compute";
 
-const VALUATION_DATE = "2026-05-28";
+const VALUATION_DATE = "2026-05-31";
 
 interface CouponRow {
   id: string;
@@ -209,3 +209,4 @@ export function CouponSchedules() {
     </div>
   );
 }
+

@@ -32,7 +32,7 @@ const FREQ_MONTHS: Record<string, number> = {
   Annual: 12,
 };
 
-const VALUATION_DATE = new Date("2026-05-28");
+const VALUATION_DATE = new Date("2026-05-31");
 
 const COLUMNS: DataTableColumn<CouponRow>[] = [
   {
@@ -199,3 +199,4 @@ export function CouponRecognition() {
     </div>
   );
 }
+
