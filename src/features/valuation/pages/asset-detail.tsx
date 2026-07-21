@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Trash2, AlertCircle } from "lucide-react";
 import { useValuation } from "../store";
-import { valueInstrument } from "../engine";
+import { valueInstrument, parseDate, toISO } from "../engine";
 import { Tabs } from "../../../components/shared/tabs";
 import { SectionCard } from "../../../components/shared/section-card";
 import {
@@ -244,6 +244,37 @@ function SummaryTab({
   const isAC = inst.classification === "AC";
   const isFVOCI = inst.classification === "FVOCI";
   const isFVTPL = inst.classification === "FVTPL";
+  const valDate = new Date(valuationDate);
+  const monthStart = new Date(valDate.getFullYear(), valDate.getMonth(), 1);
+  const monthStartMs = monthStart.getTime();
+  const valDateMs = valDate.getTime();
+  const maturityDate = parseDate(inst.maturityDate);
+  const valueDate = parseDate(inst.purchaseDate);
+  const currentPeriod = val.amortSchedule.find(r => r.status === "Current");
+  const lastCouponDate = currentPeriod ? parseDate(currentPeriod.periodStartDate) : parseDate(inst.purchaseDate);
+  const nextCouponDate = currentPeriod ? parseDate(currentPeriod.date) : maturityDate;
+
+  // T-Bill variables
+  const repDateMs = Math.min(maturityDate.getTime(), valDateMs);
+  const tbillStartMs = Math.max(valueDate.getTime(), monthStartMs);
+  const tbillDaysInMonth = Math.max(0, Math.round((repDateMs - tbillStartMs) / 86400000));
+  const tbillTenor = Math.round((maturityDate.getTime() - valueDate.getTime()) / 86400000);
+  const tbillTotalDiscount = inst.faceValue - inst.purchasePrice;
+  const tbillThisMonthIncome = tbillTenor > 0 ? tbillTotalDiscount * (tbillDaysInMonth / tbillTenor) : 0;
+  const tbillClosingAccrued = tbillTenor > 0 ? tbillTotalDiscount * (Math.max(0, repDateMs - valueDate.getTime()) / 86400000) / tbillTenor : 0;
+
+  // Bond variables
+  const daysEarnedInMonth = Math.max(0, Math.round((repDateMs - Math.max(lastCouponDate.getTime(), monthStartMs)) / 86400000));
+  const bondThisMonthInterest = inst.faceValue * (inst.couponRate ?? 0) * (daysEarnedInMonth / 365);
+  const priorMonthEndMs = monthStartMs - 86400000;
+  const lastMonthAccruedDays = Math.max(0, Math.round((priorMonthEndMs - lastCouponDate.getTime()) / 86400000));
+  const lastMonthAccrued = inst.faceValue * (inst.couponRate ?? 0) * (lastMonthAccruedDays / 365);
+  const pastCoupons = val.amortSchedule.filter(r => r.status === "Past" && parseDate(r.date).getTime() > valueDate.getTime());
+  const ppy = inst.couponFrequency === "Semi" ? 2 : inst.couponFrequency === "Quarterly" ? 4 : inst.couponFrequency === "Monthly" ? 12 : 1;
+  const grossCouponPerPayment = ppy > 0 ? (inst.faceValue * (inst.couponRate ?? 0)) / ppy : 0;
+  const totalCouponReceivedGross = pastCoupons.length * grossCouponPerPayment;
+  const totalCouponReceivedNet = totalCouponReceivedGross * 0.9;
+
 
   return (
     <div className="grid gap-6 lg:grid-cols-2">
@@ -397,12 +428,12 @@ function SummaryTab({
             />
             <Row
               label="Interest Income for the month (Income Leg)"
-              value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)}
+              value={fmtMoney(tbillThisMonthIncome, ccy)}
               mono
             />
             <Row
               label="Closing Accrued Interest (Asset Leg)"
-              value={fmtMoney(val.acCarryingValue - inst.purchasePrice, ccy)}
+              value={fmtMoney(tbillClosingAccrued, ccy)}
               mono
             />
             <Row
@@ -435,22 +466,22 @@ function SummaryTab({
       {inst.instrumentType === "State Bond" && (
         <SectionCard title="State Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
           <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
-            <Row label="Coupon Received to date (Gross)" value="N/A (Derived)" mono />
-            <Row label="Coupon Received to date (Net)" value="N/A (Derived)" mono />
+            <Row label="Coupon Received to date (Gross)" value={fmtMoney(totalCouponReceivedGross, ccy)} mono />
+            <Row label="Coupon Received to date (Net)" value={fmtMoney(totalCouponReceivedNet, ccy)} mono />
             
             <Row label="Principal repayment for the month" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.amortisation ?? 0, ccy)} mono />
-            <Row label="LAST MONTH ACCRUED INTEREST" value="N/A (Derived)" mono />
+            <Row label="LAST MONTH ACCRUED INTEREST" value={fmtMoney(lastMonthAccrued, ccy)} mono />
             
-            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
-            <Row label="GROSS COUPON" value="N/A (Derived)" mono />
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(bondThisMonthInterest, ccy)} mono emphasis />
+            <Row label="GROSS COUPON" value={fmtMoney(grossCouponPerPayment, ccy)} mono />
             
-            <Row label="CHARGES WHT" value="N/A (Derived)" mono />
-            <Row label="NET COUPON" value="N/A (Derived)" mono />
+            <Row label="CHARGES WHT" value={fmtMoney(grossCouponPerPayment * 0.1, ccy)} mono />
+            <Row label="NET COUPON" value={fmtMoney(grossCouponPerPayment * 0.9, ccy)} mono />
             
             <Row label="TOTAL ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
-            <Row label="Last Coupon date" value="N/A (Derived)" mono />
+            <Row label="Last Coupon date" value={toISO(lastCouponDate)} mono />
             
-            <Row label="NEXT COUPON DATE" value="N/A (Derived)" mono />
+            <Row label="NEXT COUPON DATE" value={toISO(nextCouponDate)} mono />
             <Row label="TOTAL CURRENT MARKET VALUE" value={fmtMoney(val.totalBookValueDirty, ccy)} mono emphasis />
           </div>
         </SectionCard>
@@ -459,16 +490,16 @@ function SummaryTab({
       {inst.instrumentType === "Corporate Bond" && (
         <SectionCard title="Corporate Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
           <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
-            <Row label="TOTAL Coupon Received to date NET" value="N/A (Derived)" mono />
-            <Row label="TOTAL COUPON GROSS" value="N/A (Derived)" mono />
+            <Row label="TOTAL Coupon Received to date NET" value={fmtMoney(totalCouponReceivedNet, ccy)} mono />
+            <Row label="TOTAL COUPON GROSS" value={fmtMoney(totalCouponReceivedGross, ccy)} mono />
             
-            <Row label="LAST MONTH ACCRUED INTEREST" value="N/A (Derived)" mono />
-            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
+            <Row label="LAST MONTH ACCRUED INTEREST" value={fmtMoney(lastMonthAccrued, ccy)} mono />
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(bondThisMonthInterest, ccy)} mono emphasis />
             
             <Row label="TOTAL ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
-            <Row label="Last Coupon date" value="N/A (Derived)" mono />
+            <Row label="Last Coupon date" value={toISO(lastCouponDate)} mono />
             
-            <Row label="NEXT COUPON DATE" value="N/A (Derived)" mono />
+            <Row label="NEXT COUPON DATE" value={toISO(nextCouponDate)} mono />
             <Row label="TOTAL CURRENT MARKET VALUE" value={fmtMoney(val.totalBookValueDirty, ccy)} mono emphasis />
           </div>
         </SectionCard>
@@ -477,17 +508,17 @@ function SummaryTab({
       {inst.instrumentType === "FGN Bond" && (
         <SectionCard title="FGN Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
           <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
-            <Row label="TOTAL COUPON RECEIVED TO DATE" value="N/A (Derived)" mono />
-            <Row label="LAST MONTH ACCRUED INTEREST" value="N/A (Derived)" mono />
+            <Row label="TOTAL COUPON RECEIVED TO DATE" value={fmtMoney(totalCouponReceivedGross, ccy)} mono />
+            <Row label="LAST MONTH ACCRUED INTEREST" value={fmtMoney(lastMonthAccrued, ccy)} mono />
             
             <Row label="EFFECTIVE INTEREST RATE" value={fmtPct(val.eir, 4)} mono />
-            <Row label="DAYS EARNED IN THE MONTH" value="N/A (Derived)" mono />
+            <Row label="DAYS EARNED IN THE MONTH" value={daysEarnedInMonth.toString()} mono />
             
-            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(bondThisMonthInterest, ccy)} mono emphasis />
             <Row label="TOTAL ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
             
-            <Row label="LAST COUPON DATE" value="N/A (Derived)" mono />
-            <Row label="NEXT COUPON DATE" value="N/A (Derived)" mono />
+            <Row label="LAST COUPON DATE" value={toISO(lastCouponDate)} mono />
+            <Row label="NEXT COUPON DATE" value={toISO(nextCouponDate)} mono />
             
             <Row label="LAST MONTH MARKET VALUE (CLEAN)" value="N/A (Derived)" mono />
             <Row label="LAST MONTH MARKET YIELD" value="N/A (Derived)" mono />
@@ -515,7 +546,7 @@ function SummaryTab({
             const principalCcy = inst.purchasePrice;
             const receivableCcy = inst.faceValue - inst.purchasePrice;
             const accruedCcy = val.acCarryingValue - inst.purchasePrice;
-            const monthIncomeCcy = val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0;
+            const monthIncomeCcy = inst.purchasePrice * (inst.couponRate ?? 0) * (tbillDaysInMonth / 365);
             
             // Unrealised FX Gain = (Current Value @ Current FX) - (Current Value @ Purchase FX)
             const unrealisedFxGain = (val.acCarryingValue * currentFx) - (val.acCarryingValue * purchaseFx);
@@ -1140,7 +1171,7 @@ function AuditTab({
       <Row label="Booked By" value={inst.bookedBy ?? inst.status} />
       <Row label="Initial Classification" value={inst.classification} />
       <Row label="Reclassification History" value="None" />
-      <Row label="Last Valuation Run" value="2026-05-28 08:00 AM" mono />
+      <Row label="Last Valuation Run" value="2026-05-31 08:00 AM" mono />
       <Row label="Valuation Model" value={valuationModel} />
       <Row label="IFRS 13 Level" value={inst.ifrs13Level} />
       <Row label="Impairment Stage" value={inst.impairmentStage ?? "N/A"} />

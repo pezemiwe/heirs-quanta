@@ -98,6 +98,8 @@ export interface YieldCurvePoint {
 /* ─── derived schedules / metrics ───────────────────────── */
 export interface AmortRow {
   period: number;
+  periodStartDate: string;
+  daysBetween: number;
   date: string;
   openingBalance: number;
   eirIncome: number;

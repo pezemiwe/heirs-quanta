@@ -24,7 +24,7 @@ type TxRow = {
   status: "Settled" | "Pending" | "Processing";
 };
 
-const VALUATION_MS = new Date("2026-05-28").getTime();
+const VALUATION_MS = new Date("2026-05-31").getTime();
 const DAYS_90 = 90 * 86400000;
 
 const TYPE_COLORS: Record<string, string> = {
@@ -314,3 +314,4 @@ export function PortfolioTransactions() {
     </div>
   );
 }
+

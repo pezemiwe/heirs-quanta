@@ -13,7 +13,7 @@ import {
   useBookComputed,
 } from "../../portfolio/engine/book-compute";
 
-const VALUATION_DATE = "2026-05-28";
+const VALUATION_DATE = "2026-05-31";
 const MS_PER_YEAR = 365.25 * 86400 * 1000;
 
 function yearsSince(purchaseDateStr: string): number {
@@ -601,3 +601,4 @@ export function Returns() {
     </div>
   );
 }
+
