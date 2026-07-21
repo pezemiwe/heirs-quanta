@@ -579,6 +579,7 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
   const cRate = col("RATE", ["rate"], 9);
   const cValueDate = col("VALUE DATE", ["valuedate"], 10);
   const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 11);
+  const cOpeningFx = col("OPENING EXCHANGE RATE", ["openingexchangerate", "openingrate"], -1);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -591,6 +592,7 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
     const dealer = str(r[cDealer]);
     const principalUSD = parseNum(r[cPrincipalUSD]);
     const fxRate = parseNum(r[cFxRate]);
+    const openingFxRate = cOpeningFx >= 0 ? parseNum(r[cOpeningFx]) : undefined;
     const couponRate = parseRate(r[cRate]);
     const purchaseDate = parseDate(r[cValueDate]);
     const maturityDate = parseDate(r[cMaturityDate]);
@@ -616,6 +618,8 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
       bookedBy: dealer,
       impairmentStage: "Stage 1",
       eclProvision: 0,
+      purchaseFxRate: isNaN(fxRate) || fxRate === 0 ? undefined : fxRate,
+      openingFxRate: openingFxRate === undefined || isNaN(openingFxRate) || openingFxRate === 0 ? undefined : openingFxRate,
     });
   }
 

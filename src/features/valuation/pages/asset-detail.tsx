@@ -436,8 +436,8 @@ function SummaryTab({
         <SectionCard title="FCY Placement FX Schedule (Accounting)" className="lg:col-span-2">
           {(() => {
             const currentFx = val.balanceSheetValueNGN / (val.cleanFairValue || 1);
-            const purchaseFx = Math.max(1, currentFx - 150); // Demo simulated historical rate
-            const openingFx = Math.max(1, currentFx - 20); // Demo simulated start-of-month rate
+            const purchaseFx = inst.purchaseFxRate ?? currentFx;
+            const openingFx = inst.openingFxRate ?? currentFx;
             
             const principalCcy = inst.purchasePrice;
             const receivableCcy = inst.faceValue - inst.purchasePrice;
@@ -462,7 +462,7 @@ function SummaryTab({
                 <Row label="Accrued Interest (NGN)" value={fmtMoney(accruedCcy * currentFx, "NGN")} mono />
                 <Row label={`This Month Interest Income (${ccy})`} value={fmtMoney(monthIncomeCcy, ccy)} mono emphasis />
                 
-                <Row label="Opening Exchange rate" value={fmtNumber(openingFx, 2)} mono />
+                <Row label="Opening Exchange rate" value={inst.openingFxRate != null ? fmtNumber(openingFx, 2) : "N/A (Derived)"} mono />
                 <Row label="Current Exchange rate" value={fmtNumber(currentFx, 2)} mono emphasis />
                 
                 <Row label={`CLOSING AMORTISED COST (${ccy})`} value={fmtMoney(val.acCarryingValue, ccy)} mono emphasis />
