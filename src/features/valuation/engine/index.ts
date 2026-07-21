@@ -92,10 +92,12 @@ export function couponDates(inst: Instrument): Date[] {
   if (months === 0) return [maturity]; // zero coupon / equity / N/A
   const dates: Date[] = [];
   // generate forward from purchase
-  let d = addMonths(purchase, months);
+  let i = 1;
+  let d = addMonths(purchase, i * months);
   while (d.getTime() < maturity.getTime()) {
     dates.push(d);
-    d = addMonths(d, months);
+    i++;
+    d = addMonths(purchase, i * months);
   }
   dates.push(maturity);
   return dates;
@@ -176,13 +178,24 @@ export function buildAmortSchedule(
 
   // Determine "Current" period - the one containing valuationDate
   for (let i = 0; i < dates.length; i++) {
-    const eirIncome = ppy > 0 ? opening * periodRate : 0;
+    const cfDate = dates[i];
+    const prev = i === 0 ? parseDate(inst.purchaseDate) : dates[i - 1];
+
+    let eirIncome = 0;
+    if (inst.instrumentType === "Bank Placement") {
+      // Calculate exact simple interest for the period (net of WHT)
+      const days = daysBetween(prev, cfDate);
+      const totalDays = daysBetween(parseDate(inst.purchaseDate), parseDate(inst.maturityDate));
+      const totalNetInterest = inst.faceValue - inst.purchasePrice;
+      eirIncome = totalDays > 0 ? totalNetInterest * (days / totalDays) : 0;
+    } else {
+      eirIncome = ppy > 0 ? opening * periodRate : 0;
+    }
+
     const amort = eirIncome - couponCF;
     const closing = opening + amort;
-    const cfDate = dates[i];
 
     let status: AmortRow["status"];
-    const prev = i === 0 ? parseDate(inst.purchaseDate) : dates[i - 1];
     if (cfDate.getTime() < valuationDate.getTime()) status = "Past";
     else if (
       prev.getTime() <= valuationDate.getTime() &&

@@ -65,6 +65,10 @@ export interface Instrument {
   sourceFileName?: string;
   importBatchId?: string;
   importBatchLabel?: string;
+
+  /* FX specific properties for FCY instruments */
+  purchaseFxRate?: number;
+  openingFxRate?: number;
 }
 
 /* ─── valuation engine assumptions ──────────────────────── */

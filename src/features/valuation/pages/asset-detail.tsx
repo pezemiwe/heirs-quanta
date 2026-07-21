@@ -381,6 +381,190 @@ function SummaryTab({
           )}
         </div>
       </SectionCard>
+
+      {inst.instrumentType === "T-Bill" && (
+        <SectionCard title="T-Bill Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row
+              label="Interest receivable"
+              value={fmtMoney(inst.faceValue - inst.purchasePrice, ccy)}
+              mono
+            />
+            <Row
+              label="Effective Interest rate"
+              value={fmtPct(val.eir, 4)}
+              mono
+            />
+            <Row
+              label="Interest Income for the month (Income Leg)"
+              value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)}
+              mono
+            />
+            <Row
+              label="Closing Accrued Interest (Asset Leg)"
+              value={fmtMoney(val.acCarryingValue - inst.purchasePrice, ccy)}
+              mono
+            />
+            <Row
+              label="Current Market Bid Discount Rate"
+              value="Derived from Market Inputs"
+              mono
+            />
+            <Row
+              label="Current Market Value"
+              value={fmtMoney(val.cleanFairValue, ccy)}
+              mono
+              emphasis
+            />
+            <Row
+              label="Current Market to Mark Gain/loss (Asset Leg)"
+              value={fmtMoney(val.unrealisedGL, ccy)}
+              mono
+              emphasis
+            />
+            <Row
+              label="Monthly Mark to Market to post (Income Leg)"
+              value={fmtMoney(val.unrealisedGL, ccy)}
+              mono
+              emphasis
+            />
+          </div>
+        </SectionCard>
+      )}
+
+      {inst.instrumentType === "State Bond" && (
+        <SectionCard title="State Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row label="Coupon Received to date (Gross)" value="N/A (Derived)" mono />
+            <Row label="Coupon Received to date (Net)" value="N/A (Derived)" mono />
+            
+            <Row label="Principal repayment for the month" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.amortisation ?? 0, ccy)} mono />
+            <Row label="LAST MONTH ACCRUED INTEREST" value="N/A (Derived)" mono />
+            
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
+            <Row label="GROSS COUPON" value="N/A (Derived)" mono />
+            
+            <Row label="CHARGES WHT" value="N/A (Derived)" mono />
+            <Row label="NET COUPON" value="N/A (Derived)" mono />
+            
+            <Row label="TOTAL ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
+            <Row label="Last Coupon date" value="N/A (Derived)" mono />
+            
+            <Row label="NEXT COUPON DATE" value="N/A (Derived)" mono />
+            <Row label="TOTAL CURRENT MARKET VALUE" value={fmtMoney(val.totalBookValueDirty, ccy)} mono emphasis />
+          </div>
+        </SectionCard>
+      )}
+
+      {inst.instrumentType === "Corporate Bond" && (
+        <SectionCard title="Corporate Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row label="TOTAL Coupon Received to date NET" value="N/A (Derived)" mono />
+            <Row label="TOTAL COUPON GROSS" value="N/A (Derived)" mono />
+            
+            <Row label="LAST MONTH ACCRUED INTEREST" value="N/A (Derived)" mono />
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
+            
+            <Row label="TOTAL ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
+            <Row label="Last Coupon date" value="N/A (Derived)" mono />
+            
+            <Row label="NEXT COUPON DATE" value="N/A (Derived)" mono />
+            <Row label="TOTAL CURRENT MARKET VALUE" value={fmtMoney(val.totalBookValueDirty, ccy)} mono emphasis />
+          </div>
+        </SectionCard>
+      )}
+
+      {inst.instrumentType === "FGN Bond" && (
+        <SectionCard title="FGN Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row label="TOTAL COUPON RECEIVED TO DATE" value="N/A (Derived)" mono />
+            <Row label="LAST MONTH ACCRUED INTEREST" value="N/A (Derived)" mono />
+            
+            <Row label="EFFECTIVE INTEREST RATE" value={fmtPct(val.eir, 4)} mono />
+            <Row label="DAYS EARNED IN THE MONTH" value="N/A (Derived)" mono />
+            
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
+            <Row label="TOTAL ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
+            
+            <Row label="LAST COUPON DATE" value="N/A (Derived)" mono />
+            <Row label="NEXT COUPON DATE" value="N/A (Derived)" mono />
+            
+            <Row label="LAST MONTH MARKET VALUE (CLEAN)" value="N/A (Derived)" mono />
+            <Row label="LAST MONTH MARKET YIELD" value="N/A (Derived)" mono />
+            <Row label="LAST MONTH MARKET PRICE" value="N/A (Derived)" mono />
+            
+            <Row label="CURRENT MARKET YIELD" value={inst.marketYield != null ? fmtPct(inst.marketYield, 4) : "Derived from Curve"} mono emphasis />
+            <Row label="CURRENT MARKET PRICE" value={fmtNumber((val.cleanFairValue / (inst.faceValue || 1)) * 100, 2)} mono emphasis />
+            
+            <Row label="ACTUAL CURRENT MARKET VALUE (CLEAN)" value={fmtMoney(val.cleanFairValue, ccy)} mono />
+            <Row label="TOTAL CURRENT MARKET VALUE" value={fmtMoney(val.totalBookValueDirty, ccy)} mono emphasis />
+            
+            <Row label="CURRENT MARK TO MARKET GAIN /(LOSS)" value={fmtMoney(val.unrealisedGL, ccy)} mono emphasis />
+            <Row label="MARK TO MARKET TO POST THIS MONTH" value={fmtMoney(val.unrealisedGL, ccy)} mono emphasis />
+          </div>
+        </SectionCard>
+      )}
+
+      {inst.instrumentType === "Bank Placement" && ccy !== "NGN" && (
+        <SectionCard title="FCY Placement FX Schedule (Accounting)" className="lg:col-span-2">
+          {(() => {
+            const currentFx = val.balanceSheetValueNGN / (val.cleanFairValue || 1);
+            const purchaseFx = inst.purchaseFxRate ?? currentFx;
+            const openingFx = inst.openingFxRate ?? currentFx;
+            
+            const principalCcy = inst.purchasePrice;
+            const receivableCcy = inst.faceValue - inst.purchasePrice;
+            const accruedCcy = val.acCarryingValue - inst.purchasePrice;
+            const monthIncomeCcy = val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0;
+            
+            // Unrealised FX Gain = (Current Value @ Current FX) - (Current Value @ Purchase FX)
+            const unrealisedFxGain = (val.acCarryingValue * currentFx) - (val.acCarryingValue * purchaseFx);
+            const thisMonthFxGain = (val.acCarryingValue * currentFx) - (val.acCarryingValue * openingFx);
+
+            return (
+              <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+                <Row label={`Principal (${ccy})`} value={fmtMoney(principalCcy, ccy)} mono />
+                <Row label="Exchange rate @ purchase" value={fmtNumber(purchaseFx, 2)} mono />
+                <Row label="Principal (NGN)" value={fmtMoney(principalCcy * purchaseFx, "NGN")} mono />
+                
+                <Row label={`Interest Receivable (${ccy})`} value={fmtMoney(receivableCcy, ccy)} mono />
+                <Row label="Interest Receivable (NGN)" value={fmtMoney(receivableCcy * currentFx, "NGN")} mono />
+                <Row label={`Maturity Value (${ccy})`} value={fmtMoney(inst.faceValue, ccy)} mono />
+                
+                <Row label={`Accrued Interest (${ccy})`} value={fmtMoney(accruedCcy, ccy)} mono />
+                <Row label="Accrued Interest (NGN)" value={fmtMoney(accruedCcy * currentFx, "NGN")} mono />
+                <Row label={`This Month Interest Income (${ccy})`} value={fmtMoney(monthIncomeCcy, ccy)} mono emphasis />
+                
+                <Row label="Opening Exchange rate" value={inst.openingFxRate != null ? fmtNumber(openingFx, 2) : "N/A (Derived)"} mono />
+                <Row label="Current Exchange rate" value={fmtNumber(currentFx, 2)} mono emphasis />
+                
+                <Row label={`CLOSING AMORTISED COST (${ccy})`} value={fmtMoney(val.acCarryingValue, ccy)} mono emphasis />
+                <Row label="THIS MONTH EXCHANGE GAIN / LOSS (NGN)" value={fmtMoney(thisMonthFxGain, "NGN")} mono />
+                <Row label="TOTAL UNREALISED EXCHANGE GAIN/LOSS (NGN)" value={fmtMoney(unrealisedFxGain, "NGN")} mono emphasis />
+                <Row label="TOTAL CURRENT MARKET VALUE INCLUSIVE OF FX (NGN)" value={fmtMoney(val.balanceSheetValueNGN, "NGN")} mono emphasis />
+              </div>
+            );
+          })()}
+        </SectionCard>
+      )}
+
+      {inst.instrumentType === "Equity" && (
+        <SectionCard title="Quoted Equity Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row label="Current Market Value (Asset Leg)" value={fmtMoney(val.cleanFairValue, ccy)} mono emphasis />
+            <Row label="Opening Gain/(Loss) Asset leg" value="N/A (Derived)" mono />
+            
+            <Row label="Current MTM (Fair value Gain/(Loss)) Asset leg" value={fmtMoney(val.unrealisedGL, ccy)} mono emphasis />
+            <Row label="Monthly Fair value Gain/(Loss) Income Leg" value={fmtMoney(val.unrealisedGL, ccy)} mono />
+            
+            <Row label="Gross Dividend Received for the month" value={fmtMoney(0, ccy)} mono />
+            <Row label="WHT" value={fmtMoney(0, ccy)} mono />
+            
+            <Row label="Dividend Received for the month (Net of wht)" value={fmtMoney(0, ccy)} mono emphasis />
+            <Row label="YTD Dividend Received NET" value={fmtMoney(0, ccy)} mono emphasis />
+          </div>
+        </SectionCard>
+      )}
     </div>
   );
 }
@@ -433,11 +617,25 @@ function AmortTab({
                 <tr>
                   <th className="px-4 py-2.5 text-left">Per</th>
                   <th className="px-4 py-2.5 text-left">Date</th>
-                  <th className="px-4 py-2.5 text-right">Opening Bal</th>
-                  <th className="px-4 py-2.5 text-right">EIR Income</th>
-                  <th className="px-4 py-2.5 text-right">Coupon CF</th>
-                  <th className="px-4 py-2.5 text-right">Amort</th>
-                  <th className="px-4 py-2.5 text-right">Closing Bal</th>
+                  <th className="px-4 py-2.5 text-right">
+                    {inst.instrumentType === "Bank Placement" ? "Opening Amortised Cost" : "Opening Bal"}
+                  </th>
+                  {inst.instrumentType === "Bank Placement" ? (
+                    <>
+                      <th className="px-4 py-2.5 text-right">This month Interest</th>
+                      <th className="px-4 py-2.5 text-right">WHT (10%)</th>
+                      <th className="px-4 py-2.5 text-right">This month Interest (Net)</th>
+                    </>
+                  ) : (
+                    <>
+                      <th className="px-4 py-2.5 text-right">EIR Income</th>
+                      <th className="px-4 py-2.5 text-right">Coupon CF</th>
+                      <th className="px-4 py-2.5 text-right">Amort</th>
+                    </>
+                  )}
+                  <th className="px-4 py-2.5 text-right">
+                    {inst.instrumentType === "Bank Placement" ? "Closing Amortised Cost" : "Closing Bal"}
+                  </th>
                   <th className="px-4 py-2.5 text-center">Status</th>
                 </tr>
               </thead>
@@ -458,15 +656,19 @@ function AmortTab({
                     <td className="px-4 py-2 text-right">
                       {fmtNumber(r.openingBalance, 0)}
                     </td>
-                    <td className="px-4 py-2 text-right">
-                      {fmtNumber(r.eirIncome, 0)}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      {fmtNumber(r.couponCF, 0)}
-                    </td>
-                    <td className="px-4 py-2 text-right">
-                      {fmtNumber(r.amortisation, 0)}
-                    </td>
+                    {inst.instrumentType === "Bank Placement" ? (
+                      <>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.eirIncome / 0.9, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber((r.eirIncome / 0.9) * 0.1, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.eirIncome, 0)}</td>
+                      </>
+                    ) : (
+                      <>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.eirIncome, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.couponCF, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber(r.amortisation, 0)}</td>
+                      </>
+                    )}
                     <td className="px-4 py-2 text-right">
                       {fmtNumber(r.closingBalance, 0)}
                     </td>

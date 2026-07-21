@@ -579,6 +579,7 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
   const cRate = col("RATE", ["rate"], 9);
   const cValueDate = col("VALUE DATE", ["valuedate"], 10);
   const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 11);
+  const cOpeningFx = col("OPENING EXCHANGE RATE", ["openingexchangerate", "openingrate"], -1);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -591,6 +592,7 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
     const dealer = str(r[cDealer]);
     const principalUSD = parseNum(r[cPrincipalUSD]);
     const fxRate = parseNum(r[cFxRate]);
+    const openingFxRate = cOpeningFx >= 0 ? parseNum(r[cOpeningFx]) : undefined;
     const couponRate = parseRate(r[cRate]);
     const purchaseDate = parseDate(r[cValueDate]);
     const maturityDate = parseDate(r[cMaturityDate]);
@@ -616,6 +618,8 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
       bookedBy: dealer,
       impairmentStage: "Stage 1",
       eclProvision: 0,
+      purchaseFxRate: isNaN(fxRate) || fxRate === 0 ? undefined : fxRate,
+      openingFxRate: openingFxRate === undefined || isNaN(openingFxRate) || openingFxRate === 0 ? undefined : openingFxRate,
     });
   }
 
@@ -656,6 +660,16 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
     const maturityDate = parseDate(r[cMaturityDate]);
     const portfolioBook = "Placements <90 Days";
 
+    let faceValue = principal;
+    if (purchaseDate && maturityDate) {
+      const pDate = new Date(purchaseDate);
+      const mDate = new Date(maturityDate);
+      const tenorDays = Math.round((mDate.getTime() - pDate.getTime()) / 86400000);
+      const grossInterest = principal * couponRate * (tenorDays / 365);
+      const netInterest = grossInterest * 0.9; // 10% WHT deducted
+      faceValue = principal + netInterest;
+    }
+
     instruments.push({
       id,
       name: `${institution} Placement ${id}`,
@@ -666,12 +680,12 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
       classification: "AC",
       ifrs13Level: "L2",
       currency: "NGN",
-      faceValue: principal,
+      faceValue,
       purchasePrice: principal,
       purchaseDate: purchaseDate || "2026-01-01",
       maturityDate: maturityDate || "2026-06-01",
-      couponRate,
-      couponFrequency: "Zero",
+      couponRate: 0, // Yield is derived from faceValue vs purchasePrice
+      couponFrequency: "Monthly", // Force monthly schedule for proper accrual steps
       status: "Active",
       bookedBy: institution,
       impairmentStage: "Stage 1",
