@@ -431,6 +431,49 @@ function SummaryTab({
           </div>
         </SectionCard>
       )}
+
+      {inst.instrumentType === "Bank Placement" && ccy !== "NGN" && (
+        <SectionCard title="FCY Placement FX Schedule (Accounting)" className="lg:col-span-2">
+          {(() => {
+            const currentFx = val.balanceSheetValueNGN / (val.cleanFairValue || 1);
+            const purchaseFx = Math.max(1, currentFx - 150); // Demo simulated historical rate
+            const openingFx = Math.max(1, currentFx - 20); // Demo simulated start-of-month rate
+            
+            const principalCcy = inst.purchasePrice;
+            const receivableCcy = inst.faceValue - inst.purchasePrice;
+            const accruedCcy = val.acCarryingValue - inst.purchasePrice;
+            const monthIncomeCcy = val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0;
+            
+            // Unrealised FX Gain = (Current Value @ Current FX) - (Current Value @ Purchase FX)
+            const unrealisedFxGain = (val.acCarryingValue * currentFx) - (val.acCarryingValue * purchaseFx);
+            const thisMonthFxGain = (val.acCarryingValue * currentFx) - (val.acCarryingValue * openingFx);
+
+            return (
+              <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+                <Row label={`Principal (${ccy})`} value={fmtMoney(principalCcy, ccy)} mono />
+                <Row label="Exchange rate @ purchase" value={fmtNumber(purchaseFx, 2)} mono />
+                <Row label="Principal (NGN)" value={fmtMoney(principalCcy * purchaseFx, "NGN")} mono />
+                
+                <Row label={`Interest Receivable (${ccy})`} value={fmtMoney(receivableCcy, ccy)} mono />
+                <Row label="Interest Receivable (NGN)" value={fmtMoney(receivableCcy * currentFx, "NGN")} mono />
+                <Row label={`Maturity Value (${ccy})`} value={fmtMoney(inst.faceValue, ccy)} mono />
+                
+                <Row label={`Accrued Interest (${ccy})`} value={fmtMoney(accruedCcy, ccy)} mono />
+                <Row label="Accrued Interest (NGN)" value={fmtMoney(accruedCcy * currentFx, "NGN")} mono />
+                <Row label={`This Month Interest Income (${ccy})`} value={fmtMoney(monthIncomeCcy, ccy)} mono emphasis />
+                
+                <Row label="Opening Exchange rate" value={fmtNumber(openingFx, 2)} mono />
+                <Row label="Current Exchange rate" value={fmtNumber(currentFx, 2)} mono emphasis />
+                
+                <Row label={`CLOSING AMORTISED COST (${ccy})`} value={fmtMoney(val.acCarryingValue, ccy)} mono emphasis />
+                <Row label="THIS MONTH EXCHANGE GAIN / LOSS (NGN)" value={fmtMoney(thisMonthFxGain, "NGN")} mono />
+                <Row label="TOTAL UNREALISED EXCHANGE GAIN/LOSS (NGN)" value={fmtMoney(unrealisedFxGain, "NGN")} mono emphasis />
+                <Row label="TOTAL CURRENT MARKET VALUE INCLUSIVE OF FX (NGN)" value={fmtMoney(val.balanceSheetValueNGN, "NGN")} mono emphasis />
+              </div>
+            );
+          })()}
+        </SectionCard>
+      )}
     </div>
   );
 }
