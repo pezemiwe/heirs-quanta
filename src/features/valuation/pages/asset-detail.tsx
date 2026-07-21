@@ -381,6 +381,56 @@ function SummaryTab({
           )}
         </div>
       </SectionCard>
+
+      {inst.instrumentType === "T-Bill" && (
+        <SectionCard title="T-Bill Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row
+              label="Interest receivable"
+              value={fmtMoney(inst.faceValue - inst.purchasePrice, ccy)}
+              mono
+            />
+            <Row
+              label="Effective Interest rate"
+              value={fmtPct(val.eir, 4)}
+              mono
+            />
+            <Row
+              label="Interest Income for the month (Income Leg)"
+              value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)}
+              mono
+            />
+            <Row
+              label="Closing Accrued Interest (Asset Leg)"
+              value={fmtMoney(val.acCarryingValue - inst.purchasePrice, ccy)}
+              mono
+            />
+            <Row
+              label="Current Market Bid Discount Rate"
+              value="Derived from Market Inputs"
+              mono
+            />
+            <Row
+              label="Current Market Value"
+              value={fmtMoney(val.cleanFairValue, ccy)}
+              mono
+              emphasis
+            />
+            <Row
+              label="Current Market to Mark Gain/loss (Asset Leg)"
+              value={fmtMoney(val.unrealisedGL, ccy)}
+              mono
+              emphasis
+            />
+            <Row
+              label="Monthly Mark to Market to post (Income Leg)"
+              value={fmtMoney(val.unrealisedGL, ccy)}
+              mono
+              emphasis
+            />
+          </div>
+        </SectionCard>
+      )}
     </div>
   );
 }
