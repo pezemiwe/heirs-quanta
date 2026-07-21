@@ -432,6 +432,30 @@ function SummaryTab({
         </SectionCard>
       )}
 
+      {inst.instrumentType === "State Bond" && (
+        <SectionCard title="State Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row label="Coupon Received to date (Gross)" value="N/A (Derived)" mono />
+            <Row label="Coupon Received to date (Net)" value="N/A (Derived)" mono />
+            
+            <Row label="Principal repayment for the month" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.amortisation ?? 0, ccy)} mono />
+            <Row label="LAST MONTH ACCRUED INTEREST" value="N/A (Derived)" mono />
+            
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
+            <Row label="GROSS COUPON" value="N/A (Derived)" mono />
+            
+            <Row label="CHARGES WHT" value="N/A (Derived)" mono />
+            <Row label="NET COUPON" value="N/A (Derived)" mono />
+            
+            <Row label="TOTAL ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
+            <Row label="Last Coupon date" value="N/A (Derived)" mono />
+            
+            <Row label="NEXT COUPON DATE" value="N/A (Derived)" mono />
+            <Row label="TOTAL CURRENT MARKET VALUE" value={fmtMoney(val.totalBookValueDirty, ccy)} mono emphasis />
+          </div>
+        </SectionCard>
+      )}
+
       {inst.instrumentType === "Corporate Bond" && (
         <SectionCard title="Corporate Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
           <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
