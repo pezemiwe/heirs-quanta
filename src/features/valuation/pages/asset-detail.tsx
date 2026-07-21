@@ -474,6 +474,24 @@ function SummaryTab({
           })()}
         </SectionCard>
       )}
+
+      {inst.instrumentType === "Equity" && (
+        <SectionCard title="Quoted Equity Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row label="Current Market Value (Asset Leg)" value={fmtMoney(val.cleanFairValue, ccy)} mono emphasis />
+            <Row label="Opening Gain/(Loss) Asset leg" value="N/A (Derived)" mono />
+            
+            <Row label="Current MTM (Fair value Gain/(Loss)) Asset leg" value={fmtMoney(val.unrealisedGL, ccy)} mono emphasis />
+            <Row label="Monthly Fair value Gain/(Loss) Income Leg" value={fmtMoney(val.unrealisedGL, ccy)} mono />
+            
+            <Row label="Gross Dividend Received for the month" value={fmtMoney(0, ccy)} mono />
+            <Row label="WHT" value={fmtMoney(0, ccy)} mono />
+            
+            <Row label="Dividend Received for the month (Net of wht)" value={fmtMoney(0, ccy)} mono emphasis />
+            <Row label="YTD Dividend Received NET" value={fmtMoney(0, ccy)} mono emphasis />
+          </div>
+        </SectionCard>
+      )}
     </div>
   );
 }
