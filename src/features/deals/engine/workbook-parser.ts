@@ -1036,7 +1036,12 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
   const cPrincipal = col("PRINCIPAL", ["principal"], 3);
   const cRate = col("RATE", ["rate", "interestrate", "yield", "coupon", "couponrate", "effectiveinterestrate"], 4);
   const cValueDate = col("VALUE DATE", ["valuedate"], 5);
-  const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 6);
+  const cMaturityDate = col("MATURITY DATE", ["maturitydate", "enddate", "maturity"], 6);
+
+  console.log("=== DEBUG PLACEMENTS NGN HEADERS ===");
+  console.log("Found Header Row:", hdr);
+  console.log("Header Map Keys:", Array.from(headerMap.keys()));
+  console.log("Column Indices:", { cId, cInstitution, cPrincipal, cRate, cValueDate, cMaturityDate });
 
   const c_interestReceivable = optCol(["interestreceivable", "interestreceivableusd", "interestreceivablengn", "accruedinterest"]);
   const c_effectiveInterestRate = optCol(["effectiveinterestrate", "eir", "yield", "interestrate"]);
@@ -1122,7 +1127,7 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
       purchasePrice: principal,
       purchaseDate: purchaseDate || "2026-01-01",
       maturityDate: maturityDate || "2026-06-01",
-      couponRate: 0, // Yield is derived from faceValue vs purchasePrice
+      couponRate,
       couponFrequency: "Monthly", // Force monthly schedule for proper accrual steps
       status: "Active",
       bookedBy: institution,
@@ -1267,7 +1272,7 @@ function parseQuotedEquity(
       ifrs13Level: "L1",
       currency: "NGN",
       faceValue: totalCost,
-      purchasePrice: costPriceUnit * quantity || totalCost,
+      purchasePrice: costPriceUnit * quantity,
       purchaseDate: purchaseDate || "2024-01-01",
       maturityDate: "2099-12-31",
       couponRate: 0,
