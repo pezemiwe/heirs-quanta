@@ -432,6 +432,24 @@ function SummaryTab({
         </SectionCard>
       )}
 
+      {inst.instrumentType === "Corporate Bond" && (
+        <SectionCard title="Corporate Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row label="TOTAL Coupon Received to date NET" value="N/A (Derived)" mono />
+            <Row label="TOTAL COUPON GROSS" value="N/A (Derived)" mono />
+            
+            <Row label="LAST MONTH ACCRUED INTEREST" value="N/A (Derived)" mono />
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
+            
+            <Row label="TOTAL ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
+            <Row label="Last Coupon date" value="N/A (Derived)" mono />
+            
+            <Row label="NEXT COUPON DATE" value="N/A (Derived)" mono />
+            <Row label="TOTAL CURRENT MARKET VALUE" value={fmtMoney(val.totalBookValueDirty, ccy)} mono emphasis />
+          </div>
+        </SectionCard>
+      )}
+
       {inst.instrumentType === "FGN Bond" && (
         <SectionCard title="FGN Bond Schedule Metrics (Accounting)" className="lg:col-span-2">
           <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
