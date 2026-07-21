@@ -536,6 +536,19 @@ function SummaryTab({
         </SectionCard>
       )}
 
+      {inst.instrumentType === "Bank Placement" && ccy === "NGN" && (
+        <SectionCard title="Placement Schedule Metrics (Accounting)" className="lg:col-span-2">
+          <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
+            <Row label="INTEREST RECEIVABLE" value={fmtMoney(val.accruedInterest, ccy)} mono />
+            <Row label="EFFECTIVE INTEREST RATE" value={fmtPct(val.eir, 4)} mono />
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
+            <Row label="WHT 10%" value={fmtMoney((val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0) * 0.1, ccy)} mono />
+            <Row label="NET INCOME" value={fmtMoney((val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0) * 0.9, ccy)} mono />
+            <Row label="CLOSING ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
+          </div>
+        </SectionCard>
+      )}
+
       {inst.instrumentType === "Bank Placement" && ccy !== "NGN" && (
         <SectionCard title="FCY Placement FX Schedule (Accounting)" className="lg:col-span-2">
           {(() => {

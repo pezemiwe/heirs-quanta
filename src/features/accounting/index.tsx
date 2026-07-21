@@ -24,6 +24,7 @@ import { CouponRecognition } from "./pages/coupon-recognition";
 import { Disposals } from "./pages/disposals";
 import { MultiCurrency } from "./pages/multi-currency";
 import { MonthlySchedule } from "./pages/monthly-schedule";
+import { ValuationProvider } from "../valuation/store";
 
 export type AccountingPage =
   | "journals"
@@ -119,7 +120,11 @@ function PageBody({ page }: { page: AccountingPage }) {
     case "multi-currency":
       return <MultiCurrency />;
     case "monthly-schedule":
-      return <MonthlySchedule />;
+      return (
+        <ValuationProvider>
+          <MonthlySchedule />
+        </ValuationProvider>
+      );
   }
 }
 

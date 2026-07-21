@@ -267,24 +267,24 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
   );
   const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 17);
   const cCostPriceClean = col("COST PRICE/CLEAN", ["costpriceclean"], 15);
-  const cMarketYield = col("CURRENT MARKET YIELD", ["currentmarketyield"], 31);
-  const cMarketPrice = col("CURRENT MARKET PRICE", ["currentmarketprice"], 32);
+  const cMarketYield = col("CURRENT MARKET YIELD", ["currentmarketyield", "currentyield"], 31);
+  const cMarketPrice = col("CURRENT MARKET PRICE", ["currentmarketprice", "currentprice"], 32);
 
   const c_couponReceivedToDateGross = optCol(["totalcouponreceivedtodate"]);
-  const c_lastMonthAccruedInterest = optCol(["lastmonthaccruedinterest"]);
-  const c_effectiveInterestRate = optCol(["effectiveinterestrate"]);
-  const c_daysEarnedInMonth = optCol(["daysearnedinthemonth"]);
-  const c_interestIncomeThisMonth = optCol(["thismonthinterest"]);
-  const c_totalAccruedInterest = optCol(["totalaccruedinterest"]);
-  const c_lastMonthMarketValueClean = optCol(["lastmonthmarketvalueclean"]);
-  const c_lastMonthMarketYield = optCol(["lastmonthmarketyield"]);
-  const c_lastMonthMarketPrice = optCol(["lastmonthmarketprice"]);
-  const c_currentMarketYield = optCol(["currentmarketyield"]);
-  const c_currentMarketPrice = optCol(["currentmarketprice"]);
-  const c_actualCurrentMarketValueClean = optCol(["actualcurrentmarketvalueclean"]);
-  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalue"]);
-  const c_currentMtmGainLoss = optCol(["currentmarktomarketgainloss"]);
-  const c_monthlyMtmToPost = optCol(["marktomarkettopostthismonth"]);
+  const c_lastMonthAccruedInterest = optCol(["lastmonthaccruedinterest", "accruedinterestlastmonth"]);
+  const c_effectiveInterestRate = optCol(["effectiveinterestrate", "eir", "yield", "interestrate"]);
+  const c_daysEarnedInMonth = optCol(["daysearnedinthemonth", "daysearnedinmonth", "daysinmonth"]);
+  const c_interestIncomeThisMonth = optCol(["thismonthinterest", "thismonthinterestincome", "interestincomeforthemonth", "interestincomeforthemonthincomeleg"]);
+  const c_totalAccruedInterest = optCol(["totalaccruedinterest", "accruedinterest", "closingaccruedinterest"]);
+  const c_lastMonthMarketValueClean = optCol(["lastmonthmarketvalueclean", "lastmonthmarketvalue"]);
+  const c_lastMonthMarketYield = optCol(["lastmonthmarketyield", "lastmonthyield"]);
+  const c_lastMonthMarketPrice = optCol(["lastmonthmarketprice", "lastmonthprice"]);
+  const c_currentMarketYield = optCol(["currentmarketyield", "currentyield"]);
+  const c_currentMarketPrice = optCol(["currentmarketprice", "currentprice"]);
+  const c_actualCurrentMarketValueClean = optCol(["actualcurrentmarketvalueclean", "currentmarketvalueclean", "actualmarketvalueclean"]);
+  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalue", "currentmarketvalue", "totalmarketvalue"]);
+  const c_currentMtmGainLoss = optCol(["currentmarktomarketgainloss", "mtmgainloss", "currentmtmgainloss"]);
+  const c_monthlyMtmToPost = optCol(["marktomarkettopostthismonth", "mtmtopost", "monthlymtmtopost"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -463,16 +463,16 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
   const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 15);
   const cCost = col("COST", ["cost"], 14);
 
-  const c_couponReceivedToDateGross = optCol(["couponreceivedtodategross"]);
-  const c_couponReceivedToDateNet = optCol(["couponreceivedtodatenet"]);
+  const c_couponReceivedToDateGross = optCol(["couponreceivedtodategross", "totalcouponreceivedtodategross", "totalcoupongross"]);
+  const c_couponReceivedToDateNet = optCol(["couponreceivedtodatenet", "totalcouponreceivedtodatenet", "totalcouponnet"]);
   const c_principalRepaymentThisMonth = optCol(["principalrepaymentforthemonth"]);
-  const c_lastMonthAccruedInterest = optCol(["lastmonthaccruedinterest"]);
-  const c_interestIncomeThisMonth = optCol(["thismonthinterest"]);
+  const c_lastMonthAccruedInterest = optCol(["lastmonthaccruedinterest", "accruedinterestlastmonth"]);
+  const c_interestIncomeThisMonth = optCol(["thismonthinterest", "thismonthinterestincome", "interestincomeforthemonth", "interestincomeforthemonthincomeleg"]);
   const c_grossCoupon = optCol(["grosscoupon"]);
   const c_wht = optCol(["chargeswht"]);
   const c_netCoupon = optCol(["netcoupon"]);
-  const c_totalAccruedInterest = optCol(["totalaccruedinterest"]);
-  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalue"]);
+  const c_totalAccruedInterest = optCol(["totalaccruedinterest", "accruedinterest", "closingaccruedinterest"]);
+  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalue", "currentmarketvalue", "totalmarketvalue"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -627,10 +627,10 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
 
   const c_couponReceivedToDateNet = optCol(["totalcouponreceivedtodatenet"]);
   const c_couponReceivedToDateGross = optCol(["totalcoupongross"]);
-  const c_lastMonthAccruedInterest = optCol(["lastmonthaccruedinterest"]);
-  const c_interestIncomeThisMonth = optCol(["thismonthinterest"]);
-  const c_totalAccruedInterest = optCol(["totalaccruedinterest"]);
-  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalue"]);
+  const c_lastMonthAccruedInterest = optCol(["lastmonthaccruedinterest", "accruedinterestlastmonth"]);
+  const c_interestIncomeThisMonth = optCol(["thismonthinterest", "thismonthinterestincome", "interestincomeforthemonth", "interestincomeforthemonthincomeleg"]);
+  const c_totalAccruedInterest = optCol(["totalaccruedinterest", "accruedinterest", "closingaccruedinterest"]);
+  const c_totalCurrentMarketValue = optCol(["totalcurrentmarketvalue", "currentmarketvalue", "totalmarketvalue"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -766,8 +766,8 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
   const cInterestRate = col("INTEREST RATE", ["interestrate"], 8);
   const cFaceValue = col("FACEVALUE", ["facevalue"], 9);
 
-  const c_interestReceivable = optCol(["interestreceivable"]);
-  const c_effectiveInterestRate = optCol(["effectiveinterestrate"]);
+  const c_interestReceivable = optCol(["interestreceivable", "interestreceivableusd", "interestreceivablengn", "accruedinterest"]);
+  const c_effectiveInterestRate = optCol(["effectiveinterestrate", "eir", "yield", "interestrate"]);
   const c_interestIncomeThisMonth = optCol(["interestincomeforthemonthincomeleg"]);
   const c_accruedInterestClosing = optCol(["closingaccruedinterestassetleg"]);
   const c_currentMarketBidDiscountRate = optCol(["currentmarketbiddiscountrate"]);
@@ -896,13 +896,13 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
   const cPortfolio = col("PORTFOLIO", ["portfolio"], 3);
   const cPrincipalUSD = col("PRINCIPAL USD ($)", ["principalusd"], 6);
   const cFxRate = col("EXCHANGE RATE @ PURCHASE", ["exchangeratepurchase", "exchangerateatpurchase", "exchangerate"], 7);
-  const cRate = col("RATE", ["rate"], 9);
+  const cRate = col("RATE", ["rate", "interestrate", "yield", "coupon", "couponrate", "effectiveinterestrate"], 9);
   const cValueDate = col("VALUE DATE", ["valuedate"], 10);
   const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 11);
   const cOpeningFx = col("OPENING EXCHANGE RATE", ["openingexchangerate", "openingrate"], -1);
 
   const c_interestReceivable = optCol(["interestreceivableusd"]);
-  const c_effectiveInterestRate = optCol(["effectiveinterestrate"]);
+  const c_effectiveInterestRate = optCol(["effectiveinterestrate", "eir", "yield", "interestrate"]);
   const c_interestIncomeThisMonth = optCol(["thismonthinterestincomeusd"]);
   const c_accruedInterestClosingUsd = optCol(["accruedinterestusd"]);
   const c_accruedInterestClosingNgn = optCol(["accruedinterestngn"]);
@@ -1034,16 +1034,21 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
   const cId = col("IDENTIFIER", ["identifier"], 1);
   const cInstitution = col("INSTITUTION", ["institution"], 2);
   const cPrincipal = col("PRINCIPAL", ["principal"], 3);
-  const cRate = col("RATE", ["rate"], 4);
+  const cRate = col("RATE", ["rate", "interestrate", "yield", "coupon", "couponrate", "effectiveinterestrate"], 4);
   const cValueDate = col("VALUE DATE", ["valuedate"], 5);
-  const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 6);
+  const cMaturityDate = col("MATURITY DATE", ["maturitydate", "enddate", "maturity"], 6);
 
-  const c_interestReceivable = optCol(["interestreceivable"]);
-  const c_effectiveInterestRate = optCol(["effectiveinterestrate"]);
-  const c_interestIncomeThisMonth = optCol(["thismonthinterest"]);
-  const c_wht = optCol(["wht10", "wht"]);
-  const c_netIncome = optCol(["netincome"]);
-  const c_accruedInterestClosing = optCol(["closingaccruedinterest", "closingamortisedcost"]);
+  console.log("=== DEBUG PLACEMENTS NGN HEADERS ===");
+  console.log("Found Header Row:", hdr);
+  console.log("Header Map Keys:", Array.from(headerMap.keys()));
+  console.log("Column Indices:", { cId, cInstitution, cPrincipal, cRate, cValueDate, cMaturityDate });
+
+  const c_interestReceivable = optCol(["interestreceivable", "interestreceivableusd", "interestreceivablengn", "accruedinterest"]);
+  const c_effectiveInterestRate = optCol(["effectiveinterestrate", "eir", "yield", "interestrate"]);
+  const c_interestIncomeThisMonth = optCol(["thismonthinterest", "thismonthinterestincome", "interestincomeforthemonth", "interestincomeforthemonthincomeleg"]);
+  const c_wht = optCol(["wht10", "wht", "chargeswht", "whttax", "tax"]);
+  const c_netIncome = optCol(["netincome", "netinterestincome"]);
+  const c_accruedInterestClosing = optCol(["closingaccruedinterest", "closingamortisedcost", "accruedinterestclosing", "closingaccruedinterestassetleg", "accruedinterest"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -1122,7 +1127,7 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
       purchasePrice: principal,
       purchaseDate: purchaseDate || "2026-01-01",
       maturityDate: maturityDate || "2026-06-01",
-      couponRate: 0, // Yield is derived from faceValue vs purchasePrice
+      couponRate,
       couponFrequency: "Monthly", // Force monthly schedule for proper accrual steps
       status: "Active",
       bookedBy: institution,
@@ -1267,7 +1272,7 @@ function parseQuotedEquity(
       ifrs13Level: "L1",
       currency: "NGN",
       faceValue: totalCost,
-      purchasePrice: costPriceUnit * quantity || totalCost,
+      purchasePrice: costPriceUnit * quantity,
       purchaseDate: purchaseDate || "2024-01-01",
       maturityDate: "2099-12-31",
       couponRate: 0,
