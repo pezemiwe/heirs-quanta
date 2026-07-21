@@ -92,10 +92,12 @@ export function couponDates(inst: Instrument): Date[] {
   if (months === 0) return [maturity]; // zero coupon / equity / N/A
   const dates: Date[] = [];
   // generate forward from purchase
-  let d = addMonths(purchase, months);
+  let i = 1;
+  let d = addMonths(purchase, i * months);
   while (d.getTime() < maturity.getTime()) {
     dates.push(d);
-    d = addMonths(d, months);
+    i++;
+    d = addMonths(purchase, i * months);
   }
   dates.push(maturity);
   return dates;
