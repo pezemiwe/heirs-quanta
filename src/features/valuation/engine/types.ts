@@ -299,3 +299,25 @@ export interface PortfolioResult {
   topExposures: TopExposure[];
   income: IncomeSummary;
 }
+export interface ScheduleMetrics {
+  totalAccruedInterest: number;
+  effectiveInterestRate: number;
+  thisMonthInterest: number;
+  lastMonthAccruedInterest: number;
+  couponReceivedToDateGross: number;
+  closingAmortisedCost: number;
+  currentMarketYield: number;
+  totalCurrentMarketValue: number;
+  currentMtmGainLoss: number;
+  monthlyMtmToPost: number;
+}
+
+export interface FcyScheduleMetrics {
+  totalAccruedInterestFcy: number;
+  thisMonthInterestFcy: number;
+  closingAmortisedCostFcy: number;
+  closingAmortisedCostBase: number;
+  thisMonthUnrealisedFxGainLoss: number;
+  totalUnrealisedFxGainLoss: number;
+  totalCurrentMarketValueBase: number;
+}

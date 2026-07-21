@@ -5,14 +5,16 @@ import { useValuation } from "../../valuation/store";
 import { valueInstrument } from "../../valuation/engine";
 import { Tabs } from "../../../components/shared/tabs";
 import { fmtMoney, fmtPct, fmtDate, fmtNumber } from "../../valuation/utils";
-import type { Instrument, ManualValueKey, Currency } from "../../valuation/engine/types";
+import type { Instrument, ManualValueKey, Currency, ScheduleMetrics, FcyScheduleMetrics } from "../../valuation/engine/types";
+import { computeScheduleMetrics, computeFcyScheduleMetrics } from "../../valuation/engine/schedule-metrics";
 import { PageHeader } from "../../../components/shared/page-header";
 
 type TabId = "placements-ngn" | "tbills" | "placements-usd" | "equities" | "fgn-bonds" | "corp-bonds" | "state-bonds";
 
 interface ValuationResult {
   instrument: Instrument;
-  [key: string]: any; 
+  scheduleMetrics?: ScheduleMetrics;
+  fcyScheduleMetrics?: FcyScheduleMetrics;
 }
 
 type ColDef = {
@@ -175,7 +177,7 @@ export function MonthlySchedule() {
   const instrumentsForTab = useMemo(() => {
     return v.instruments.filter(i => {
       if (tab === "placements-ngn") return i.instrumentType === "Bank Placement" && i.currency === "NGN";
-      if (tab === "placements-usd") return i.instrumentType === "Bank Placement" && i.currency === "USD";
+      if (tab === "placements-usd") return i.instrumentType === "Fixed Deposit" && i.currency === "USD";
       if (tab === "tbills") return i.instrumentType === "T-Bill";
       if (tab === "equities") return i.instrumentType === "Equity";
       if (tab === "fgn-bonds") return i.instrumentType === "FGN Bond";
@@ -186,7 +188,14 @@ export function MonthlySchedule() {
   }, [v.instruments, tab]);
 
   const vals = useMemo(() => {
-    return instrumentsForTab.map(inst => valueInstrument(inst, v.assumptions));
+    return instrumentsForTab.map(inst => {
+      const val = valueInstrument(inst, v.assumptions);
+      return {
+        instrument: inst,
+        scheduleMetrics: computeScheduleMetrics(inst, val, v.assumptions),
+        fcyScheduleMetrics: inst.currency !== "NGN" ? computeFcyScheduleMetrics(inst, val, v.assumptions) : undefined
+      };
+    });
   }, [instrumentsForTab, v.assumptions]);
 
   const cols = getCols(tab);
@@ -197,7 +206,7 @@ export function MonthlySchedule() {
     for (const t of tabs) {
       const typeInsts = v.instruments.filter(i => {
         if (t.id === "placements-ngn") return i.instrumentType === "Bank Placement" && i.currency === "NGN";
-        if (t.id === "placements-usd") return i.instrumentType === "Bank Placement" && i.currency === "USD";
+        if (t.id === "placements-usd") return i.instrumentType === "Fixed Deposit" && i.currency === "USD";
         if (t.id === "tbills") return i.instrumentType === "T-Bill";
         if (t.id === "equities") return i.instrumentType === "Equity";
         if (t.id === "fgn-bonds") return i.instrumentType === "FGN Bond";
