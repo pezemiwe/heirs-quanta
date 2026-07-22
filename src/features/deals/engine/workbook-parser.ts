@@ -546,6 +546,12 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
         uploadedManualValues["principalRepaymentThisMonth"] = parseNum(raw);
       }
     }
+    if (cPrincipalRepayment >= 0) {
+      const raw = String(r[cPrincipalRepayment] ?? "").trim();
+      if (raw !== "" && raw !== "-") {
+        uploadedManualValues["principalRepaymentToDate"] = parseNum(raw);
+      }
+    }
     if (c_lastMonthAccruedInterest >= 0) {
       const raw = String(r[c_lastMonthAccruedInterest] ?? "").trim();
       if (raw !== "" && raw !== "-") {

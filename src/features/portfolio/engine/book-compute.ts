@@ -68,7 +68,7 @@ export function fmtCompact(n: number, ccy = NAIRA_SYMBOL): string {
 
 export function fmtPct(n: number, dp = 2): string {
   if (!isFinite(n)) return "-";
-  return `${(n * 100).toFixed(dp)}%`;
+  return `${parseFloat((n * 100).toFixed(dp))}%`;
 }
 
 export function fmtDate(iso: string | null | undefined): string {

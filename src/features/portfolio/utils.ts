@@ -15,7 +15,7 @@ export function fmtNGN(millions: number, dec = 1): string {
 
 /** decimal → "11.8%" */
 export function fmtPct(v: number, dec = 1): string {
-  return `${(v * 100).toFixed(dec)}%`;
+  return `${parseFloat((v * 100).toFixed(dec))}%`;
 }
 
 /** plain number with thousands separator */

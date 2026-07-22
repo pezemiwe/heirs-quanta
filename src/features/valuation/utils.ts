@@ -47,7 +47,7 @@ export function fmtMoneyCompact(
 
 export function fmtPct(v: number, decimals = 4): string {
   if (v == null || isNaN(v)) return "-";
-  return `${(v * 100).toFixed(decimals)}%`;
+  return `${parseFloat((v * 100).toFixed(decimals))}%`;
 }
 
 export function fmtNumber(v: number, decimals = 0): string {
