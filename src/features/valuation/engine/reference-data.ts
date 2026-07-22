@@ -10,7 +10,7 @@ import type {
 } from "./types";
 
 /* ─── default valuation date ────────────────────────────── */
-export const DEFAULT_VALUATION_DATE = "2026-05-31";
+export const DEFAULT_VALUATION_DATE = "2026-05-28";
 
 /* ─── yield curves ──────────────────────────────────────── */
 export const DEFAULT_FGN_CURVE: YieldCurvePoint[] = [

@@ -43,7 +43,7 @@ export function computeScheduleMetrics(inst: Instrument, val: any, assumptions: 
   if (inst.instrumentType === "T-Bill") {
     thisMonthInterest = tbillThisMonthIncome;
     closingAmortisedCost = tbillClosingAccrued;
-    currentMarketValue = val.cleanFairValue ?? 0;
+    currentMarketValue = inst.purchasePrice + tbillClosingAccrued; // T-Bills are held at amortised cost
     totalAccruedInterest = tbillTotalDiscount; // Interest Receivable = full discount at issuance, not accrued-to-date
   } else if (inst.instrumentType === "Bank Placement" || inst.instrumentType === "Fixed Deposit") {
     thisMonthInterest = placementThisMonthInterest;

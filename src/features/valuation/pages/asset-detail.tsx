@@ -265,7 +265,7 @@ function SummaryTab({
   const lastCouponDate = currentPeriod ? parseDate(currentPeriod.periodStartDate) : parseDate(inst.purchaseDate);
   const nextCouponDate = currentPeriod ? parseDate(currentPeriod.date) : parseDate(inst.maturityDate);
   const placementMetrics =
-    inst.instrumentType === "Bank Placement"
+    (inst.instrumentType === "Bank Placement" || inst.instrumentType === "Fixed Deposit")
       ? placementScheduleMetricsAt(inst, parseDate(assumptions.valuationDate))
       : null;
   const daysEarnedInMonth = Math.max(0, Math.round((repDateMs - Math.max(lastCouponDate.getTime(), monthStartMs)) / 86400000));
@@ -536,7 +536,7 @@ function SummaryTab({
         </SectionCard>
       )}
 
-      {inst.instrumentType === "Bank Placement" && ccy === "NGN" && (
+      {(inst.instrumentType === "Bank Placement" || inst.instrumentType === "Fixed Deposit") && ccy === "NGN" && (
         <SectionCard title="Placement Schedule Metrics (Accounting)" className="lg:col-span-2">
           <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
             <Row label="INTEREST RECEIVABLE" value={fmtMoney(val.accruedInterest, ccy)} mono />
@@ -549,7 +549,7 @@ function SummaryTab({
         </SectionCard>
       )}
 
-      {inst.instrumentType === "Bank Placement" && ccy !== "NGN" && (
+      {(inst.instrumentType === "Bank Placement" || inst.instrumentType === "Fixed Deposit") && ccy !== "NGN" && (
         <SectionCard title="FCY Placement FX Schedule (Accounting)" className="lg:col-span-2">
           {(() => {
             const currentFx = val.balanceSheetValueNGN / (val.cleanFairValue || 1);
@@ -661,9 +661,9 @@ function AmortTab({
                   <th className="px-4 py-2.5 text-left">Per</th>
                   <th className="px-4 py-2.5 text-left">Date</th>
                   <th className="px-4 py-2.5 text-right">
-                    {inst.instrumentType === "Bank Placement" ? "Opening Amortised Cost" : "Opening Bal"}
+                    {(inst.instrumentType === "Bank Placement" || inst.instrumentType === "Fixed Deposit") ? "Opening Amortised Cost" : "Opening Bal"}
                   </th>
-                  {inst.instrumentType === "Bank Placement" ? (
+                  {(inst.instrumentType === "Bank Placement" || inst.instrumentType === "Fixed Deposit") ? (
                     <>
                       <th className="px-4 py-2.5 text-right">This month Interest</th>
                       <th className="px-4 py-2.5 text-right">WHT (10%)</th>
@@ -677,7 +677,7 @@ function AmortTab({
                     </>
                   )}
                   <th className="px-4 py-2.5 text-right">
-                    {inst.instrumentType === "Bank Placement" ? "Closing Amortised Cost" : "Closing Bal"}
+                    {(inst.instrumentType === "Bank Placement" || inst.instrumentType === "Fixed Deposit") ? "Closing Amortised Cost" : "Closing Bal"}
                   </th>
                   <th className="px-4 py-2.5 text-center">Status</th>
                 </tr>
@@ -699,7 +699,7 @@ function AmortTab({
                     <td className="px-4 py-2 text-right">
                       {fmtNumber(r.openingBalance, 0)}
                     </td>
-                    {inst.instrumentType === "Bank Placement" ? (
+                    {(inst.instrumentType === "Bank Placement" || inst.instrumentType === "Fixed Deposit") ? (
                       <>
                         <td className="px-4 py-2 text-right">{fmtNumber(r.eirIncome, 0)}</td>
                         <td className="px-4 py-2 text-right">{fmtNumber(placementInterestBasis(inst) === "Gross" ? r.eirIncome * 0.1 : 0, 0)}</td>

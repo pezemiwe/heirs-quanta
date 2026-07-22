@@ -818,11 +818,11 @@ function parseTreasuryBills(rows: unknown[][]): { instruments: Instrument[]; war
   const cId = col("IDENTIFIER", ["identifier"], 2);
   const cPortfolio = col("PORTFOLIO", ["portfolio"], 3);
   const cDescription = col("DESCRIPTION", ["description"], 4);
-  const cPurchaseCost = col("PURCHASE COST", ["purchasecost"], 5);
+  const cPurchaseCost = col("PURCHASE COST", ["purchasecost", "cost", "consideration", "costprice", "amount"], 5);
   const cValueDate = col("VALUE DATE", ["valuedate"], 6);
   const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 7);
   const cInterestRate = col("INTEREST RATE", ["interestrate"], 8);
-  const cFaceValue = col("FACEVALUE", ["facevalue"], 9);
+  const cFaceValue = col("FACE VALUE", ["facevalue", "costatpar"], 9);
 
   const c_interestReceivable = optCol(["interestreceivable", "interestreceivableusd", "interestreceivablengn", "accruedinterest"]);
   const c_effectiveInterestRate = optCol(["effectiveinterestrate", "eir", "yield", "interestrate"]);
@@ -1047,11 +1047,20 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
         uploadedManualValues["totalUnrealisedExchangeGainLoss"] = parseNum(raw);
       }
     }
-    if (c_totalCurrentMarketValue >= 0) {
-      const raw = String(r[c_totalCurrentMarketValue] ?? "").trim();
-      if (raw !== "" && raw !== "-") {
-        uploadedManualValues["totalCurrentMarketValue"] = parseNum(raw);
+      if (c_totalCurrentMarketValue >= 0) {
+        const raw = String(r[c_totalCurrentMarketValue] ?? "").trim();
+        if (raw !== "" && raw !== "-") {
+          uploadedManualValues["totalCurrentMarketValue"] = parseNum(raw);
+        }
       }
+      let faceValue = principalUSD;
+    if (purchaseDate && maturityDate) {
+      const pDate = new Date(purchaseDate);
+      const mDate = new Date(maturityDate);
+      const tenorDays = Math.round((mDate.getTime() - pDate.getTime()) / 86400000);
+      const grossInterest = principalUSD * (couponRate / 100) * (tenorDays / 365);
+      const totalInterest = placementInterestBasis === "Gross" ? grossInterest : grossInterest * 0.9;
+      faceValue = principalUSD + totalInterest;
     }
     instruments.push({
       uploadedManualValues,
@@ -1064,7 +1073,7 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
       classification: "AC",
       ifrs13Level: "L2",
       currency: "USD",
-      faceValue: principalUSD,
+      faceValue,
       purchasePrice: principalUSD,
       purchaseDate: purchaseDate || "2026-01-01",
       maturityDate: maturityDate || "2027-01-01",
