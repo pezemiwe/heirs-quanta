@@ -1049,6 +1049,7 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
   const c_wht = optCol(["wht10", "wht", "chargeswht", "whttax", "tax"]);
   const c_netIncome = optCol(["netincome", "netinterestincome"]);
   const c_accruedInterestClosing = optCol(["closingaccruedinterest", "closingamortisedcost", "accruedinterestclosing", "closingaccruedinterestassetleg", "accruedinterest"]);
+  const c_netGross = optCol(["netgross", "interestbasis", "whtbasis"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -1064,6 +1065,9 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
     const purchaseDate = parseDate(r[cValueDate]);
     const maturityDate = parseDate(r[cMaturityDate]);
     const portfolioBook = "Placements <90 Days";
+    const placementInterestBasis = str(c_netGross >= 0 ? r[c_netGross] : "").toLowerCase() === "gross"
+      ? "Gross"
+      : "Net";
 
     let faceValue = principal;
     if (purchaseDate && maturityDate) {
@@ -1071,8 +1075,8 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
       const mDate = new Date(maturityDate);
       const tenorDays = Math.round((mDate.getTime() - pDate.getTime()) / 86400000);
       const grossInterest = principal * couponRate * (tenorDays / 365);
-      const netInterest = grossInterest * 0.9; // 10% WHT deducted
-      faceValue = principal + netInterest;
+      const totalInterest = placementInterestBasis === "Gross" ? grossInterest : grossInterest * 0.9;
+      faceValue = principal + totalInterest;
     }
 
     const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
@@ -1129,6 +1133,7 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
       maturityDate: maturityDate || "2026-06-01",
       couponRate,
       couponFrequency: "Monthly", // Force monthly schedule for proper accrual steps
+      placementInterestBasis,
       status: "Active",
       bookedBy: institution,
       impairmentStage: "Stage 1",

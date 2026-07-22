@@ -2,7 +2,7 @@ import { useState, useMemo } from "react";
 import { useNavigate, useParams } from "react-router-dom";
 import { ArrowLeft, Trash2, AlertCircle } from "lucide-react";
 import { useValuation } from "../store";
-import { valueInstrument, parseDate, toISO } from "../engine";
+import { placementInterestBasis, placementScheduleMetricsAt, valueInstrument, parseDate, toISO } from "../engine";
 import { Tabs } from "../../../components/shared/tabs";
 import { SectionCard } from "../../../components/shared/section-card";
 import {
@@ -65,7 +65,6 @@ export function ValuationAssetDetail() {
   const inst = instrument;
   const cls = inst.classification;
   const ccy = inst.currency;
-
   /* tabs availability - Equity hides amort & cashflow */
   const isEquity = inst.instrumentType === "Equity";
   const tabs: { value: Tab; label: string }[] = [
@@ -253,6 +252,10 @@ function SummaryTab({
   const currentPeriod = val.amortSchedule.find(r => r.status === "Current");
   const lastCouponDate = currentPeriod ? parseDate(currentPeriod.periodStartDate) : parseDate(inst.purchaseDate);
   const nextCouponDate = currentPeriod ? parseDate(currentPeriod.date) : maturityDate;
+  const placementMetrics =
+    inst.instrumentType === "Bank Placement"
+      ? placementScheduleMetricsAt(inst, parseDate(valuationDate))
+      : null;
 
   // T-Bill variables
   const repDateMs = Math.min(maturityDate.getTime(), valDateMs);
@@ -541,10 +544,10 @@ function SummaryTab({
           <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
             <Row label="INTEREST RECEIVABLE" value={fmtMoney(val.accruedInterest, ccy)} mono />
             <Row label="EFFECTIVE INTEREST RATE" value={fmtPct(val.eir, 4)} mono />
-            <Row label="THIS MONTH INTEREST" value={fmtMoney(val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0, ccy)} mono emphasis />
-            <Row label="WHT 10%" value={fmtMoney((val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0) * 0.1, ccy)} mono />
-            <Row label="NET INCOME" value={fmtMoney((val.amortSchedule.find((r) => r.status === "Current")?.eirIncome ?? 0) * 0.9, ccy)} mono />
-            <Row label="CLOSING ACCRUED INTEREST" value={fmtMoney(val.accruedInterest, ccy)} mono emphasis />
+            <Row label="THIS MONTH INTEREST" value={fmtMoney(placementMetrics?.thisMonthInterest ?? 0, ccy)} mono emphasis />
+            <Row label="WHT 10%" value={fmtMoney(placementMetrics?.wht ?? 0, ccy)} mono />
+            <Row label="NET INCOME" value={fmtMoney(placementMetrics?.netIncome ?? 0, ccy)} mono />
+            <Row label="CLOSING ACCRUED INTEREST" value={fmtMoney(placementMetrics?.closingAmortisedCost ?? 0, ccy)} mono emphasis />
           </div>
         </SectionCard>
       )}
@@ -702,9 +705,9 @@ function AmortTab({
                     </td>
                     {inst.instrumentType === "Bank Placement" ? (
                       <>
-                        <td className="px-4 py-2 text-right">{fmtNumber(r.eirIncome / 0.9, 0)}</td>
-                        <td className="px-4 py-2 text-right">{fmtNumber((r.eirIncome / 0.9) * 0.1, 0)}</td>
                         <td className="px-4 py-2 text-right">{fmtNumber(r.eirIncome, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber(placementInterestBasis(inst) === "Gross" ? r.eirIncome * 0.1 : 0, 0)}</td>
+                        <td className="px-4 py-2 text-right">{fmtNumber(placementInterestBasis(inst) === "Gross" ? r.eirIncome * 0.9 : r.eirIncome, 0)}</td>
                       </>
                     ) : (
                       <>
