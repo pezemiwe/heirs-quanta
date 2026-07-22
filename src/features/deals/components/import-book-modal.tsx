@@ -193,10 +193,37 @@ export function ImportBookModal({
                   {totalParsed} instruments imported successfully
                 </p>
                 <p className="text-xs text-dark-gray/60">
-                  {importState.fileName} · uploaded to the shared platform book
+                  {importState.fileName} • uploaded to the shared platform book
                 </p>
               </div>
             </div>
+
+            {importState.dataQualityIssues && importState.dataQualityIssues.length > 0 ? (
+              <div className="flex flex-col gap-2 rounded-xl border border-amber-300 bg-amber-50 p-4">
+                <div className="flex items-center gap-2">
+                  <AlertTriangle className="h-4 w-4 text-amber-600" />
+                  <p className="text-sm font-semibold text-amber-800">
+                    {importState.dataQualityIssues.length} Data Quality Issues Detected
+                  </p>
+                </div>
+                <ul className="list-inside list-disc text-xs text-amber-700 space-y-1">
+                  {importState.dataQualityIssues.slice(0, 3).map((issue, idx) => (
+                    <li key={idx}>{issue.message}</li>
+                  ))}
+                  {importState.dataQualityIssues.length > 3 && (
+                    <li className="list-none text-amber-800 font-medium pt-1">
+                      + {importState.dataQualityIssues.length - 3} more issues (view on Monthly Closing Schedule)
+                    </li>
+                  )}
+                </ul>
+              </div>
+            ) : (
+              <div className="flex items-center gap-2 rounded-xl border border-blue-200 bg-blue-50 p-4">
+                <p className="text-sm font-medium text-blue-800">
+                  No data quality issues detected. The book is clean!
+                </p>
+              </div>
+            )}
 
             {importState.summary.length > 0 && (
               <div className="rounded-lg border border-border bg-surface p-4">

@@ -68,6 +68,9 @@ export function computeScheduleMetrics(inst: Instrument, val: any, assumptions: 
     totalCurrentMarketValue: currentMarketValue,
     currentMtmGainLoss: val.unrealisedGL ?? 0,
     monthlyMtmToPost: val.unrealisedGL ?? 0,
+    lastCouponDate: lastCouponDate ? lastCouponDate.toISOString().split('T')[0] : undefined,
+    nextCouponDate: val.risk?.nextCouponDate ?? undefined,
+    daysEarnedInMonth: inst.instrumentType.includes("Bond") ? daysEarnedInMonth : undefined,
   };
 }
 

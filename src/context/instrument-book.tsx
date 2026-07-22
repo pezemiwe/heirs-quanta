@@ -55,6 +55,7 @@ export interface ImportState {
   summary: SheetSummary[];
   unrecognizedSheets: UnrecognizedSheet[];
   error: string | null;
+  dataQualityIssues?: import('../features/valuation/engine/types').DataQualityIssue[];
   conflictData?: {
     parsedInstruments: Instrument[];
     sheets: SheetSummary[];
