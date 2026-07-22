@@ -70,6 +70,9 @@ export interface Instrument {
   purchaseFxRate?: number;
   openingFxRate?: number;
 
+  /* Placement-specific accounting basis */
+  placementInterestBasis?: "Net" | "Gross";
+
   /* Reconciliation data (uploaded manual values from grey cells) */
   uploadedManualValues?: Partial<Record<ManualValueKey, number>>;
 }

@@ -234,6 +234,30 @@ function runSyntheticTests() {
     });
   }
 
+  // 6. Net/Gross placement basis drives carrying amount construction
+  {
+    const wb = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(
+      wb,
+      XLSX.utils.aoa_to_sheet([
+        ["PLACEMENTS LESS THAN 90DAYS"],
+        ["S/No", "Identifier", "Institution", "Principal", "Rate", "Value date", "Maturity date", "Net/Gross"],
+        [1, "PLC-NET", "Union Bank", 10_000_000, "15%", "31-Mar-26", "01-Jun-26", "Net"],
+        [2, "PLC-GROSS", "Providus Bank", 10_000_000, "15%", "31-Mar-26", "01-Jun-26", "Gross"],
+      ]),
+      "PLACEMENTS LESS THAN 90DAYS",
+    );
+    const [netInst, grossInst] = parseWorkbook(toBuffer(wb)).instruments;
+    assert(netInst && grossInst, "expected net and gross placement instruments");
+    assert(netInst.placementInterestBasis === "Net", `expected Net basis, got ${netInst.placementInterestBasis}`);
+    assert(grossInst.placementInterestBasis === "Gross", `expected Gross basis, got ${grossInst.placementInterestBasis}`);
+    assert(netInst.faceValue < grossInst.faceValue, "expected net-basis maturity value to be lower than gross-basis");
+    console.log("✓ net/gross placement basis:", {
+      netFaceValue: netInst.faceValue,
+      grossFaceValue: grossInst.faceValue,
+    });
+  }
+
   console.log("All synthetic tests passed.\n");
 }
 
