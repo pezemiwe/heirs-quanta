@@ -109,6 +109,7 @@ export type ManualValueKey =
   | "lastMonthAccruedInterest"
   | "grossCoupon"
   | "netCoupon"
+  | "principalRepaymentToDate"
   | "grossDividendReceived"
   | "netDividendReceived"
   | "ytdDividendReceivedNet"
