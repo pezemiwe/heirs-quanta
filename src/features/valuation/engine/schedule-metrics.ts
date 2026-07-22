@@ -10,10 +10,11 @@ export function computeScheduleMetrics(inst: Instrument, val: any, assumptions: 
   const valueDate = parseDate(inst.purchaseDate);
   const currentPeriod = val.amortSchedule.find((r: any) => r.status === "Current");
   const lastCouponDate = currentPeriod ? parseDate(currentPeriod.periodStartDate) : parseDate(inst.purchaseDate);
+  const priorMonthEndMs = monthStartMs - 86400000;
 
   // T-Bill variables
   const repDateMs = Math.min(maturityDate.getTime(), valDateMs);
-  const tbillStartMs = Math.max(valueDate.getTime(), monthStartMs);
+  const tbillStartMs = Math.max(valueDate.getTime(), priorMonthEndMs);
   const tbillDaysInMonth = Math.max(0, Math.round((repDateMs - tbillStartMs) / 86400000));
   const tbillTenor = Math.round((maturityDate.getTime() - valueDate.getTime()) / 86400000);
   const tbillTotalDiscount = inst.faceValue - inst.purchasePrice;
@@ -21,9 +22,8 @@ export function computeScheduleMetrics(inst: Instrument, val: any, assumptions: 
   const tbillClosingAccrued = tbillTenor > 0 ? tbillTotalDiscount * (Math.max(0, repDateMs - valueDate.getTime()) / 86400000) / tbillTenor : 0;
 
   // Bond variables
-  const daysEarnedInMonth = Math.max(0, Math.round((repDateMs - Math.max(lastCouponDate.getTime(), monthStartMs)) / 86400000));
+  const daysEarnedInMonth = Math.max(0, Math.round((repDateMs - Math.max(lastCouponDate.getTime(), priorMonthEndMs)) / 86400000));
   const bondThisMonthInterest = inst.faceValue * (inst.couponRate ?? 0) * (daysEarnedInMonth / 365);
-  const priorMonthEndMs = monthStartMs - 86400000;
   const lastMonthAccruedDays = Math.max(0, Math.round((priorMonthEndMs - lastCouponDate.getTime()) / 86400000));
   const lastMonthAccrued = inst.faceValue * (inst.couponRate ?? 0) * (lastMonthAccruedDays / 365);
   const pastCoupons = val.amortSchedule.filter((r: any) => r.status === "Past" && parseDate(r.date).getTime() > valueDate.getTime());
@@ -81,9 +81,10 @@ export function computeFcyScheduleMetrics(inst: Instrument, val: any, assumption
   const valDateMs = valDate.getTime();
   const maturityDate = parseDate(inst.maturityDate);
   const valueDate = parseDate(inst.purchaseDate);
+  const priorMonthEndMs = monthStartMs - 86400000;
 
   const repDateMs = Math.min(maturityDate.getTime(), valDateMs);
-  const tbillStartMs = Math.max(valueDate.getTime(), monthStartMs);
+  const tbillStartMs = Math.max(valueDate.getTime(), priorMonthEndMs);
   const tbillDaysInMonth = Math.max(0, Math.round((repDateMs - tbillStartMs) / 86400000));
 
   const currentFx = val.balanceSheetValueNGN / (val.cleanFairValue || 1);
