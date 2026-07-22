@@ -478,6 +478,7 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
   const cCouponRate = col("COUPON RATE", ["couponrate"], 7);
   const cFaceValue = col("FACE VALUE", ["facevalue"], 11);
   const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 15);
+  const cPrincipalRepayment = col("PRINCIPAL REPAYMENT", ["principalrepayment"], 16);
   const cCost = col("COST", ["cost"], 14);
   const cCostPriceClean = col("COST PRICE/CLEAN PRICE", ["costpricecleanprice", "costpriceclean"], 13);
   const cDirtyPriceAtPurchase = col("DIRTY PRICE", ["dirtyprice"], 12);

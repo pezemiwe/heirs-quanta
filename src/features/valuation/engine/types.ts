@@ -109,6 +109,10 @@ export type ManualValueKey =
   | "lastMonthAccruedInterest"
   | "grossCoupon"
   | "netCoupon"
+  | "principalRepaymentToDate"
+  | "grossDividendReceived"
+  | "netDividendReceived"
+  | "ytdDividendReceivedNet"
   | "totalAccruedInterest"
   | "totalCurrentMarketValue"
   | "daysEarnedInMonth"
@@ -340,6 +344,7 @@ export interface FcyScheduleMetrics {
   closingAmortisedCostFcy: number;
   closingAmortisedCostBase: number;
   thisMonthUnrealisedFxGainLoss: number;
+  thisMonthAccruedFxGainLoss: number;
   totalUnrealisedFxGainLoss: number;
   totalCurrentMarketValueBase: number;
 }
