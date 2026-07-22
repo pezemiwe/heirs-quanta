@@ -95,6 +95,7 @@ export function computeFcyScheduleMetrics(inst: Instrument, val: any, assumption
   const unrealisedFxGain = (val.acCarryingValue * currentFx) - (val.acCarryingValue * purchaseFx);
   const thisMonthFxGain = (val.acCarryingValue * currentFx) - (val.acCarryingValue * openingFx);
   const accruedCcy = val.acCarryingValue - inst.purchasePrice;
+  const thisMonthAccruedFxGainLoss = (accruedCcy * currentFx) - (accruedCcy * openingFx);
 
   return {
     totalAccruedInterestFcy: accruedCcy,
@@ -102,6 +103,7 @@ export function computeFcyScheduleMetrics(inst: Instrument, val: any, assumption
     closingAmortisedCostFcy: val.acCarryingValue,
     closingAmortisedCostBase: val.acCarryingValue * currentFx,
     thisMonthUnrealisedFxGainLoss: thisMonthFxGain,
+    thisMonthAccruedFxGainLoss,
     totalUnrealisedFxGainLoss: unrealisedFxGain,
     totalCurrentMarketValueBase: val.balanceSheetValueNGN,
   };
