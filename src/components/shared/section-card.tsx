@@ -5,7 +5,7 @@ import { twMerge } from "tailwind-merge";
 const cn = (...inputs: ClassValue[]) => twMerge(clsx(inputs));
 
 type SectionCardProps = {
-  title?: string;
+  title?: string | ReactNode;
   description?: string;
   actions?: ReactNode;
   children: ReactNode;
