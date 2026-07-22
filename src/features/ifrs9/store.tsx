@@ -16,6 +16,7 @@ import { runEngine } from "./engine";
 import { parseSecuritiesCSV } from "./engine/parsing";
 import { DEFAULT_ASSUMPTIONS } from "./engine/reference-data";
 import { useInstrumentBook } from "../../context/instrument-book";
+import { loadOverrides } from "./pages/pd-tables";
 
 interface IFRS9ContextValue {
   securities: Security[];
@@ -77,10 +78,10 @@ export function IFRS9Provider({ children }: { children: ReactNode }) {
     setParseErrors([]);
   }, [book.importState.fileName, book.securities]);
 
-  const result = useMemo(
-    () => runEngine(securities, assumptions),
-    [securities, assumptions],
-  );
+  const result = useMemo(() => {
+    const pdOverrides = loadOverrides() as Assumptions["pdOverrides"];
+    return runEngine(securities, { ...assumptions, pdOverrides });
+  }, [securities, assumptions]);
 
   const resultByInstrumentId = useMemo(() => {
     const eligible = book.instruments.filter(
