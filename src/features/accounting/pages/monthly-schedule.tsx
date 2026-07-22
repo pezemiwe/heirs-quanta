@@ -266,26 +266,30 @@ const fgnBondsCols: ColDef[] = [
 ];
 
 const corpBondsCols: ColDef[] = [
+  { header: "S/N", render: (_, __, i) => i + 1, exportValue: (_, __, i) => i + 1 },
   { header: "IDENTIFIER", render: (i) => i.id, exportValue: (i) => i.id },
   { header: "DEALER", render: (i) => i.issuer, exportValue: (i) => i.issuer },
   { header: "PORTFOLIO", render: (i) => i.portfolioBook ?? "N/A", exportValue: (i) => i.portfolioBook ?? "N/A" },
   { header: "BOND NAME", render: (i) => i.name, exportValue: (i) => i.name },
   { header: "VALUE DATE", render: (i) => fmtDate(i.purchaseDate), exportValue: (i) => i.purchaseDate },
+  { header: "MATURITY DATE", render: (i) => fmtDate(i.maturityDate), exportValue: (i) => i.maturityDate },
   { header: "COUPON RATE", render: (i) => fmtPct(i.couponRate), exportValue: (i) => i.couponRate },
   { header: "YIELD AT PURCHASE", render: (i) => fmtPct(i.uploadedManualValues?.yieldAtPurchase ?? 0), exportValue: (i) => i.uploadedManualValues?.yieldAtPurchase ?? 0 },
   { header: "UNITS", render: (i) => fmtNumber(i.quantity ?? 0), exportValue: (i) => i.quantity ?? 0 },
   { header: "COST AT PAR", render: (i) => fmtMoney(i.uploadedManualValues?.costAtPar ?? i.faceValue, "NGN"), exportValue: (i) => i.uploadedManualValues?.costAtPar ?? i.faceValue },
+  { header: "FACE VALUE", render: (i) => fmtMoney(i.faceValue, "NGN"), exportValue: (i) => i.faceValue },
   { header: "DIRTY PRICE AT PURCHASE", render: (i) => fmtNumber(i.dirtyPriceAtPurchase ?? 0), exportValue: (i) => i.dirtyPriceAtPurchase ?? 0 },
   { header: "COST PRICE AT PURCHASE", render: (i) => fmtNumber(i.uploadedManualValues?.costPriceClean ?? 0), exportValue: (i) => i.uploadedManualValues?.costPriceClean ?? 0 },
   { header: "COST", render: (i) => fmtMoney(i.uploadedManualValues?.cost ?? i.purchasePrice, "NGN"), exportValue: (i) => i.uploadedManualValues?.cost ?? i.purchasePrice },
   { header: "CONSIDERATION AT PURCHASE", render: (i) => fmtMoney(i.uploadedManualValues?.considerationAtPurchase ?? i.purchasePrice, "NGN"), exportValue: (i) => i.uploadedManualValues?.considerationAtPurchase ?? i.purchasePrice },
-  { header: "MATURITY DATE", render: (i) => fmtDate(i.maturityDate), exportValue: (i) => i.maturityDate },
-  { header: "FACE VALUE", render: (i) => fmtMoney(i.faceValue, "NGN"), exportValue: (i) => i.faceValue },
+  { header: "NUMBER OF COUPONS RECEIVED", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={Math.round((v.scheduleMetrics?.couponReceivedToDateGross ?? 0) / (i.faceValue * (i.couponRate ?? 0) / (i.couponFrequency === "Semi" ? 2 : i.couponFrequency === "Quarterly" ? 4 : i.couponFrequency === "Monthly" ? 12 : 1)))} manualKey="numberOfCouponsReceived" />, exportValue: (i, v) => Math.round((v.scheduleMetrics?.couponReceivedToDateGross ?? 0) / (i.faceValue * (i.couponRate ?? 0) / (i.couponFrequency === "Semi" ? 2 : i.couponFrequency === "Quarterly" ? 4 : i.couponFrequency === "Monthly" ? 12 : 1))) },
   { header: "TOTAL COUPON RECEIVED TO DATE NET", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={(v.scheduleMetrics?.couponReceivedToDateGross ?? 0) * 0.9} manualKey="couponReceivedToDateNet" />, exportValue: (i, v) => (v.scheduleMetrics?.couponReceivedToDateGross ?? 0) * 0.9 },
   { header: "TOTAL COUPON GROSS", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={v.scheduleMetrics?.couponReceivedToDateGross ?? 0} manualKey="couponReceivedToDateGross" />, exportValue: (i, v) => v.scheduleMetrics?.couponReceivedToDateGross ?? 0 },
   { header: "LAST MONTH ACCRUED INTEREST", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={v.scheduleMetrics?.lastMonthAccruedInterest ?? 0} manualKey="lastMonthAccruedInterest" />, exportValue: (i, v) => v.scheduleMetrics?.lastMonthAccruedInterest ?? 0 },
   { header: "THIS MONTH INTEREST", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={v.scheduleMetrics?.thisMonthInterest ?? 0} manualKey="interestIncomeThisMonth" />, exportValue: (i, v) => v.scheduleMetrics?.thisMonthInterest ?? 0 },
   { header: "TOTAL ACCRUED INTEREST", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={v.scheduleMetrics?.totalAccruedInterest ?? 0} manualKey="totalAccruedInterest" />, exportValue: (i, v) => v.scheduleMetrics?.totalAccruedInterest ?? 0 },
+  { header: "LAST COUPON DATE", isGrey: true, render: (i, v) => v.scheduleMetrics?.lastCouponDate ?? "N/A", exportValue: (i, v) => v.scheduleMetrics?.lastCouponDate ?? "N/A" },
+  { header: "NEXT COUPON DATE", isGrey: true, render: (i, v) => v.scheduleMetrics?.nextCouponDate ?? "N/A", exportValue: (i, v) => v.scheduleMetrics?.nextCouponDate ?? "N/A" },
   { header: "TOTAL CURRENT MARKET VALUE", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={v.scheduleMetrics?.totalCurrentMarketValue ?? 0} manualKey="totalCurrentMarketValue" />, exportValue: (i, v) => v.scheduleMetrics?.totalCurrentMarketValue ?? 0 },
 ];
 
