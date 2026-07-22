@@ -44,6 +44,62 @@ export function yearsBetween(a: Date, b: Date): number {
   return daysBetween(a, b) / 365.25;
 }
 
+export function placementInterestBasis(inst: Instrument): "Net" | "Gross" {
+  return inst.placementInterestBasis === "Gross" ? "Gross" : "Net";
+}
+
+function clampPlacementDate(inst: Instrument, asOfDate: Date): Date {
+  const purchase = parseDate(inst.purchaseDate);
+  const maturity = parseDate(inst.maturityDate);
+  if (asOfDate.getTime() <= purchase.getTime()) return purchase;
+  if (asOfDate.getTime() >= maturity.getTime()) return maturity;
+  return asOfDate;
+}
+
+export function placementAccruedInterestAt(inst: Instrument, asOfDate: Date): number {
+  if (inst.instrumentType !== "Bank Placement") return 0;
+  const purchase = parseDate(inst.purchaseDate);
+  const effectiveDate = clampPlacementDate(inst, asOfDate);
+  const elapsedDays = Math.max(0, daysBetween(purchase, effectiveDate));
+  const taxFactor = placementInterestBasis(inst) === "Gross" ? 1 : 0.9;
+  return inst.purchasePrice * (inst.couponRate ?? 0) * (elapsedDays / 365) * taxFactor;
+}
+
+export function placementScheduleMetricsAt(inst: Instrument, valuationDate: Date) {
+  const clampedValuationDate = clampPlacementDate(inst, valuationDate);
+  const previousMonthEnd = new Date(
+    Date.UTC(
+      clampedValuationDate.getUTCFullYear(),
+      clampedValuationDate.getUTCMonth(),
+      0,
+    ),
+  );
+  const purchase = parseDate(inst.purchaseDate);
+  const effectivePreviousDate =
+    previousMonthEnd.getTime() <= purchase.getTime()
+      ? purchase
+      : clampPlacementDate(inst, previousMonthEnd);
+  const totalAccruedInterest = placementAccruedInterestAt(inst, clampedValuationDate);
+  const openingAccruedInterest = placementAccruedInterestAt(inst, effectivePreviousDate);
+  const thisMonthInterest = Math.max(0, totalAccruedInterest - openingAccruedInterest);
+  const wht = placementInterestBasis(inst) === "Gross" ? thisMonthInterest * 0.1 : 0;
+  const netIncome = placementInterestBasis(inst) === "Gross" ? thisMonthInterest - wht : thisMonthInterest;
+
+  return {
+    basis: placementInterestBasis(inst),
+    accruedDays: Math.max(0, daysBetween(purchase, clampedValuationDate)),
+    totalInterest: Math.max(0, inst.faceValue - inst.purchasePrice),
+    maturityValue: inst.faceValue,
+    openingAccruedInterest,
+    openingAmortisedCost: inst.purchasePrice + openingAccruedInterest,
+    totalAccruedInterest,
+    closingAmortisedCost: inst.purchasePrice + totalAccruedInterest,
+    thisMonthInterest,
+    wht,
+    netIncome,
+  };
+}
+
 export function addMonths(d: Date, months: number): Date {
   const r = new Date(d.getTime());
   const day = r.getUTCDate();
@@ -260,6 +316,10 @@ export function accruedInterest(
   schedule: AmortRow[],
   valuationDate: Date,
 ): number {
+  if (inst.instrumentType === "Bank Placement") {
+    return placementAccruedInterestAt(inst, valuationDate);
+  }
+
   const ppy = periodsPerYear(inst.couponFrequency);
   if (ppy === 0) return 0;
 
@@ -519,8 +579,11 @@ export function valueInstrument(
   }
 
   const { schedule, eir } = buildAmortSchedule(inst, valDate);
-  const ac = interpolatedCarryingValue(schedule, purchaseDate, valDate);
   const accrued = accruedInterest(inst, schedule, valDate);
+  const ac =
+    inst.instrumentType === "Bank Placement"
+      ? inst.purchasePrice + accrued
+      : interpolatedCarryingValue(schedule, purchaseDate, valDate);
 
   // pick market yield
   const { curve, spread, label } = pickYieldCurve(inst, assumptions, valDate);
@@ -558,7 +621,8 @@ export function valueInstrument(
     amortSchedule: schedule,
     acCarryingValue: ac,
     accruedInterest: accrued,
-    totalBookValueDirty: ac + accrued,
+    totalBookValueDirty:
+      inst.instrumentType === "Bank Placement" ? ac : ac + accrued,
     cleanFairValue: cleanFV,
     dirtyFairValue: dirtyFV,
     cashFlowSchedule: rows,

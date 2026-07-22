@@ -3,7 +3,7 @@ import { Download, Check } from "lucide-react";
 import * as XLSX from "xlsx";
 import { useValuation } from "../../valuation/store";
 import { useInstrumentBook } from "../../../context/instrument-book";
-import { valueInstrument } from "../../valuation/engine";
+import { daysBetween, parseDate, placementScheduleMetricsAt, valueInstrument } from "../../valuation/engine";
 import { Tabs } from "../../../components/shared/tabs";
 import { fmtMoney, fmtPct, fmtDate, fmtNumber } from "../../valuation/utils";
 import type { Instrument, ManualValueKey, Currency, ScheduleMetrics, FcyScheduleMetrics } from "../../valuation/engine/types";
@@ -12,10 +12,11 @@ import { PageHeader } from "../../../components/shared/page-header";
 
 type TabId = "placements-ngn" | "tbills" | "placements-usd" | "equities" | "fgn-bonds" | "corp-bonds" | "state-bonds" | "data-quality";
 
-interface ValuationResult {
+type ValuationResult = ReturnType<typeof valueInstrument> & {
   instrument: Instrument;
   scheduleMetrics?: ScheduleMetrics;
   fcyScheduleMetrics?: FcyScheduleMetrics;
+  placementScheduleMetrics?: any;
 }
 
 type ColDef = {
@@ -67,19 +68,84 @@ function PendingState({ message = "Requires market data input" }: { message?: st
 }
 
 const placementsNgnCols: ColDef[] = [
-  { header: "S/N", render: (_, __, i) => i + 1, exportValue: (_, __, i) => i + 1 },
-  { header: "IDENTIFIER", render: (i) => i.id, exportValue: (i) => i.id },
-  { header: "INSTITUTION", render: (i) => i.issuer, exportValue: (i) => i.issuer },
-  { header: "PRINCIPAL", render: (i) => fmtMoney(i.faceValue, "NGN"), exportValue: (i) => i.faceValue },
-  { header: "RATE", render: (i) => fmtPct(i.couponRate), exportValue: (i) => i.couponRate },
-  { header: "VALUE DATE", render: (i) => fmtDate(i.purchaseDate), exportValue: (i) => i.purchaseDate },
-  { header: "MATURITY DATE", render: (i) => fmtDate(i.maturityDate), exportValue: (i) => i.maturityDate },
-  { header: "INTEREST RECEIVABLE", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={v.scheduleMetrics?.totalAccruedInterest ?? 0} manualKey="interestReceivable" />, exportValue: (i, v) => v.scheduleMetrics?.totalAccruedInterest ?? 0 },
-  { header: "EFFECTIVE INTEREST RATE", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={v.scheduleMetrics?.effectiveInterestRate ?? 0} manualKey="effectiveInterestRate" isPct />, exportValue: (i, v) => v.scheduleMetrics?.effectiveInterestRate ?? 0 },
-  { header: "THIS MONTH INTEREST", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={v.scheduleMetrics?.thisMonthInterest ?? 0} manualKey="interestIncomeThisMonth" />, exportValue: (i, v) => v.scheduleMetrics?.thisMonthInterest ?? 0 },
-  { header: "WHT 10%", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={(v.scheduleMetrics?.thisMonthInterest ?? 0) * 0.1} manualKey="wht" />, exportValue: (i, v) => (v.scheduleMetrics?.thisMonthInterest ?? 0) * 0.1 },
-  { header: "NET INCOME", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={(v.scheduleMetrics?.thisMonthInterest ?? 0) * 0.9} manualKey="netIncome" />, exportValue: (i, v) => (v.scheduleMetrics?.thisMonthInterest ?? 0) * 0.9 },
-  { header: "CLOSING ACCRUED INTEREST", isGrey: true, render: (i, v) => <InlineDiff inst={i} computed={v.scheduleMetrics?.closingAmortisedCost ?? 0} manualKey="accruedInterestClosing" />, exportValue: (i, v) => v.scheduleMetrics?.closingAmortisedCost ?? 0 },
+  { header: "S/No", render: (_, __, i) => i + 1, exportValue: (_, __, i) => i + 1 },
+  { header: "Identifier", render: (i) => i.id, exportValue: (i) => i.id },
+  { header: "Institution", render: (i) => i.issuer, exportValue: (i) => i.issuer },
+  { header: "Principal", render: (i) => fmtMoney(i.purchasePrice, "NGN"), exportValue: (i) => i.purchasePrice },
+  { header: "Rate", render: (i) => fmtPct(i.couponRate), exportValue: (i) => i.couponRate },
+  { header: "Value date", render: (i) => fmtDate(i.purchaseDate), exportValue: (i) => i.purchaseDate },
+  { header: "Maturity date", render: (i) => fmtDate(i.maturityDate), exportValue: (i) => i.maturityDate },
+  {
+    header: "Tenor",
+    render: (i) => daysBetween(parseDate(i.purchaseDate), parseDate(i.maturityDate)),
+    exportValue: (i) => daysBetween(parseDate(i.purchaseDate), parseDate(i.maturityDate)),
+  },
+  {
+    header: "Interest Amount",
+    isGrey: true,
+    render: (i, v) => <InlineDiff inst={i} computed={v.placementScheduleMetrics?.totalInterest ?? 0} manualKey="interestReceivable" />,
+    exportValue: (i, v) => v.placementScheduleMetrics?.totalInterest ?? 0,
+  },
+  {
+    header: "Maturity value",
+    isGrey: true,
+    render: (i, v) => <span className="text-gray-900">{fmtMoney(v.placementScheduleMetrics?.maturityValue ?? i.faceValue, "NGN")}</span>,
+    exportValue: (i, v) => v.placementScheduleMetrics?.maturityValue ?? i.faceValue,
+  },
+  {
+    header: "This month Interest",
+    isGrey: true,
+    render: (i, v) => <InlineDiff inst={i} computed={v.placementScheduleMetrics?.thisMonthInterest ?? 0} manualKey="interestIncomeThisMonth" />,
+    exportValue: (i, v) => v.placementScheduleMetrics?.thisMonthInterest ?? 0,
+  },
+  {
+    header: "WHT (10%)",
+    isGrey: true,
+    render: (i, v) => <InlineDiff inst={i} computed={v.placementScheduleMetrics?.wht ?? 0} manualKey="wht" />,
+    exportValue: (i, v) => v.placementScheduleMetrics?.wht ?? 0,
+  },
+  {
+    header: "This month Interest (Net)",
+    isGrey: true,
+    render: (i, v) => <InlineDiff inst={i} computed={v.placementScheduleMetrics?.netIncome ?? 0} manualKey="netIncome" />,
+    exportValue: (i, v) => v.placementScheduleMetrics?.netIncome ?? 0,
+  },
+  {
+    header: "Opening Amortised Cost",
+    isGrey: true,
+    render: (i, v) => <span className="text-gray-900">{fmtMoney(v.placementScheduleMetrics?.openingAmortisedCost ?? i.purchasePrice, "NGN")}</span>,
+    exportValue: (i, v) => v.placementScheduleMetrics?.openingAmortisedCost ?? i.purchasePrice,
+  },
+  {
+    header: "Opening Accrued Income",
+    isGrey: true,
+    render: (i, v) => <span className="text-gray-900">{fmtMoney(v.placementScheduleMetrics?.openingAccruedInterest ?? 0, "NGN")}</span>,
+    exportValue: (i, v) => v.placementScheduleMetrics?.openingAccruedInterest ?? 0,
+  },
+  {
+    header: "Closing Amortised Cost",
+    isGrey: true,
+    render: (i, v) => <InlineDiff inst={i} computed={v.placementScheduleMetrics?.closingAmortisedCost ?? 0} manualKey="accruedInterestClosing" />,
+    exportValue: (i, v) => v.placementScheduleMetrics?.closingAmortisedCost ?? 0,
+  },
+  {
+    header: "Accrued Days",
+    isGrey: true,
+    render: (_, v) => <span className="text-gray-900">{v.placementScheduleMetrics?.accruedDays ?? 0}</span>,
+    exportValue: (_, v) => v.placementScheduleMetrics?.accruedDays ?? 0,
+  },
+  {
+    header: "Interest Accrued to Valuation Date",
+    isGrey: true,
+    render: (i, v) => <InlineDiff inst={i} computed={v.placementScheduleMetrics?.totalAccruedInterest ?? 0} manualKey="interestReceivable" />,
+    exportValue: (i, v) => v.placementScheduleMetrics?.totalAccruedInterest ?? 0,
+  },
+  {
+    header: "Net/Gross",
+    isGrey: true,
+    render: (_, v) => <span className="text-gray-900">{v.placementScheduleMetrics?.basis ?? "Net"}</span>,
+    exportValue: (_, v) => v.placementScheduleMetrics?.basis ?? "Net",
+  },
 ];
 
 const placementsUsdCols: ColDef[] = [
@@ -313,11 +379,13 @@ export function MonthlySchedule() {
 
   const vals = useMemo(() => {
     return instrumentsForTab.map(inst => {
-      const val = valueInstrument(inst, v.assumptions);
+      const valuation = valueInstrument(inst, v.assumptions);
       return {
+        ...valuation,
         instrument: inst,
-        scheduleMetrics: computeScheduleMetrics(inst, val, v.assumptions),
-        fcyScheduleMetrics: inst.currency !== "NGN" ? computeFcyScheduleMetrics(inst, val, v.assumptions) : undefined
+        scheduleMetrics: computeScheduleMetrics(inst, valuation, v.assumptions),
+        fcyScheduleMetrics: inst.currency !== "NGN" ? computeFcyScheduleMetrics(inst, valuation, v.assumptions) : undefined,
+        placementScheduleMetrics: inst.instrumentType === "Bank Placement" && inst.currency === "NGN" ? placementScheduleMetricsAt(inst, new Date(`${v.assumptions.valuationDate}T00:00:00Z`)) : undefined
       };
     });
   }, [instrumentsForTab, v.assumptions]);
@@ -339,7 +407,19 @@ export function MonthlySchedule() {
         return false;
       });
       
-      const typeVals = typeInsts.map(inst => valueInstrument(inst, v.assumptions));
+      const typeVals = typeInsts.map(inst => {
+        const valuation = valueInstrument(inst, v.assumptions);
+        if (inst.instrumentType === "Bank Placement" && inst.currency === "NGN") {
+          return {
+            ...valuation,
+            placementScheduleMetrics: placementScheduleMetricsAt(
+              inst,
+              new Date(`${v.assumptions.valuationDate}T00:00:00Z`),
+            ),
+          };
+        }
+        return valuation;
+      });
       const typeCols = getCols(t.id as TabId);
       
       const data = typeVals.map((val, idx) => {
