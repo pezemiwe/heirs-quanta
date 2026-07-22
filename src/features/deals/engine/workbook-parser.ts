@@ -1113,6 +1113,7 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
   const c_netIncome = optCol(["netincome", "netinterestincome"]);
   const c_accruedInterestClosing = optCol(["closingaccruedinterest", "closingamortisedcost", "accruedinterestclosing", "closingaccruedinterestassetleg", "accruedinterest"]);
   const c_netGross = optCol(["netgross", "interestbasis", "whtbasis"]);
+  const c_interestAmount = optCol(["interestamount"]);
   const c_accruedDays = optCol(["accrueddays"]);
   const c_interestAccruedToValuationDate = optCol(["interestaccruedtovaluationdate"]);
 
@@ -1130,7 +1131,29 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
     const purchaseDate = parseDate(r[cValueDate]);
     const maturityDate = parseDate(r[cMaturityDate]);
     const portfolioBook = "Placements <90 Days";
-    const placementInterestBasis = str(c_netGross >= 0 ? r[c_netGross] : "").toLowerCase() === "gross" ? "Gross" : "Net";
+
+    let placementInterestBasis: "Net" | "Gross" = "Net";
+    const explicitNetGross = str(c_netGross >= 0 ? r[c_netGross] : "");
+    if (explicitNetGross.toLowerCase() === "gross") {
+      placementInterestBasis = "Gross";
+    } else if (explicitNetGross.toLowerCase() === "net") {
+      placementInterestBasis = "Net";
+    } else {
+      let explicitInterestAmount: number | undefined;
+      if (c_interestAmount >= 0) {
+        const raw = String(r[c_interestAmount] ?? "").trim();
+        if (raw !== "" && raw !== "-") explicitInterestAmount = parseNum(raw);
+      }
+      if (explicitInterestAmount !== undefined && purchaseDate && maturityDate) {
+        const pDate = new Date(purchaseDate);
+        const mDate = new Date(maturityDate);
+        const tenorDays = Math.round((mDate.getTime() - pDate.getTime()) / 86400000);
+        const grossInterest = principal * couponRate * (tenorDays / 365);
+        if (Math.abs(explicitInterestAmount - grossInterest) <= 2) {
+          placementInterestBasis = "Gross";
+        }
+      }
+    }
 
     let faceValue = principal;
     if (purchaseDate && maturityDate) {
