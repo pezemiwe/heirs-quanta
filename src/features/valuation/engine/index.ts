@@ -57,12 +57,15 @@ function clampPlacementDate(inst: Instrument, asOfDate: Date): Date {
 }
 
 export function placementAccruedInterestAt(inst: Instrument, asOfDate: Date): number {
-  if (inst.instrumentType !== "Bank Placement") return 0;
+  if (inst.instrumentType !== "Bank Placement" && inst.instrumentType !== "Fixed Deposit") return 0;
   const purchase = parseDate(inst.purchaseDate);
+  const maturity = parseDate(inst.maturityDate);
   const effectiveDate = clampPlacementDate(inst, asOfDate);
   const elapsedDays = Math.max(0, daysBetween(purchase, effectiveDate));
+  const tenor = Math.max(1, daysBetween(purchase, maturity));
   const taxFactor = placementInterestBasis(inst) === "Gross" ? 1 : 0.9;
-  return inst.purchasePrice * (inst.couponRate ?? 0) * (elapsedDays / 365) * taxFactor;
+  const totalInterest = inst.uploadedManualValues?.interestReceivable ?? Math.max(0, inst.faceValue - inst.purchasePrice);
+  return totalInterest * (elapsedDays / tenor) * taxFactor;
 }
 
 export function placementScheduleMetricsAt(inst: Instrument, valuationDate: Date) {
@@ -88,8 +91,8 @@ export function placementScheduleMetricsAt(inst: Instrument, valuationDate: Date
   return {
     basis: placementInterestBasis(inst),
     accruedDays: Math.max(0, daysBetween(purchase, clampedValuationDate)),
-    totalInterest: Math.max(0, inst.faceValue - inst.purchasePrice),
-    maturityValue: inst.faceValue,
+    totalInterest: inst.uploadedManualValues?.interestReceivable ?? Math.max(0, inst.faceValue - inst.purchasePrice),
+    maturityValue: inst.purchasePrice + (inst.uploadedManualValues?.interestReceivable ?? Math.max(0, inst.faceValue - inst.purchasePrice)),
     openingAccruedInterest,
     openingAmortisedCost: inst.purchasePrice + openingAccruedInterest,
     totalAccruedInterest,

@@ -198,21 +198,24 @@ export function buildPDTermStructure(
   return out;
 }
 
-function pdTableFor(spec: AssetSpecification): Record<string, number[]> {
-  if (spec === "Corporate") return MOODY_PD_CUM;
-  if (spec === "Sovereign FCY") return SP_SOV_FCY_PD_CUM;
-  return SP_SOV_LCY_PD_CUM;
+function pdTableFor(
+  spec: AssetSpecification,
+  overrides?: Assumptions["pdOverrides"],
+): Record<string, number[]> {
+  if (spec === "Corporate") return overrides?.["Moody Corporate"] ?? MOODY_PD_CUM;
+  if (spec === "Sovereign FCY") return overrides?.["S&P Sovereign FCY"] ?? SP_SOV_FCY_PD_CUM;
+  return overrides?.["S&P Sovereign LCY"] ?? SP_SOV_LCY_PD_CUM;
 }
 
 /* ──────────────────────────────────────────────────────────────
    LGD
    ────────────────────────────────────────────────────────────── */
-function bucketCorporateForRR(rating: string): string {
+function bucketCorporateForRR(rating: string, rrTable: Record<string, number[]>): string {
   if (rating === "Aaa") return "Aaa";
   if (rating.startsWith("C")) return "Caa-C";
   // strip trailing digit  Aa1 → Aa, Baa3 → Baa, B2 → B
   const trimmed = rating.replace(/\d+$/, "");
-  if (MOODY_RR[trimmed]) return trimmed;
+  if (rrTable[trimmed]) return trimmed;
   // Fallback
   return "Baa";
 }
@@ -221,13 +224,15 @@ export function computeLGD(
   s: Security,
   ratingEq: string,
   sovereignRR: number,
+  rrOverride?: Record<string, number[]>,
 ): { lgd: number[]; bucket: string } {
   if (s.assetSpecification !== "Corporate") {
     const lgd = Array(5).fill(1 - sovereignRR);
     return { lgd, bucket: "Sovereign" };
   }
-  const bucket = bucketCorporateForRR(ratingEq);
-  const rr = MOODY_RR[bucket] ?? MOODY_RR.Baa;
+  const rrTable = rrOverride ?? MOODY_RR;
+  const bucket = bucketCorporateForRR(ratingEq, rrTable);
+  const rr = rrTable[bucket] ?? rrTable.Baa ?? MOODY_RR.Baa;
   // recovery rates supplied as percentages
   const lgd = rr.map((r) => 1 - r / 100);
   return { lgd, bucket };
@@ -337,7 +342,7 @@ export function runEngine(
     );
 
     const ratingEquivalent = mapRating(s);
-    const pdTable = pdTableFor(s.assetSpecification);
+    const pdTable = pdTableFor(s.assetSpecification, assumptions.pdOverrides);
     const cum =
       pdTable[ratingEquivalent] ?? pdTable.B ?? Object.values(pdTable)[0];
     const pd = buildPDTermStructure(cum, assumptions);
@@ -346,6 +351,7 @@ export function runEngine(
       s,
       ratingEquivalent,
       assumptions.sovereignRecoveryRate,
+      assumptions.pdOverrides?.["Moody RR"]
     );
     const ead = projectEAD(s, ttm, meir, mcir, lcd);
 

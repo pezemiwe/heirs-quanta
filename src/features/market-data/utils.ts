@@ -2,7 +2,7 @@ const NAIRA_SYMBOL = "\u20A6";
 
 export function fmtPct(v: number, dp = 2): string {
   if (v == null || isNaN(v)) return "-";
-  return `${(v * 100).toFixed(dp)}%`;
+  return `${parseFloat((v * 100).toFixed(dp))}%`;
 }
 
 export function fmtBps(bps: number): string {

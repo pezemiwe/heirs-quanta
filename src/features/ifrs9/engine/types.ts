@@ -76,6 +76,12 @@ export interface Assumptions {
     bestCase: number;
     worseCase: number;
   };
+  /** Optional PD/LGD table overrides uploaded via the PD Tables admin page.
+   *  Undefined or missing keys fall through to the hardcoded reference tables. */
+  pdOverrides?: Partial<Record<
+    "Moody Corporate" | "S&P Sovereign FCY" | "S&P Sovereign LCY" | "Moody RR",
+    Record<string, number[]>
+  >>;
 }
 
 export interface SecurityComputed extends Security {

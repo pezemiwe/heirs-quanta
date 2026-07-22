@@ -67,6 +67,24 @@ export function ValuationProvider({ children }: { children: ReactNode }) {
     setParseErrors([]);
   }, [book.importState.fileName, book.instruments]);
 
+  /* Fetch live FX rates globally on app load */
+  useEffect(() => {
+    Promise.all([
+      fetch("https://api.frankfurter.dev/v2/rate/USD/NGN?providers=CBN").then(r => r.json()).catch(() => null),
+      fetch("https://api.frankfurter.dev/v2/rate/GBP/NGN?providers=CBN").then(r => r.json()).catch(() => null),
+      fetch("https://api.frankfurter.dev/v2/rate/EUR/NGN?providers=CBN").then(r => r.json()).catch(() => null)
+    ]).then(([usdRes, gbpRes, eurRes]) => {
+      setAssumptions(prev => {
+        const patch: Partial<Assumptions> = {};
+        if (usdRes?.rate) patch.fxUSD = usdRes.rate;
+        if (gbpRes?.rate) patch.fxGBP = gbpRes.rate;
+        if (eurRes?.rate) patch.fxEUR = eurRes.rate;
+        if (Object.keys(patch).length > 0) return { ...prev, ...patch };
+        return prev;
+      });
+    });
+  }, []);
+
   const result = useMemo(
     () => runPortfolioEngine(instruments, assumptions),
     [instruments, assumptions],

@@ -87,6 +87,10 @@ export interface Instrument {
 
 export type ManualValueKey =
   | "interestReceivable"
+  | "interestReceivableNgn"
+  | "maturityValueUsd"
+  | "closingAccruedIncomeUsd"
+  | "closingAccruedIncomeNgn"
   | "effectiveInterestRate"
   | "interestIncomeThisMonth"
   | "wht"
@@ -112,6 +116,8 @@ export type ManualValueKey =
   | "principalRepaymentToDate"
   | "grossDividendReceived"
   | "netDividendReceived"
+  | "openingGainLoss"
+  | "ytdDividendReceivedNet"
   | "ytdDividendReceivedNet"
   | "totalAccruedInterest"
   | "totalCurrentMarketValue"

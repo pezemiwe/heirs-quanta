@@ -38,11 +38,13 @@ export function computeScheduleMetrics(inst: Instrument, val: any, assumptions: 
   let thisMonthInterest = 0;
   let closingAmortisedCost = 0;
   let currentMarketValue = 0;
+  let totalAccruedInterest = val.accruedInterest ?? 0; // default for bonds/placements — unchanged
 
   if (inst.instrumentType === "T-Bill") {
     thisMonthInterest = tbillThisMonthIncome;
     closingAmortisedCost = tbillClosingAccrued;
-    currentMarketValue = val.cleanFairValue ?? 0;
+    currentMarketValue = inst.purchasePrice + tbillClosingAccrued; // T-Bills are held at amortised cost
+    totalAccruedInterest = tbillTotalDiscount; // Interest Receivable = full discount at issuance, not accrued-to-date
   } else if (inst.instrumentType === "Bank Placement" || inst.instrumentType === "Fixed Deposit") {
     thisMonthInterest = placementThisMonthInterest;
     closingAmortisedCost = val.accruedInterest;
@@ -58,7 +60,7 @@ export function computeScheduleMetrics(inst: Instrument, val: any, assumptions: 
   }
 
   return {
-    totalAccruedInterest: val.accruedInterest ?? 0,
+    totalAccruedInterest,
     effectiveInterestRate: val.eir ?? 0,
     thisMonthInterest,
     lastMonthAccruedInterest: lastMonthAccrued,

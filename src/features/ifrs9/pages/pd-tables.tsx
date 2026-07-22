@@ -25,11 +25,11 @@ const DEFAULTS: Record<Table, Record<string, number[]>> = {
 
 const RR_DIVIDERS = new Set(["Caa-C"]); // row after which a divider appears
 
-const STORAGE_KEY = "iqfd_table_overrides";
+export const STORAGE_KEY = "iqfd_table_overrides";
 
-type Overrides = Partial<Record<Table, Record<string, number[]>>>;
+export type Overrides = Partial<Record<Table, Record<string, number[]>>>;
 
-function loadOverrides(): Overrides {
+export function loadOverrides(): Overrides {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     return raw ? (JSON.parse(raw) as Overrides) : {};

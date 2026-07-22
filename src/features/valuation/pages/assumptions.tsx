@@ -1,3 +1,4 @@
+import { useState, useEffect } from "react";
 import { useValuation } from "../store";
 import { SectionCard } from "../../../components/shared/section-card";
 import { fmtNumber, fmtPct } from "../utils";
@@ -8,6 +9,38 @@ export function ValuationAssumptions() {
 
   const update = (patch: Partial<typeof a>) =>
     v.setAssumptions({ ...a, ...patch });
+
+  const [isFetchingFx, setIsFetchingFx] = useState(false);
+
+  const handleFetchFx = async () => {
+    setIsFetchingFx(true);
+    try {
+      const [usdRes, gbpRes, eurRes] = await Promise.all([
+        fetch("https://api.frankfurter.dev/v2/rate/USD/NGN?providers=CBN").then(r => r.json()),
+        fetch("https://api.frankfurter.dev/v2/rate/GBP/NGN?providers=CBN").then(r => r.json()),
+        fetch("https://api.frankfurter.dev/v2/rate/EUR/NGN?providers=CBN").then(r => r.json())
+      ]);
+
+      const patch: Partial<typeof a> = {};
+      if (usdRes?.rate) patch.fxUSD = usdRes.rate;
+      if (gbpRes?.rate) patch.fxGBP = gbpRes.rate;
+      if (eurRes?.rate) patch.fxEUR = eurRes.rate;
+      
+      if (Object.keys(patch).length > 0) {
+        update(patch);
+      } else {
+        console.warn("No rates returned from the provider.");
+      }
+    } catch (e) {
+      console.error("Failed to fetch FX rates", e);
+    } finally {
+      setIsFetchingFx(false);
+    }
+  };
+
+  useEffect(() => {
+    handleFetchFx();
+  }, []);
 
   return (
     <div className="p-3 sm:p-4 md:p-6 xl:p-8 space-y-6">
@@ -29,7 +62,14 @@ export function ValuationAssumptions() {
         />
       </SectionCard>
 
-      <SectionCard title="FX Rates (vs NGN)">
+      <SectionCard 
+        title={
+          <div className="flex items-center justify-between">
+            <span>FX Rates (vs NGN)</span>
+            {isFetchingFx && <span className="text-xs font-normal text-gray-500 animate-pulse">Syncing with CBN Live...</span>}
+          </div>
+        }
+      >
         <div className="grid gap-4 sm:grid-cols-3">
           <FxField
             label="USD"
