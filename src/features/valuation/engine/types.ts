@@ -46,10 +46,18 @@ export interface Instrument {
   purchaseDate: string; // ISO yyyy-mm-dd
   maturityDate: string; // ISO yyyy-mm-dd
 
+  // Additions for exact source matching:
+  quantity?: number;
+  costPriceUnit?: number;
+  dirtyPriceAtPurchase?: number;
+
   couponRate: number; // fraction e.g. 0.1398; 0 if zero/equity
   couponFrequency: CouponFrequency;
 
   status: InstrumentStatus;
+
+  netGrossFlag?: "Net" | "Gross";
+  numberOfCouponsReceived?: number;
   bookedBy?: string;
 
   /* Market overrides */
@@ -115,7 +123,15 @@ export type ManualValueKey =
   | "openingGainLoss"
   | "grossDividendReceived"
   | "netDividendReceived"
-  | "ytdDividendReceivedNet";
+  | "ytdDividendReceivedNet"
+  | "accruedDays"
+  | "interestAccruedToValuationDate"
+  | "numberOfCouponsReceived"
+  | "cost"
+  | "yieldAtPurchase"
+  | "costAtPar"
+  | "considerationAtPurchase"
+  | "costPriceClean";
 
 /* ─── valuation engine assumptions ──────────────────────── */
 export interface Assumptions {
@@ -301,4 +317,38 @@ export interface PortfolioResult {
   maturityProfile: MaturityBucket[];
   topExposures: TopExposure[];
   income: IncomeSummary;
+}
+export interface ScheduleMetrics {
+  totalAccruedInterest: number;
+  effectiveInterestRate: number;
+  thisMonthInterest: number;
+  lastMonthAccruedInterest: number;
+  couponReceivedToDateGross: number;
+  closingAmortisedCost: number;
+  currentMarketYield: number;
+  totalCurrentMarketValue: number;
+  currentMtmGainLoss: number;
+  monthlyMtmToPost: number;
+  lastCouponDate?: string;
+  nextCouponDate?: string;
+  daysEarnedInMonth?: number;
+}
+
+export interface FcyScheduleMetrics {
+  totalAccruedInterestFcy: number;
+  thisMonthInterestFcy: number;
+  closingAmortisedCostFcy: number;
+  closingAmortisedCostBase: number;
+  thisMonthUnrealisedFxGainLoss: number;
+  totalUnrealisedFxGainLoss: number;
+  totalCurrentMarketValueBase: number;
+}
+
+
+export type DataQualitySeverity = "warning" | "info";
+export interface DataQualityIssue {
+  category: string;
+  severity: DataQualitySeverity;
+  message: string;
+  affectedInstrumentIds: string[];
 }

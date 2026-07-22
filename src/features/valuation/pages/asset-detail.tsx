@@ -15,6 +15,7 @@ import {
   STAGE_BADGE,
 } from "../utils";
 import type { Instrument } from "../engine/types";
+import { computeScheduleMetrics, computeFcyScheduleMetrics } from "../engine/schedule-metrics";
 
 type Tab =
   | "summary"
@@ -147,7 +148,7 @@ export function ValuationAssetDetail() {
         <SummaryTab
           inst={inst}
           val={valuation}
-          valuationDate={v.assumptions.valuationDate}
+          assumptions={v.assumptions}
         />
       )}
       {tab === "amort" && <AmortTab inst={inst} val={valuation} />}
@@ -233,50 +234,46 @@ function Row({
 function SummaryTab({
   inst,
   val,
-  valuationDate,
+  assumptions,
 }: {
   inst: Instrument;
   val: ReturnType<typeof valueInstrument>;
-  valuationDate: string;
+  assumptions: any; // Using any or Assumptions depending on imports
 }) {
   const ccy = inst.currency;
   const isAC = inst.classification === "AC";
   const isFVOCI = inst.classification === "FVOCI";
   const isFVTPL = inst.classification === "FVTPL";
-  const valDate = new Date(valuationDate);
+
+  const metrics = computeScheduleMetrics(inst, val, assumptions);
+  const fcyMetrics = inst.currency !== "NGN" ? computeFcyScheduleMetrics(inst, val, assumptions) : null;
+
+  // Variables mapped from metrics for the UI to use
+  const tbillThisMonthIncome = metrics.thisMonthInterest;
+  const tbillClosingAccrued = metrics.closingAmortisedCost;
+  const bondThisMonthInterest = metrics.thisMonthInterest;
+  const lastMonthAccrued = metrics.lastMonthAccruedInterest;
+  const totalCouponReceivedGross = metrics.couponReceivedToDateGross;
+  const totalCouponReceivedNet = totalCouponReceivedGross * 0.9;
+  
+  const valDate = new Date(assumptions.valuationDate);
   const monthStart = new Date(valDate.getFullYear(), valDate.getMonth(), 1);
   const monthStartMs = monthStart.getTime();
-  const valDateMs = valDate.getTime();
-  const maturityDate = parseDate(inst.maturityDate);
-  const valueDate = parseDate(inst.purchaseDate);
+  const repDateMs = Math.min(parseDate(inst.maturityDate).getTime(), valDate.getTime());
+  
   const currentPeriod = val.amortSchedule.find(r => r.status === "Current");
   const lastCouponDate = currentPeriod ? parseDate(currentPeriod.periodStartDate) : parseDate(inst.purchaseDate);
-  const nextCouponDate = currentPeriod ? parseDate(currentPeriod.date) : maturityDate;
+  const nextCouponDate = currentPeriod ? parseDate(currentPeriod.date) : parseDate(inst.maturityDate);
   const placementMetrics =
     inst.instrumentType === "Bank Placement"
-      ? placementScheduleMetricsAt(inst, parseDate(valuationDate))
+      ? placementScheduleMetricsAt(inst, parseDate(assumptions.valuationDate))
       : null;
-
-  // T-Bill variables
-  const repDateMs = Math.min(maturityDate.getTime(), valDateMs);
-  const tbillStartMs = Math.max(valueDate.getTime(), monthStartMs);
-  const tbillDaysInMonth = Math.max(0, Math.round((repDateMs - tbillStartMs) / 86400000));
-  const tbillTenor = Math.round((maturityDate.getTime() - valueDate.getTime()) / 86400000);
-  const tbillTotalDiscount = inst.faceValue - inst.purchasePrice;
-  const tbillThisMonthIncome = tbillTenor > 0 ? tbillTotalDiscount * (tbillDaysInMonth / tbillTenor) : 0;
-  const tbillClosingAccrued = tbillTenor > 0 ? tbillTotalDiscount * (Math.max(0, repDateMs - valueDate.getTime()) / 86400000) / tbillTenor : 0;
-
-  // Bond variables
   const daysEarnedInMonth = Math.max(0, Math.round((repDateMs - Math.max(lastCouponDate.getTime(), monthStartMs)) / 86400000));
-  const bondThisMonthInterest = inst.faceValue * (inst.couponRate ?? 0) * (daysEarnedInMonth / 365);
-  const priorMonthEndMs = monthStartMs - 86400000;
-  const lastMonthAccruedDays = Math.max(0, Math.round((priorMonthEndMs - lastCouponDate.getTime()) / 86400000));
-  const lastMonthAccrued = inst.faceValue * (inst.couponRate ?? 0) * (lastMonthAccruedDays / 365);
-  const pastCoupons = val.amortSchedule.filter(r => r.status === "Past" && parseDate(r.date).getTime() > valueDate.getTime());
   const ppy = inst.couponFrequency === "Semi" ? 2 : inst.couponFrequency === "Quarterly" ? 4 : inst.couponFrequency === "Monthly" ? 12 : 1;
   const grossCouponPerPayment = ppy > 0 ? (inst.faceValue * (inst.couponRate ?? 0)) / ppy : 0;
-  const totalCouponReceivedGross = pastCoupons.length * grossCouponPerPayment;
-  const totalCouponReceivedNet = totalCouponReceivedGross * 0.9;
+  
+  const tbillStartMs = Math.max(parseDate(inst.purchaseDate).getTime(), monthStartMs);
+  const tbillDaysInMonth = Math.max(0, Math.round((repDateMs - tbillStartMs) / 86400000));
 
 
   return (
@@ -307,7 +304,7 @@ function SummaryTab({
         <Row label="Purchase Date" value={fmtDate(inst.purchaseDate)} mono />
         <Row label="Maturity Date" value={fmtDate(inst.maturityDate)} mono />
         <Row label="Coupon Rate" value={fmtPct(inst.couponRate)} mono />
-        <Row label="Valuation Date" value={fmtDate(valuationDate)} mono />
+        <Row label="Valuation Date" value={fmtDate(assumptions.valuationDate)} mono />
       </SectionCard>
 
       <SectionCard title="Carrying & Fair Value" className="lg:col-span-2">
@@ -561,12 +558,11 @@ function SummaryTab({
             
             const principalCcy = inst.purchasePrice;
             const receivableCcy = inst.faceValue - inst.purchasePrice;
-            const accruedCcy = val.acCarryingValue - inst.purchasePrice;
-            const monthIncomeCcy = inst.purchasePrice * (inst.couponRate ?? 0) * (tbillDaysInMonth / 365);
+            const accruedCcy = fcyMetrics?.totalAccruedInterestFcy ?? 0;
+            const monthIncomeCcy = fcyMetrics?.thisMonthInterestFcy ?? 0;
             
-            // Unrealised FX Gain = (Current Value @ Current FX) - (Current Value @ Purchase FX)
-            const unrealisedFxGain = (val.acCarryingValue * currentFx) - (val.acCarryingValue * purchaseFx);
-            const thisMonthFxGain = (val.acCarryingValue * currentFx) - (val.acCarryingValue * openingFx);
+            const unrealisedFxGain = fcyMetrics?.totalUnrealisedFxGainLoss ?? 0;
+            const thisMonthFxGain = fcyMetrics?.thisMonthUnrealisedFxGainLoss ?? 0;
 
             return (
               <div className="grid gap-x-8 gap-y-1 md:grid-cols-2 bg-gray-50/50 p-4 rounded-lg border border-border">
@@ -585,10 +581,10 @@ function SummaryTab({
                 <Row label="Opening Exchange rate" value={inst.openingFxRate != null ? fmtNumber(openingFx, 2) : "N/A (Derived)"} mono />
                 <Row label="Current Exchange rate" value={fmtNumber(currentFx, 2)} mono emphasis />
                 
-                <Row label={`CLOSING AMORTISED COST (${ccy})`} value={fmtMoney(val.acCarryingValue, ccy)} mono emphasis />
+                <Row label={`CLOSING AMORTISED COST (${ccy})`} value={fmtMoney(fcyMetrics?.closingAmortisedCostFcy ?? 0, ccy)} mono emphasis />
                 <Row label="THIS MONTH EXCHANGE GAIN / LOSS (NGN)" value={fmtMoney(thisMonthFxGain, "NGN")} mono />
                 <Row label="TOTAL UNREALISED EXCHANGE GAIN/LOSS (NGN)" value={fmtMoney(unrealisedFxGain, "NGN")} mono emphasis />
-                <Row label="TOTAL CURRENT MARKET VALUE INCLUSIVE OF FX (NGN)" value={fmtMoney(val.balanceSheetValueNGN, "NGN")} mono emphasis />
+                <Row label="TOTAL CURRENT MARKET VALUE INCLUSIVE OF FX (NGN)" value={fmtMoney(fcyMetrics?.totalCurrentMarketValueBase ?? 0, "NGN")} mono emphasis />
               </div>
             );
           })()}

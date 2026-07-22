@@ -267,6 +267,11 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
   );
   const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 17);
   const cCostPriceClean = col("COST PRICE/CLEAN", ["costpriceclean"], 15);
+  const cCost = col("COST", ["cost"], 16);
+  const cDirtyPriceAtPurchase = col("DIRTY PRICE", ["dirtyprice", "dirtypriceatpurchase"], 14);
+  const cUnits = col("UNITS", ["units", "unitsholding"], 11);
+  const cYieldAtPurchase = col("YIELD AT PURCHASE", ["yieldatpurchase"], 10);
+  const cCostAtPar = col("COST AT PAR", ["costatpar", "facevalue"], 12);
   const cMarketYield = col("CURRENT MARKET YIELD", ["currentmarketyield", "currentyield"], 31);
   const cMarketPrice = col("CURRENT MARKET PRICE", ["currentmarketprice", "currentprice"], 32);
 
@@ -302,6 +307,11 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
     const faceValue = parseNum(r[cFaceValue]);
     // Prefer consideration incl. FMDQ, else consideration, else clean cost price
     const purchasePrice = parseNum(r[cConsiderationFmdq]) || parseNum(r[cConsideration]) || parseNum(r[cCostPriceClean]);
+    const cost = parseNum(r[cCost]);
+    const dirtyPriceAtPurchase = parseNum(r[cDirtyPriceAtPurchase]);
+    const quantity = parseNum(r[cUnits]);
+    const yieldAtPurchase = parseRate(r[cYieldAtPurchase]);
+    const costAtPar = parseNum(r[cCostAtPar]);
     const marketYield = parseRate(r[cMarketYield]);
     const marketPrice = parseNum(r[cMarketPrice]);
     const bookedBy = str(r[cDealer]);
@@ -312,6 +322,11 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
     const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    uploadedManualValues["cost"] = cost;
+    uploadedManualValues["yieldAtPurchase"] = yieldAtPurchase;
+    uploadedManualValues["costAtPar"] = costAtPar;
+    uploadedManualValues["considerationAtPurchase"] = parseNum(r[cConsideration]);
+    uploadedManualValues["costPriceClean"] = parseNum(r[cCostPriceClean]);
     if (c_couponReceivedToDateGross >= 0) {
       const raw = String(r[c_couponReceivedToDateGross] ?? "").trim();
       if (raw !== "" && raw !== "-") {
@@ -415,6 +430,8 @@ function parseFgnBonds(rows: unknown[][]): { instruments: Instrument[]; warnings
       currency: "NGN",
       faceValue,
       purchasePrice: purchasePrice || faceValue,
+      quantity,
+      dirtyPriceAtPurchase,
       purchaseDate: purchaseDate || "2021-01-01",
       maturityDate: maturityDate || "2030-01-01",
       couponRate,
@@ -462,6 +479,11 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
   const cFaceValue = col("FACE VALUE", ["facevalue"], 11);
   const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 15);
   const cCost = col("COST", ["cost"], 14);
+  const cCostPriceClean = col("COST PRICE/CLEAN PRICE", ["costpricecleanprice", "costpriceclean"], 13);
+  const cDirtyPriceAtPurchase = col("DIRTY PRICE", ["dirtyprice"], 12);
+  const cUnits = col("UNITS HOLDING", ["unitsholding", "units"], 9);
+  const cYieldAtPurchase = col("YIELD AT PURCHASE", ["yieldatpurchase"], 8);
+  const cCostAtPar = col("COST AT PAR", ["costatpar"], 10);
 
   const c_couponReceivedToDateGross = optCol(["couponreceivedtodategross", "totalcouponreceivedtodategross", "totalcoupongross"]);
   const c_couponReceivedToDateNet = optCol(["couponreceivedtodatenet", "totalcouponreceivedtodatenet", "totalcouponnet"]);
@@ -488,6 +510,11 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
     const couponRate = parseRate(r[cCouponRate]);
     const faceValue = parseNum(r[cFaceValue]);
     const purchasePrice = parseNum(r[cConsideration]) || parseNum(r[cCost]);
+    const cost = parseNum(r[cCost]);
+    const dirtyPriceAtPurchase = parseNum(r[cDirtyPriceAtPurchase]);
+    const quantity = parseNum(r[cUnits]);
+    const yieldAtPurchase = parseRate(r[cYieldAtPurchase]);
+    const costAtPar = parseNum(r[cCostAtPar]);
     const bookedBy = str(r[cDealer]);
     const portfolioBook = str(r[cPortfolio]) || "State Bond Book";
 
@@ -495,6 +522,11 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
     const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    uploadedManualValues["cost"] = cost;
+    uploadedManualValues["yieldAtPurchase"] = yieldAtPurchase;
+    uploadedManualValues["costAtPar"] = costAtPar;
+    uploadedManualValues["considerationAtPurchase"] = parseNum(r[cConsideration]);
+    uploadedManualValues["costPriceClean"] = parseNum(r[cCostPriceClean]);
     if (c_couponReceivedToDateGross >= 0) {
       const raw = String(r[c_couponReceivedToDateGross] ?? "").trim();
       if (raw !== "" && raw !== "-") {
@@ -568,6 +600,8 @@ function parseStateBonds(rows: unknown[][]): { instruments: Instrument[]; warnin
       currency: "NGN",
       faceValue,
       purchasePrice: purchasePrice || faceValue,
+      quantity,
+      dirtyPriceAtPurchase,
       purchaseDate: purchaseDate || "2022-01-01",
       maturityDate: maturityDate || "2033-01-01",
       couponRate,
@@ -624,6 +658,11 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
   const cFaceValue = col("FACE VALUE", ["facevalue"], 11);
   const cConsideration = col("CONSIDERATION AT PURCHASE", ["considerationatpurchase"], 15);
   const cCost = col("COST", ["cost"], 14);
+  const cCostPriceClean = col("COST PRICE/CLEAN PRICE", ["costpricecleanprice", "costpriceclean"], 13);
+  const cDirtyPriceAtPurchase = col("DIRTY PRICE", ["dirtyprice"], 12);
+  const cUnits = col("UNITS HOLDING", ["unitsholding", "units"], 9);
+  const cYieldAtPurchase = col("YIELD AT PURCHASE", ["yieldatpurchase"], 8);
+  const cCostAtPar = col("COST AT PAR", ["costatpar"], 10);
 
   const c_couponReceivedToDateNet = optCol(["totalcouponreceivedtodatenet"]);
   const c_couponReceivedToDateGross = optCol(["totalcoupongross"]);
@@ -646,12 +685,22 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
     const couponRate = parseRate(r[cCouponRate]);
     const faceValue = parseNum(r[cFaceValue]);
     const purchasePrice = parseNum(r[cConsideration]) || parseNum(r[cCost]);
+    const cost = parseNum(r[cCost]);
+    const dirtyPriceAtPurchase = parseNum(r[cDirtyPriceAtPurchase]);
+    const quantity = parseNum(r[cUnits]);
+    const yieldAtPurchase = parseRate(r[cYieldAtPurchase]);
+    const costAtPar = parseNum(r[cCostAtPar]);
     const bookedBy = str(r[cDealer]);
     const portfolioBook = str(r[cPortfolio]) || "Corporate Bond Book";
 
     if (faceValue === 0) warnings.push(`Row ${i + 1}: face value is zero for ${id}`);
 
     const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    uploadedManualValues["cost"] = cost;
+    uploadedManualValues["yieldAtPurchase"] = yieldAtPurchase;
+    uploadedManualValues["costAtPar"] = costAtPar;
+    uploadedManualValues["considerationAtPurchase"] = parseNum(r[cConsideration]);
+    uploadedManualValues["costPriceClean"] = parseNum(r[cCostPriceClean]);
     if (c_couponReceivedToDateNet >= 0) {
       const raw = String(r[c_couponReceivedToDateNet] ?? "").trim();
       if (raw !== "" && raw !== "-") {
@@ -701,6 +750,8 @@ function parseCorporateBonds(rows: unknown[][]): { instruments: Instrument[]; wa
       currency: "NGN",
       faceValue,
       purchasePrice: purchasePrice || faceValue,
+      quantity,
+      dirtyPriceAtPurchase,
       purchaseDate: purchaseDate || "2022-01-01",
       maturityDate: maturityDate || "2027-01-01",
       couponRate,
@@ -901,6 +952,9 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
   const cMaturityDate = col("MATURITY DATE", ["maturitydate"], 11);
   const cOpeningFx = col("OPENING EXCHANGE RATE", ["openingexchangerate", "openingrate"], -1);
 
+  const c_netGross = optCol(["netgross", "interestbasis", "whtbasis"]);
+  const c_accruedDays = optCol(["accrueddays"]);
+  const c_interestAccruedToValuationDate = optCol(["interestaccruedtovaluationdate"]);
   const c_interestReceivable = optCol(["interestreceivableusd"]);
   const c_effectiveInterestRate = optCol(["effectiveinterestrate", "eir", "yield", "interestrate"]);
   const c_interestIncomeThisMonth = optCol(["thismonthinterestincomeusd"]);
@@ -927,8 +981,17 @@ function parsePlacementsUSD(rows: unknown[][]): { instruments: Instrument[]; war
     const purchaseDate = parseDate(r[cValueDate]);
     const maturityDate = parseDate(r[cMaturityDate]);
     const portfolioBook = str(r[cPortfolio]) || "USD Placement Book";
+    const placementInterestBasis = str(c_netGross >= 0 ? r[c_netGross] : "").toLowerCase() === "gross" ? "Gross" : "Net";
 
     const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
+    if (c_accruedDays >= 0) {
+      const raw = String(r[c_accruedDays] ?? "").trim();
+      if (raw !== "" && raw !== "-") uploadedManualValues["accruedDays"] = parseNum(raw);
+    }
+    if (c_interestAccruedToValuationDate >= 0) {
+      const raw = String(r[c_interestAccruedToValuationDate] ?? "").trim();
+      if (raw !== "" && raw !== "-") uploadedManualValues["interestAccruedToValuationDate"] = parseNum(raw);
+    }
     if (c_interestReceivable >= 0) {
       const raw = String(r[c_interestReceivable] ?? "").trim();
       if (raw !== "" && raw !== "-") {
@@ -1050,6 +1113,8 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
   const c_netIncome = optCol(["netincome", "netinterestincome"]);
   const c_accruedInterestClosing = optCol(["closingaccruedinterest", "closingamortisedcost", "accruedinterestclosing", "closingaccruedinterestassetleg", "accruedinterest"]);
   const c_netGross = optCol(["netgross", "interestbasis", "whtbasis"]);
+  const c_accruedDays = optCol(["accrueddays"]);
+  const c_interestAccruedToValuationDate = optCol(["interestaccruedtovaluationdate"]);
 
   for (let i = hdr + 1; i < rows.length; i++) {
     const r = rows[i] as unknown[];
@@ -1065,9 +1130,7 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
     const purchaseDate = parseDate(r[cValueDate]);
     const maturityDate = parseDate(r[cMaturityDate]);
     const portfolioBook = "Placements <90 Days";
-    const placementInterestBasis = str(c_netGross >= 0 ? r[c_netGross] : "").toLowerCase() === "gross"
-      ? "Gross"
-      : "Net";
+    const placementInterestBasis = str(c_netGross >= 0 ? r[c_netGross] : "").toLowerCase() === "gross" ? "Gross" : "Net";
 
     let faceValue = principal;
     if (purchaseDate && maturityDate) {
@@ -1080,7 +1143,15 @@ function parsePlacementsNGN(rows: unknown[][]): { instruments: Instrument[]; war
     }
 
     const uploadedManualValues: Partial<Record<import('../../valuation/engine/types').ManualValueKey, number>> = {};
-    if (c_interestReceivable >= 0) {
+    if (c_accruedDays >= 0) {
+        const raw = String(r[c_accruedDays] ?? "").trim();
+        if (raw !== "" && raw !== "-") uploadedManualValues["accruedDays"] = parseNum(raw);
+      }
+      if (c_interestAccruedToValuationDate >= 0) {
+        const raw = String(r[c_interestAccruedToValuationDate] ?? "").trim();
+        if (raw !== "" && raw !== "-") uploadedManualValues["interestAccruedToValuationDate"] = parseNum(raw);
+      }
+      if (c_interestReceivable >= 0) {
       const raw = String(r[c_interestReceivable] ?? "").trim();
       if (raw !== "" && raw !== "-") {
         uploadedManualValues["interestReceivable"] = parseNum(raw);
@@ -1278,6 +1349,8 @@ function parseQuotedEquity(
       currency: "NGN",
       faceValue: totalCost,
       purchasePrice: costPriceUnit * quantity,
+        quantity,
+        costPriceUnit,
       purchaseDate: purchaseDate || "2024-01-01",
       maturityDate: "2099-12-31",
       couponRate: 0,
